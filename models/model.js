@@ -9,6 +9,8 @@ import {
 import { query, getDocs, onSnapshot } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { useEffect, useRef, useState } from "react";
+import createSubscription from "@/utils/createSubscription";
+import useStable from "@/utils/useStable";
 
 /**
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
@@ -72,6 +74,7 @@ class MultiQuery {
   watch(cb, onError = console.error) {
     return onSnapshot(this.query, {
       next(snapshot) {
+        console.log(snapshot);
         cb(toItemArray(snapshot));
       },
       error(error) {
@@ -103,9 +106,9 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
     error: null,
     loading: true,
   });
-
+  const getState = useStable(() => state);
   useEffect(
-    () => sendQuery(dedupeIndex, state, setState, watch, createQuery),
+    () => sendQuery(dedupeIndex, getState, setState, watch, createQuery),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [watch, ...deps]
   );
@@ -113,21 +116,43 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   return state;
 }
 
-const sendQuery = (dedupeIndex, state, setState, watch, createQuery) => {
+export function createSharedQuery(query, { watch = false }) {
+  const dedupeIndex = { current: 0 };
+  return createSubscription((setState) => {
+    setState({
+      data: null,
+      error: null,
+      loading: true,
+    });
+    let lastState;
+    return sendQuery(
+      dedupeIndex,
+      () => lastState,
+      (s) => {
+        lastState = s;
+        setState(s);
+      },
+      watch,
+      () => query
+    );
+  });
+}
+
+const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
   const p = dedupeIndex.current;
   /**@type {MultiQuery} */
   const query = createQuery();
-  setState({ loading: true, ...state });
+  setState({ loading: true, ...getState() });
   const onSuccess = (e) => {
     if (p === dedupeIndex.current)
       setState({ loading: false, data: e, error: null });
   };
   const onError = (e) => {
     if (p === dedupeIndex.current)
-      setState({ loading: false, error: e, ...state });
+      setState({ loading: false, error: e, ...getState() });
   };
   if (watch) {
-    state.get().then(onSuccess, onError);
+    query.get().then(onSuccess, onError);
   } else {
     return query.watch(onSuccess, onError);
   }
