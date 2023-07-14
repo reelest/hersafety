@@ -50,17 +50,14 @@ export class Model {
       )
     );
   }
-  async delete(id) {
-    await deleteDoc(doc(firestore, this.collectionID, id));
-  }
-  async item(id) {
-    return DocumentQuery(this.ref(id));
+  item(id) {
+    return new this.Item(this.ref(id), this.Item.Empty);
   }
   create() {
-    return new this.Item(doc(firestore, this.collectionID), this.Item.Empty);
+    return new this.Item(this.ref(), this.Item.Empty);
   }
-  ref(id) {
-    return doc(firestore, this.collectionID, id);
+  ref(...id) {
+    return doc(firestore, this.collectionID, ...id);
   }
 }
 
@@ -167,6 +164,9 @@ export class Item {
   }
   async save() {
     await updateDoc(this._ref, this);
+  }
+  async load() {
+    Object.assign(this, await new DocumentQuery(this._ref).get());
   }
   async delete() {
     await deleteDoc(this._ref);
