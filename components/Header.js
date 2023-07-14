@@ -1,10 +1,9 @@
-import { useAnnouncementsAPI } from "@/logic/api";
-import ThemedButton from "./ThemedButton";
+import ThemedButton from "@mui/material/Button";
 import Link from "next/link";
-import {useQuery} from "../models/model";
+import { useQuery } from "../models/model";
 import Announcements from "../models/announcement";
 export default function Header({ showAnnouncements = true }) {
-  const data = useQuery(()=>Announcements.all());
+  const data = useQuery(() => Announcements.all());
 
   return (
     <header>

@@ -1,4 +1,4 @@
-import Box from "@/components/Box";
+import Box from "@/components/Card";
 
 function TabHeaders({ tabHeaders, currentTab, onSelectTab, _noPadding }) {
   return tabHeaders ? (

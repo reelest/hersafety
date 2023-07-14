@@ -9,13 +9,14 @@ import { Lock as LockOutlinedIcon } from "iconsax-react";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import Form, {
+  CONFIRM_PASSWORD,
   FormErrors,
   FormField,
   FormSubmit,
   REQUIRED_EMAIL,
   REQUIRED_PASSWORD,
 } from "@/components/Form";
-import { signIn } from "@/logic/api";
+import { signIn, signUp } from "@/logic/api";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
@@ -46,19 +47,20 @@ export default function SignIn() {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5" sx={{ mb: 1 }}>
-            Sign in
+            Create Account
           </Typography>
           <Box
             component={Form}
             validationRules={{
               email: REQUIRED_EMAIL,
               password: REQUIRED_PASSWORD,
+              confirmpassword: CONFIRM_PASSWORD,
             }}
             initialValue={{
               email: "",
               password: "",
             }}
-            onSubmit={signIn}
+            onSubmit={signUp}
             noValidate
             sx={{ mt: 1 }}
           >
@@ -67,7 +69,6 @@ export default function SignIn() {
               margin="normal"
               required
               fullWidth
-              id="email"
               label="Email Address"
               name="email"
               autoComplete="email"
@@ -80,12 +81,16 @@ export default function SignIn() {
               name="password"
               label="Password"
               type="password"
-              id="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
             />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
+            <FormField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmpassword"
+              label="Confirm Password"
+              type="password"
+              autoComplete="new-password"
             />
             <FormSubmit
               type="submit"
@@ -93,17 +98,12 @@ export default function SignIn() {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Create Account
             </FormSubmit>
             <Grid container>
-              <Grid item xs>
-                <Link href="/forgot-password" variant="body2">
-                  Forgot password?
-                </Link>
-              </Grid>
               <Grid item>
-                <Link href="/signup" variant="body2">
-                  {"Don't have an account? Sign Up"}
+                <Link href="/login" variant="body2">
+                  {"Already an account? Log In"}
                 </Link>
               </Grid>
             </Grid>

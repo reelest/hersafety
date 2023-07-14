@@ -15,7 +15,7 @@ import Form, {
   REQUIRED_EMAIL,
   REQUIRED_PASSWORD,
 } from "@/components/Form";
-import { signIn } from "@/logic/api";
+import { resetPassword, signIn } from "@/logic/api";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
@@ -46,19 +46,17 @@ export default function SignIn() {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5" sx={{ mb: 1 }}>
-            Sign in
+            Reset Password
           </Typography>
           <Box
             component={Form}
             validationRules={{
               email: REQUIRED_EMAIL,
-              password: REQUIRED_PASSWORD,
             }}
             initialValue={{
               email: "",
-              password: "",
             }}
-            onSubmit={signIn}
+            onSubmit={resetPassword}
             noValidate
             sx={{ mt: 1 }}
           >
@@ -73,20 +71,6 @@ export default function SignIn() {
               autoComplete="email"
               autoFocus
             />
-            <FormField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-            />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
             <FormSubmit
               type="submit"
               fullWidth
@@ -97,12 +81,12 @@ export default function SignIn() {
             </FormSubmit>
             <Grid container>
               <Grid item xs>
-                <Link href="/forgot-password" variant="body2">
-                  Forgot password?
+                <Link href="/login" variant="body2">
+                  Login
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="/signup" variant="body2">
+                <Link href="/forgot-password" variant="body2">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>

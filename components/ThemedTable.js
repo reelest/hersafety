@@ -1,5 +1,5 @@
 import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
-import Box from "./Box";
+import Box from "./Card";
 import Table, {
   TableButton,
   TableHeader,

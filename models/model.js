@@ -72,7 +72,7 @@ class MultiQuery {
   watch(cb, onError = console.error) {
     return onSnapshot(this.query, {
       next(snapshot) {
-        cb(toItemArray(snapshot.docs));
+        cb(toItemArray(snapshot));
       },
       error(error) {
         onError?.(error);
@@ -155,5 +155,6 @@ export class Item {
  * @param {QuerySnapshot} ref
  */
 const toItemArray = (snapshot) => {
+  console.log({ snapshot });
   return snapshot.docs.map((e) => e.data());
 };

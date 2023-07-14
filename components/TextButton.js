@@ -1,5 +1,5 @@
-import ThemedButton from "./ThemedButton";
+import Button from "@mui/material/Button";
 
 export default function TextButton(props) {
-  return <ThemedButton variant="text" {...props} />;
+  return <Button variant="text" {...props} />;
 }

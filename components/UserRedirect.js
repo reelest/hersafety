@@ -8,6 +8,7 @@ const DASHBOARD_URL = {
   student: "/student",
   parent: "/parent",
   teacher: "/teacher",
+  guest: "/guest",
 };
 
 export default function UserRedirect({
@@ -25,7 +26,7 @@ export default function UserRedirect({
       return null;
     }
   } else if (redirectOnUser) {
-    if (!isServerSide) router.replace(DASHBOARD_URL[user.role]);
+    if (!isServerSide) router.replace(DASHBOARD_URL[user.role ?? "guest"]);
     return null;
   }
   return children;

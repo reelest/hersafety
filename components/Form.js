@@ -7,9 +7,9 @@ import {
   defaultRules,
   useValidation,
 } from "react-simple-form-validator";
-import TextInput from "./TextInput";
-import ThemedButton from "./ThemedButton";
-import Checkbox from "./Checkbox";
+
+import { TextField, Checkbox, Button as ThemedButton } from "@mui/material";
+import theme from "./MuiTheme";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -95,20 +95,16 @@ export function FormField({ name, type, ...props }) {
   const { isFieldInError, handler, showErrors } = useContext(FormContext);
   return (
     <Template
-      as={type === "checkbox" ? Checkbox : TextInput}
+      as={type === "checkbox" ? Checkbox : TextField}
       type={type}
       props={props}
       {...(type === "checkbox"
         ? handler.checkbox(name)
         : handler.textInput(name, type))}
-      outlineColor={
-        showErrors && isFieldInError?.(name) ? "outline-secondary" : null
-      }
-      activeOutlineColor={
-        showErrors && isFieldInError?.(name)
-          ? "focus-visible:outline-secondary"
-          : "focus-visible:outline-primaryLight"
-      }
+      sx={{
+        borderColor:
+          isFieldInError && showErrors ? theme.palette.error.main : undefined,
+      }}
     />
   );
 }
@@ -151,4 +147,5 @@ export const REQUIRED = { required: true, minlength: 1 };
 export const REQUIRED_NUMBER = { required: true, numbers: true };
 export const REQUIRED_PHONE = { required: true, phone: true };
 export const REQUIRED_EMAIL = { required: true, email: true };
+export const CONFIRM_PASSWORD = { required: true, equalField: "password" };
 export const REQUIRED_PASSWORD = { required: true, minlength: 8 };
