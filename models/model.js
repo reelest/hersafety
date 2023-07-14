@@ -9,6 +9,7 @@ import {
 import { query, getDocs, onSnapshot } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { useEffect, useRef, useState } from "react";
+import createSubscription from "@/utils/createSubscription";
 
 /**
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
@@ -72,7 +73,8 @@ class MultiQuery {
   watch(cb, onError = console.error) {
     return onSnapshot(this.query, {
       next(snapshot) {
-        cb(toItemArray(snapshot.docs));
+        console.log(snapshot);
+        cb(toItemArray(snapshot));
       },
       error(error) {
         onError?.(error);
@@ -103,7 +105,7 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
     error: null,
     loading: true,
   });
-
+  const getState = useStable;
   useEffect(
     () => sendQuery(dedupeIndex, state, setState, watch, createQuery),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,6 +113,18 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   );
 
   return state;
+}
+
+export function createSharedQuery(query) {
+  const dedupeIndex = { current: 0 };
+  return createSubscription((setState) => {
+    setState({
+      data: null,
+      error: null,
+      loading: true,
+    });
+    return sendQuery();
+  });
 }
 
 const sendQuery = (dedupeIndex, state, setState, watch, createQuery) => {
