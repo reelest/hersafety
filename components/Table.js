@@ -1,6 +1,6 @@
 import range from "@/utils/range";
 import Template from "./Template";
-import ThemedButton from "./ThemedButton";
+import ThemedButton from "@mui/material/Button";
 import mergeProps from "@/utils/mergeProps";
 import LoaderAnimation from "./LoaderAnimation";
 import { useMemo, useRef, useState } from "react";

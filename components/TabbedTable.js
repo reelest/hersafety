@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ThemedButton from "@/components/ThemedButton";
+import ThemedButton from "@mui/material/Button";
 import Table, {
   TableHeader,
   addClassToColumns,
