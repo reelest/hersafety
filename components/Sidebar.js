@@ -2,8 +2,6 @@ import Image from "next/image";
 import AppLogo from "./AppLogo";
 import Spacer from "./Spacer";
 import Template from "./Template";
-import logout from "../assets/logout.svg";
-import settings from "../assets/settings.svg";
 import { useClickAway } from "react-use";
 import { useRef } from "react";
 import { useRouter } from "next/router";
@@ -61,7 +59,7 @@ export default function Sidebar({
   );
 }
 
-const TabLink = ({ icon, children, isSelected, isActivated, ...props }) => {
+const TabLink = ({ icon: Icon, children, isSelected, isActivated, ...props }) => {
   return (
     <Template
       as={Link}
@@ -70,19 +68,7 @@ const TabLink = ({ icon, children, isSelected, isActivated, ...props }) => {
         isSelected ? "bg-accent1" : isActivated ? "" : "text-white"
       } py-2 px-6 my-1.5 w-full`}
     >
-      <Image
-        src={icon}
-        alt=""
-        className="inline-block mr-4 align-middle"
-        width={16}
-        style={{
-          filter:
-            // isSelected || isActivated || true
-            // ?
-            "invert(100%)",
-          // : "invert(43%) sepia(9%) saturate(7%) hue-rotate(0deg) brightness(92%) contrast(84%)",
-        }}
-      />
+      <Icon size={24} color="#ffffff"/> 
       {children}
     </Template>
   );

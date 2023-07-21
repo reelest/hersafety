@@ -8,7 +8,7 @@ const DASHBOARD_URL = {
   student: "/student",
   parent: "/parent",
   teacher: "/teacher",
-  guest: "/guest",
+  guest: "/admin",
 };
 
 export default function UserRedirect({
