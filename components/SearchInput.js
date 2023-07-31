@@ -1,13 +1,14 @@
-import TextInput, { TextInputDecor } from "@/components/TextInput";
-import SearchIcon from "@heroicons/react/20/solid/MagnifyingGlassIcon";
+import TextInput from "@mui/material/FilledInput";
+import { SearchNormal1 as SearchIcon } from "iconsax-react";
 
 export function SearchInput() {
   return (
-    <TextInputDecor
-      className="inline-block my-2 mx-8 w-96"
-      startIcon={<SearchIcon />}
-    >
-      <TextInput placeholder="Search" variant="search" className="pl-14 pr-6" />
-    </TextInputDecor>
+    <TextInput
+      startAdornment={<SearchIcon size={24} />}
+      placeholder="Search"
+      variant="search"
+      className="pl-14 pr-6"
+      sx={{ lineHeight: "normal" }}
+    />
   );
 }

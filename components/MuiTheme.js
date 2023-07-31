@@ -24,6 +24,8 @@ const theme = createTheme({
     mode: "light",
     primary: {
       main: "#170dd8",
+      dark: "#070441",
+      hover: "rgba(255, 255, 255, 0.3)",
     },
     secondary: {
       main: "#ff8200",
@@ -31,9 +33,12 @@ const theme = createTheme({
     background: {
       default: "#fdfdfd",
     },
+    text: {
+      disabledOnPrimaryDark: "#aeafb5",
+    },
   },
   typography: {
-    fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Poppins", "Helvetica", "Arial", sans-serif',
     h1: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
