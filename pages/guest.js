@@ -1,5 +1,8 @@
 import Header from "@/components/Header";
-import { Box, Container, CssBaseline, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import CssBaseline from "@mui/material/CssBaseline";
+import Typography from "@mui/material/Typography";
 import Head from "next/head";
 
 export default function Guest() {
@@ -26,7 +29,7 @@ export default function Guest() {
           <Typography variant="h1">
             Oops, we do not know who you are.
           </Typography>
-          <Typography fontSize={32} sx={{ mx: 5, my: 5 }}>
+          <Typography fontSize={32} sx={{ mx: 10, my: 10 }}>
             Please, contact the system administrator to assign you a role.
           </Typography>
         </Box>

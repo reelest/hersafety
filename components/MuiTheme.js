@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material";
+import { createTheme } from "@mui/material/styles";
 import Link from "next/link";
 import React from "react";
 
@@ -30,8 +30,12 @@ const theme = createTheme({
     secondary: {
       main: "#ff8200",
     },
+    gray: {
+      light: "#f2f2f5",
+      main: "#777777",
+    },
     background: {
-      default: "#fdfdfd",
+      default: "#fafafd",
     },
     text: {
       disabledOnPrimaryDark: "#aeafb5",
@@ -42,37 +46,78 @@ const theme = createTheme({
     h1: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "4.214rem",
     },
     h2: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "3.161rem",
     },
     h3: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "2.37rem",
     },
     h4: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "1.78rem",
     },
     h5: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "1.33333333rem",
     },
     h6: {
       fontFamily: '"Poppins", sans-serif',
       fontWeight: "bold",
+      fontSize: "1.1666666rem",
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 12,
   },
-  spacing: 8,
+  spacing: 4, //Match the spacing scale of tailwind when fontSize is 16px
   props: {
     MuiTooltip: {
       arrow: true,
     },
   },
+  breakpoints: {
+    // Match tailwind breakpoints
+    values: {
+      xs: 0,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      "2xl": 1536,
+    },
+  },
+
+  shadows: [
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+    "none",
+  ],
 });
 
 export default theme;

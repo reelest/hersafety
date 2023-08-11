@@ -18,7 +18,7 @@
     "react/react-in-jsx-scope": "off",
     "react/jsx-uses-react": "off",
     "react/prop-types": "off",
-    "no-case-declarations": "off",
-    "no-unused-vars": "off"
+    "no-case-declarations": 1,
+    "no-unused-vars": 1
   }
 }

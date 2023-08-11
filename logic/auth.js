@@ -3,15 +3,20 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { auth } from "./firebase_init";
 import createSubscription from "@/utils/createSubscription";
 export const [useUser] = createSubscription((setUser) =>
   onAuthStateChanged(auth, setUser)
 );
-
 export const signIn = async ({ email, password }) => {
   await signInWithEmailAndPassword(auth, email, password);
+};
+export const doLogOut = async () => {
+  console.log("signing out");
+  await signOut(auth);
+  console.log("signed out");
 };
 
 export const signUp = async ({ email, password }) => {

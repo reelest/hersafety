@@ -5,14 +5,11 @@ import linkedInIcon from "@/assets/linkedIn.svg";
 import facebookIcon from "@/assets/facebook.svg";
 import twitterIcon from "@/assets/twitter.svg";
 import Image from "next/image";
-import {
-  Box,
-  Container,
-  Typography,
-  Link,
-  ThemeProvider,
-  createTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
+import Link from "@mui/material/Link";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 export default function Footer() {
   const website = useWebsiteData();
@@ -29,16 +26,16 @@ export default function Footer() {
         );
       }}
     >
-      <Box className="text-white" bgcolor="black" sx={{ py: 1, px: 4 }}>
+      <Box className="text-white" bgcolor="black" sx={{ py: 2, px: 8 }}>
         <Container
           className="flex mx-auto flex-wrap max-lg:flex-col"
-          sx={{ mt: 9 }}
+          sx={{ mt: 18 }}
         >
           <Box className="sm:basis-0 max-sm:w-full flex-grow flex items-center flex-col text-center">
             <AppLogo size={240} />
             <p className="font-20 mt-12">{website.description}</p>
           </Box>
-          <Box sx={{ ml: 8 }} className="basis-1/2">
+          <Box sx={{ ml: 16 }} className="basis-1/2">
             <Typography
               variant="h5"
               className="border-l-8 border-primaryLight font-32b"
@@ -80,7 +77,7 @@ export default function Footer() {
           variant="body2"
           // color="text.secondary"
           align="center"
-          sx={{ mt: 8, mb: 4 }}
+          sx={{ mt: 16, mb: 8 }}
         >
           {"Copyright © "}
           <Link color="common.white" href="https://csmsuniben.web.app/">

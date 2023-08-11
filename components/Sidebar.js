@@ -5,7 +5,7 @@ import Template from "./Template";
 import { useClickAway } from "react-use";
 import { useRef } from "react";
 import { useRouter } from "next/router";
-import { doLogout } from "@/logic/api";
+import { doLogOut } from "../logic/auth";
 import { Setting, Logout } from "iconsax-react";
 import {
   Box,
@@ -14,8 +14,8 @@ import {
   Typography,
   SwipeableDrawer,
   Button,
+  ButtonBase,
 } from "@mui/material";
-
 export function useActiveTab(tabs) {
   return useRouter().query["tab"] || tabs[0]?.name?.toLowerCase?.();
 }
@@ -63,9 +63,11 @@ export default function Sidebar({
           <TabLink
             isActivated
             icon={Logout}
-            as={Box}
-            component="button"
-            onClick={doLogout}
+            as={ButtonBase}
+            onClick={() => {
+              console.log("clicking");
+              doLogOut();
+            }}
           >
             Log out
           </TabLink>
@@ -88,16 +90,21 @@ const TabLink = ({
     <Template
       as={Link}
       props={props}
-      className={`block text-left whitespace-nowrap rounded-xl py-2 px-4 w-full`}
+      className={`block text-left whitespace-nowrap w-full`}
       sx={{
         marginTop: "0.375rem",
         marginBottom: "0.375rem",
+        py: 2,
+        px: 4,
+        textAlign: "left",
+        display: "block",
         textDecoration: "none",
-        backgroundColor: isSelected ? "primary.light" : "",
+        borderRadius: "0.75rem",
+        backgroundColor: isSelected ? "white" : "",
         color: isActivated
           ? "white"
           : isSelected
-          ? "white"
+          ? "primary.dark"
           : "text.disabledOnPrimaryDark",
         "&:hover": {
           backgroundColor: isSelected ? "" : "primary.hover",
@@ -112,7 +119,7 @@ const TabLink = ({
             color: isActivated
               ? "white"
               : isSelected
-              ? "white"
+              ? "primary.main"
               : "text.disabledOnPrimaryDark",
           }}
           className="inline-block align-bottom mr-4"

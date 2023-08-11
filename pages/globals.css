@@ -1,3 +1,3 @@
-@tailwind base;
+/* @tailwind base; Messes up material ui. Use CssBaseline*/
 @tailwind components;
 @tailwind utilities;

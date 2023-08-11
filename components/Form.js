@@ -7,8 +7,9 @@ import {
   defaultRules,
   useValidation,
 } from "react-simple-form-validator";
-
-import { TextField, Checkbox, Button as ThemedButton } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import Checkbox from "@mui/material/Checkbox";
+import ThemedButton from "@mui/material/Button";
 import theme from "./MuiTheme";
 // import { useCSRFToken } from "@/logic/api_get";
 
@@ -136,7 +137,7 @@ export function FormSubmit({ name, disabled, ...props }) {
 export function FormErrors({ lines = 2 }) {
   const { showErrors, getErrorMessages, handler } = useContext(FormContext);
   return showErrors ? (
-    <p className="font-20 text-secondary">
+    <p className="font-20 text-red-500">
       {handler.error ? handler.error.message : null}
       {getErrorMessages().split("\n").slice(0, lines).join("\n")}
     </p>

@@ -13,6 +13,7 @@ import Transactions from "./Transactions";
 import Users from "./Users";
 import Events from "./Events";
 import Academics from "./Academics";
+import UserRedirect from "../UserRedirect";
 const TABS = [
   {
     name: "Overview",
@@ -41,5 +42,9 @@ const TABS = [
   },
 ];
 export default function Administrators() {
-  return <DashboardLayout tabs={TABS} />;
+  return (
+    <UserRedirect redirectOnNoUser>
+      <DashboardLayout tabs={TABS} />
+    </UserRedirect>
+  );
 }

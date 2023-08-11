@@ -16,13 +16,13 @@ import Form, {
   REQUIRED_EMAIL,
   REQUIRED_PASSWORD,
 } from "@/components/Form";
-import { signIn, signUp } from "@/logic/api";
+import { signIn, signUp } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
 import Header from "@/components/Header";
 
-export default function SignIn() {
+export default function SignUp({ isSignIn }) {
   return (
     <>
       <Head>
@@ -36,33 +36,33 @@ export default function SignIn() {
         <CssBaseline />
         <Box
           sx={{
-            marginTop: 16,
-            marginBottom: 16,
+            marginTop: 32,
+            marginBottom: 32,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+          <Avatar sx={{ m: 2, bgcolor: "secondary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
-          <Typography component="h1" variant="h5" sx={{ mb: 1 }}>
-            Create Account
+          <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
+            {isSignIn ? "Sign In" : "Create Account"}
           </Typography>
           <Box
             component={Form}
             validationRules={{
               email: REQUIRED_EMAIL,
               password: REQUIRED_PASSWORD,
-              confirmpassword: CONFIRM_PASSWORD,
+              ...(isSignIn ? {} : { confirmpassword: CONFIRM_PASSWORD }),
             }}
             initialValue={{
               email: "",
               password: "",
             }}
-            onSubmit={signUp}
+            onSubmit={isSignIn ? signIn : signUp}
             noValidate
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
           >
             <FormErrors />
             <FormField
@@ -81,29 +81,38 @@ export default function SignIn() {
               name="password"
               label="Password"
               type="password"
-              autoComplete="new-password"
+              autoComplete={isSignIn ? "current-password" : "new-password"}
             />
-            <FormField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmpassword"
-              label="Confirm Password"
-              type="password"
-              autoComplete="new-password"
-            />
+            {isSignIn ? (
+              <FormControlLabel
+                control={<Checkbox value="remember" color="primary" />}
+                label="Remember me"
+              />
+            ) : (
+              <FormField
+                margin="normal"
+                required
+                fullWidth
+                name="confirmpassword"
+                label="Confirm Password"
+                type="password"
+                autoComplete="new-password"
+              />
+            )}
             <FormSubmit
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 6, mb: 4 }}
             >
-              Create Account
+              {isSignIn ? "Sign In" : "Create Account"}
             </FormSubmit>
             <Grid container>
               <Grid item>
-                <Link href="/login" variant="body2">
-                  {"Already an account? Log In"}
+                <Link href={isSignIn ? "/signup" : "/login"} variant="body2">
+                  {isSignIn
+                    ? "Don't have an account? Sign Up"
+                    : "Already an account? Log In"}
                 </Link>
               </Grid>
             </Grid>

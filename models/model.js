@@ -3,23 +3,32 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  setDoc,
   updateDoc,
   where,
+  query,
+  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
-import { query, getDocs, onSnapshot } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { useEffect, useRef, useState } from "react";
 import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
-
+import { InvalidState, ItemDoesNotExist, checkError } from "./errors";
+import { noop } from "@/utils/none";
 /**
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
  */
+export const noFirestore = firestore === null;
 export class Model {
-  constructor(collectionID, ItemClass = Item) {
-    this.collectionID = collectionID;
-    this.Item = ItemClass;
+  constructor(_collectionID, ItemClass = Item, Empty = {}) {
+    this._ref = noFirestore
+      ? { path: _collectionID }
+      : collection(firestore, _collectionID);
+    this.Item = ItemClass ?? Item;
     this.converter = Model.converter(this);
+    this.Empty = Empty;
+    global[_collectionID + "Model"] = this;
   }
   static converter(model) {
     return {
@@ -29,35 +38,43 @@ export class Model {
       /** @param {import("firebase/firestore").QueryDocumentSnapshot} snapshot */
       fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
-        return new model.Item(snapshot.ref, data);
+        return new model.Item(snapshot.ref, Object.assign(model.Empty, data));
       },
     };
   }
-  request(query) {
-    return new MultiQuery(query.withConverter(this.converter));
+  request(...params) {
+    return new MultiQuery(
+      noFirestore
+        ? null
+        : query(this._ref, ...params).withConverter(this.converter)
+    );
   }
   all() {
-    return this.request(query(collection(firestore, this.collectionID)));
+    return this.request();
   }
   /**
    * @param {...FilterParam} params
    */
   filter(...params) {
-    return this.request(
-      query(
-        collection(firestore, this.collectionID),
-        ...params.map(([key, op, val]) => where(key, op, val))
-      )
-    );
+    return this.request(...params.map(([key, op, val]) => where(key, op, val)));
   }
-  item(id) {
-    return new this.Item(this.ref(id), this.Item.Empty);
+  item(id, isCreate) {
+    return new this.Item(this.ref(id), this.Empty, isCreate);
+  }
+  async getOrCreate(id) {
+    const m = new this.Item(this.ref(id), this.Empty, true);
+    try {
+      await m.load();
+    } catch (e) {
+      checkError(e, ItemDoesNotExist);
+    }
+    return m;
   }
   create() {
-    return new this.Item(this.ref(), this.Item.Empty);
+    return new this.Item(this.ref(), this.Empty, true);
   }
   ref(...id) {
-    return doc(firestore, this.collectionID, ...id);
+    return noFirestore ? { path: "server-side" } : doc(this._ref, ...id);
   }
 }
 
@@ -66,9 +83,11 @@ class MultiQuery {
     this.query = query;
   }
   async get() {
+    if (noFirestore) return [];
     return toItemArray(await getDocs(this.query));
   }
   watch(cb, onError = console.error) {
+    if (noFirestore) return noop;
     return onSnapshot(this.query, {
       next(snapshot) {
         console.log(snapshot);
@@ -82,9 +101,11 @@ class MultiQuery {
 }
 class DocumentQuery extends MultiQuery {
   async get() {
+    if (noFirestore) return;
     return (await getDoc(this.query)).data();
   }
   watch(cb, onError = console.error) {
+    if (noFirestore) return noop;
     return onSnapshot(this.query, {
       next(snapshot) {
         cb(snapshot.data());
@@ -109,7 +130,6 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [watch, ...deps]
   );
-
   return state;
 }
 
@@ -136,43 +156,94 @@ export function createSharedQuery(query, { watch = false }) {
 }
 
 const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
-  const p = dedupeIndex.current;
+  const p = ++dedupeIndex.current;
   /**@type {MultiQuery} */
   const query = createQuery();
   setState({ loading: true, ...getState() });
   const onSuccess = (e) => {
+    console.log({ e, success: true });
     if (p === dedupeIndex.current)
       setState({ loading: false, data: e, error: null });
   };
   const onError = (e) => {
+    console.log({ e, error: true });
     if (p === dedupeIndex.current)
       setState({ loading: false, error: e, ...getState() });
   };
   if (watch) {
-    query.get().then(onSuccess, onError);
-  } else {
     return query.watch(onSuccess, onError);
+  } else {
+    query.get().then(onSuccess, onError);
+    return; //no callback
   }
 };
 
+/**
+ * @class
+ * @property {import("firebase/firestore").DocumentReference} _ref
+ */
 export class Item {
-  static Empty = {};
-  constructor(ref, data) {
-    Object.defineProperty(this, "_ref", ref);
-    Object.defineProperty(this, "_id", ref.id);
+  constructor(ref, data, isNew) {
+    Object.defineProperty(this, "_ref", { value: ref });
+    Object.defineProperty(this, "_id", { value: ref.id });
+    Object.defineProperty(this, "_isLocalOnly", {
+      writable: true,
+      value: !!isNew,
+    });
+    Object.defineProperty(this, "_isValid", {
+      writable: true,
+      value: !!isNew,
+    });
     Object.assign(this, data);
   }
   async save() {
-    await updateDoc(this._ref, this);
+    if (noFirestore) throw InvalidState("No Firestore!!");
+
+    if (this._isLocalOnly) {
+      // We add merge:true here to handle Metadata and SchoolData's unique case (non-unique uids).
+      // Might refactor out later
+      await setDoc(this._ref, this.data(), { merge: true });
+      this._isLocalOnly = false;
+    } else await updateDoc(this._ref, this.data());
   }
   async load() {
-    Object.assign(this, await new DocumentQuery(this._ref).get());
+    const data = await this.asQuery().get();
+    if (data === undefined) {
+      throw new ItemDoesNotExist(this);
+    }
+    Object.assign(this, data);
+    if (this._isLocalOnly) this._isLocalOnly = false;
+    this._isValid = true;
+    return this;
   }
+  async set(data) {
+    if (noFirestore) throw InvalidState("No Firestore!!");
+
+    Object.assign(this, data);
+    if (this._isLocalOnly) {
+      await this.save();
+    } else await updateDoc(this._ref, data);
+    return this;
+  }
+  // Deleting a document does not make it local only. Other clients might have copies of it.
+  // While they would typically not be able to update it,
+  // if restoration was made possible by marking it as local only,
+  // each client would be able to restore potentially conflicting versions of the same document.
   async delete() {
+    if (noFirestore) throw InvalidState("No Firestore!!");
     await deleteDoc(this._ref);
   }
+
   data() {
-    return this;
+    if (!this._isValid)
+      throw new InvalidState("Cannot read document that is not loaded");
+    return Object.assign({}, this);
+  }
+  asQuery() {
+    return new DocumentQuery(this._ref);
+  }
+  isLocalOnly() {
+    return this._isLocalOnly;
   }
 }
 
@@ -180,6 +251,5 @@ export class Item {
  * @param {QuerySnapshot} ref
  */
 const toItemArray = (snapshot) => {
-  console.log({ snapshot });
   return snapshot.docs.map((e) => e.data());
 };

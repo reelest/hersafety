@@ -15,7 +15,7 @@ import Form, {
   REQUIRED_EMAIL,
   REQUIRED_PASSWORD,
 } from "@/components/Form";
-import { resetPassword, signIn } from "@/logic/api";
+import { resetPassword, signIn } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
@@ -35,17 +35,17 @@ export default function SignIn() {
         <CssBaseline />
         <Box
           sx={{
-            marginTop: 16,
-            marginBottom: 16,
+            marginTop: 32,
+            marginBottom: 32,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+          <Avatar sx={{ m: 2, bgcolor: "secondary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
-          <Typography component="h1" variant="h5" sx={{ mb: 1 }}>
+          <Typography component="h1" variant="h5" sx={{ mb: 4 }}>
             Reset Password
           </Typography>
           <Box
@@ -58,7 +58,7 @@ export default function SignIn() {
             }}
             onSubmit={resetPassword}
             noValidate
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
           >
             <FormErrors />
             <FormField
@@ -75,7 +75,7 @@ export default function SignIn() {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 6, mb: 4 }}
             >
               Sign In
             </FormSubmit>

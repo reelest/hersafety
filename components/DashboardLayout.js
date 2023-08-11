@@ -1,8 +1,7 @@
 import useBreakpoints from "@/utils/useBreakpoints";
 import Sidebar, { useActiveTab } from "./Sidebar";
 import { useState } from "react";
-import isServerSide from "@/utils/is_server_side";
-import { NoSsr } from "@mui/material";
+import NoSsr from "@mui/material/NoSsr";
 
 const DashboardLayout = ({ renderChild = _renderChild, tabs }) => {
   const isWideScreen = useBreakpoints().lg;
