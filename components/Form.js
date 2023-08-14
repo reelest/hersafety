@@ -10,7 +10,7 @@ import {
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import ThemedButton from "@mui/material/Button";
-import theme from "./MuiTheme";
+import { useTheme } from "@mui/material";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -93,6 +93,7 @@ export default function Form({
  * @returns
  */
 export function FormField({ name, type, ...props }) {
+  const theme = useTheme();
   const { isFieldInError, handler, showErrors } = useContext(FormContext);
   return (
     <Template

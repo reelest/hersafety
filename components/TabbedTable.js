@@ -49,11 +49,14 @@ export default function TabbedTable({
           headers={headers}
           rowSpacing={1}
           headerClass="text-disabled text-left"
-          rowClass={(row) =>
-            `${selected === row ? "bg-primaryLight text-white" : "bg-white"} ${
-              row >= data.length ? "invisible" : "shadow-3"
-            }`
-          }
+          rowProps={(row) => ({
+            sx: {
+              backgroundColor: selected === row ? "primary.light" : "white",
+              color: selected === row ? "white" : null,
+            },
+
+            className: row >= data.length ? "invisible" : "shadow-3",
+          })}
           onClickRow={(e, row) =>
             onClickRow
               ? onClickRow((controller.page - 1) * PAGE_SIZE + row)
@@ -91,7 +94,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           disabled={selected === -1}
           onClick={() => actions.onEdit(selected)}
-          bg="bg-primary"
+          bg="primary"
           variant="classic"
           className="mx-2"
         >
@@ -102,7 +105,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           disabled={selected === -1}
           onClick={() => actions.onDelete(selected)}
-          bg="bg-secondary"
+          bg="secondary"
           variant="classic"
           className="mx-2"
         >
@@ -122,7 +125,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           onClick={actions.onClose}
           variant="classic"
-          bg="bg-primary"
+          bg="primary"
           className="mx-2"
         >
           Close

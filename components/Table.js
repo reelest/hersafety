@@ -5,6 +5,7 @@ import mergeProps from "@/utils/mergeProps";
 import LoaderAnimation from "./LoaderAnimation";
 import { useMemo, useRef, useState } from "react";
 import uniq from "@/utils/uniq";
+import { Typography } from "@mui/material";
 
 const borderSpacings = [
   "border-spacing-y-0",
@@ -14,41 +15,6 @@ const borderSpacings = [
   "border-spacing-y-4",
   "border-spacing-y-5",
 ];
-const renderColumn = ({ data, row, col, classes, attrs }) => {
-  return row >= 0 ? (
-    <td key={row + ";" + col} className={classes.join(" ")} {...attrs}>
-      {Array.isArray(data) ? data[row][col] : data}
-    </td>
-  ) : (
-    <th key={col} className={classes.join(" ")} {...attrs}>
-      {Array.isArray(data) ? data[col] : data}
-    </th>
-  );
-};
-
-const callHooks = (
-  _data,
-  _row,
-  _col,
-  _classes,
-  _attrs,
-  [firstHook, ...renderHooks]
-) => {
-  return (firstHook || renderColumn)({
-    data: _data,
-    row: _row,
-    col: _col,
-    classes: _classes,
-    attrs: _attrs,
-    next: ({
-      data = _data,
-      row = _row,
-      col = _col,
-      classes = _classes,
-      attrs = _attrs,
-    } = {}) => callHooks(data, row, col, classes, attrs, renderHooks),
-  });
-};
 export default function Table({
   data,
   rows = Array.isArray(data) ? data.length : 0,
@@ -59,7 +25,7 @@ export default function Table({
   scrollable,
   headerClass = "border-b text-left",
   bodyClass = "font-20 leading-relaxed",
-  rowClass = "",
+  rowProps,
   rowSpacing = 0,
   onClickRow,
   className = "w-full leading",
@@ -86,14 +52,18 @@ export default function Table({
               <LoaderAnimation small />
             </td>
           </tr>
+        ) : rows === 0 ? (
+          <tr>
+            <td colSpan={100} className="w-full py-16 text-center">
+              <Typography color="text.disabled">Nothing to display</Typography>
+            </td>
+          </tr>
         ) : (
           range(rows).map((row) => (
             <tr
               key={row}
-              className={
-                typeof rowClass === "function" ? rowClass(row) : rowClass
-              }
               onClick={onClickRow ? (e) => onClickRow(e, row) : undefined}
+              {...(typeof rowProps === "function" ? rowProps(row) : {})}
             >
               {range(cols).map((j) =>
                 callHooks(data, row, j, [], {}, renderHooks)
@@ -110,35 +80,112 @@ export default function Table({
 }
 
 export const TableHeader = (props) => (
-  <Template props={props} className="flex justify-between mb-4" />
-);
-export const TableButton = (props) => (
   <Template
     props={props}
-    as={ThemedButton}
-    variant="text"
-    color="text-secondary"
-    className="flex items-baseline"
+    className="flex justify-between mb-4 items-baseline"
   />
 );
+export const TableButton = (props) => (
+  <Template props={props} as={ThemedButton} variant="text" color="secondary" />
+);
 
-/**Render Hooks */
+/**
+ * Render Hooks
+ * @typedef {string|import("react").Component} TableCellValue
+ *
+ * @typedef {{
+ *  data: Array<Array<TableCellValue>|TableCellValue>|TableCellValue,
+ *  row: number,
+ *  col: number,
+ *  classes: Array<string>,
+ *  attrs: Record<string, any>
+ * }} TableCellInfo
+ *
+ * @typedef {(input: TableCellInfo & {next: TableRenderHook})=>Partial<TableCellInfo>} TableRenderHook
+ */
+
+/**
+ * @param {TableCellInfo}
+ * @returns {import("react").Component}
+ */
+const renderTableCell = ({ data, row, col, classes, attrs }) => {
+  return row >= 0 ? (
+    <td key={row + ";" + col} className={classes.join(" ")} {...attrs}>
+      {Array.isArray(data) ? data[row][col] : data}
+    </td>
+  ) : (
+    <th key={col} className={classes.join(" ")} {...attrs}>
+      {Array.isArray(data) ? data[col] : data}
+    </th>
+  );
+};
+
+const callHooks = (
+  _data,
+  _row,
+  _col,
+  _classes,
+  _attrs,
+  [firstHook, ...renderHooks]
+) => {
+  return (firstHook || renderTableCell)({
+    data: _data,
+    row: _row,
+    col: _col,
+    classes: _classes,
+    attrs: _attrs,
+    next: ({
+      data = _data,
+      row = _row,
+      col = _col,
+      classes = _classes,
+      attrs = _attrs,
+    } = {}) => callHooks(data, row, col, classes, attrs, renderHooks),
+  });
+};
+
+/**
+ * Hook that adds a class to all the table headers
+ * @param {string} className
+ * @returns {TableRenderHook}
+ */
+
 export const addHeaderClass =
   (className) =>
   ({ row, classes, next }) =>
     row < 0 ? next({ classes: classes.concat(className) }) : next();
+
+/**
+ * Hook that supplies the label of a table header
+ * @param {(col: number)=>TableCellValue} getHeader
+ * @returns {TableRenderHook}
+ */
 export const supplyHeader =
   (getHeader) =>
   ({ row, col, next }) =>
     row < 0 ? next({ data: getHeader(col) }) : next();
+
+/**
+ * Hook that adds a class to all columns or some if columns is specified
+ * @param {string} className
+ * @param {Array<number>} [columns]
+ * @returns {TableRenderHook}
+ */
 export const addClassToColumns =
   (className, columns = null) =>
   ({ row, col, classes, next }) =>
     row >= 0 && (!columns || columns.includes(col))
       ? next({ classes: classes.concat(className) })
       : next();
+
+/**
+ * Hook that adds a clickListener to all columns or some if columns is specified
+ * @param {Function} onClick
+ * @param {Array<number>} [columns]
+ * @returns {TableRenderHook}
+ */
 export const onClickHeader =
-  (onClick, columns) =>
+  (onClick, columns = null) =>
   ({ row, col, next, attrs }) =>
     row < 0 && (!columns || columns.includes(col))
       ? next({
@@ -147,21 +194,33 @@ export const onClickHeader =
           ]),
         })
       : next();
-
 /**
- *
- * @param {(row:number, col:number)=>any} getValue
- * @returns
+ * Hook that supplies the value of a cell in a table
+ * @param {(row:number, col:number)=>TableCellValue} getValue
+ * @returns {TableRenderHook}
  */
 export const supplyValue =
   (getValue) =>
   ({ row, col, next }) =>
     row >= 0 ? next({ data: getValue(row, col) }) : next();
 
+/**
+ * Hook that maps the row number on page to the actual row number in data
+ * @param {number} currentPage
+ * @param {number} pageSize
+ * @returns {TableRenderHook}
+ */
 export const pageData =
   (currentPage, pageSize) =>
   ({ row, next }) =>
     row >= 0 ? next({ row: row + (currentPage - 1) * pageSize }) : next();
+
+/**
+ * Hook that supplies the maximum and minimum width of a table cell
+ * @param {number} column
+ * @param {string} widthClass
+ * @returns {TableRenderHook}
+ */
 export const clipColumn =
   (column, widthClass = "w-56") =>
   ({ data, col, row, next }) =>
@@ -176,17 +235,30 @@ export const clipColumn =
           ),
         })
       : next();
+
+/**
+ * React Hook for filtering a table by the values on a particular column
+ * @template T
+ *
+ * @param {Array<T>} data
+ * @param {(value: T)=>string} select
+ * @param {number} column
+ * @param {Array<string>} values
+ * @param {string} emptyText
+ * @returns {[Array<T>, TableRenderHook]}
+ */
 export const useColumnSelect = (
   data,
   select,
   column,
+  values,
   emptyText = "No filter"
 ) => {
   const [active, setActive] = useState("all");
   select = useRef(select).current;
   const cols = useMemo(
-    () => (data ? data.map(select).sort().filter(uniq) : []),
-    [data, select]
+    () => values ?? (data ? data.map(select).sort().filter(uniq) : []),
+    [data, select, values]
   );
   const filtered = useMemo(
     () =>

@@ -5,34 +5,28 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Portal } from "@headlessui/react";
 import createSubscription from "@/utils/createSubscription";
 import { noop } from "@/utils/none";
+import { Box } from "@mui/material";
 
 const [, onShow, show] = createSubscription(noop);
-/** @type {typeof BoxWrapper} */
-export default function Box({ children, expand, ...props }) {
+/** @type {typeof Card1Wrapper} */
+export default function Card1({ children, expand, ...props }) {
   return (
     <>
       <AnimatePresence>
         {expand ? (
           <Portal>
-            <BoxWrapper {...props} expand>
+            <Card1Wrapper {...props} expand>
               {children}
-            </BoxWrapper>
+            </Card1Wrapper>
           </Portal>
         ) : null}
       </AnimatePresence>
-      <BoxWrapper {...props}>{expand ? null : children}</BoxWrapper>
+      <Card1Wrapper {...props}>{expand ? null : children}</Card1Wrapper>
     </>
   );
 }
 
-function BoxWrapper({
-  bg = "white",
-  expand,
-  boxClass,
-  onClose,
-  children,
-  ...props
-}) {
+function Card1Wrapper({ expand, boxClass, onClose, children, ...props }) {
   const ref = useRef();
   useEffect(() => {
     if (expand) {
@@ -48,22 +42,25 @@ function BoxWrapper({
     <>
       {expand ? <ClickAway target={ref} onClose={onClose} /> : null}
       <Template
-        as={expand ? motion.div : "div"}
+        as={Box}
+        templateAs={expand ? motion.div : "div"}
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "tween" }}
-        className={`shadow-1 print:shadow-none bg-${bg} ${
+        sx={{
+          backgroundColor: "white",
+          border: "1px solid rgba(0,0,0,0.05)",
+          maxWidth: "100%",
+        }}
+        className={`shadow-1 print:shadow-none ${
           expand
-            ? "fixed top-12 left-5 bottom-0 right-5 rounded-t-2xl z-30 mb-0"
-            : "relative rounded-2xl"
+            ? "fixed top-12 left-5 bottom-0 right-5 rounded-t z-30 mb-0"
+            : "relative rounded"
         }`}
         props={props}
       >
-        <div
-          ref={ref}
-          className={`rounded-2xl bg-${bg} relative z-10 ${boxClass}`}
-        >
+        <div ref={ref} className={`rounded relative z-10 ${boxClass}`}>
           {children}
         </div>
       </Template>

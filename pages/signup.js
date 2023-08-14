@@ -20,7 +20,6 @@ import { signIn, signUp } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
-import Header from "@/components/Header";
 
 export default function SignUp({ isSignIn }) {
   return (
@@ -30,7 +29,6 @@ export default function SignUp({ isSignIn }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="CSMS Website" />
       </Head>
-      <Header />
 
       <Container component="main" maxWidth="xs">
         <CssBaseline />

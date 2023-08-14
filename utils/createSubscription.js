@@ -6,16 +6,16 @@ import { noop } from "./none";
  * @param {function} onSubscribe - called when the first subscriber is registered
  * @returns [useSubscription, subscribe, dispatch]
  */
-export default function createSubscription(onSubscribe) {
+export default function createSubscription(onSubscribe = noop, initial) {
   const subscribers = [];
   let onUnsubscribe;
-  let currentData;
+  let currentData = initial;
   const subscribe = function (onNewData) {
-    subscribers.push(onNewData);
-    if (subscribers.length === 1) {
+    if (subscribers.length === 0) {
       const result = onSubscribe(dispatch);
       if (typeof result === "function") onUnsubscribe = result;
     }
+    subscribers.push(onNewData);
     if (currentData !== undefined) onNewData(currentData);
     return () => unsubscribe(onNewData);
   };

@@ -1,13 +1,15 @@
+import tailwindConfig from "@/tailwind.config";
 import { createTheme } from "@mui/material/styles";
 import Link from "next/link";
 import React from "react";
-
+/**Importing Tailwind into MUI since it is more lightweight and importing esmodules into commonjs is more difficult */
+const tailWindTheme = tailwindConfig.theme.extend;
 const LinkBehavior = React.forwardRef(function LinkBehaviour(props, ref) {
   const { href, ...other } = props;
   return <Link ref={ref} href={href} {...other} />;
 });
 
-const theme = createTheme({
+const MuiTheme = createTheme({
   components: {
     MuiLink: {
       defaultProps: {
@@ -19,26 +21,40 @@ const theme = createTheme({
         LinkComponent: LinkBehavior,
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        notchedOutline: {
+          borderColor: "transparent",
+        },
+        root: ({ theme }) => ({
+          "&:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline": {
+            borderColor: theme.palette.primary.dark,
+            borderWidth: "2px",
+          },
+        }),
+      },
+    },
   },
   palette: {
     mode: "light",
     primary: {
-      main: "#170dd8",
-      dark: "#070441",
+      main: tailWindTheme.colors.primary,
+      dark: tailWindTheme.colors.primaryDark,
       hover: "rgba(255, 255, 255, 0.3)",
     },
     secondary: {
-      main: "#ff8200",
+      main: tailWindTheme.colors.secondary,
     },
     gray: {
-      light: "#f2f2f5",
+      light: "#f0f0f5",
       main: "#777777",
+      dark: "#9e9fa4",
     },
     background: {
-      default: "#fafafd",
+      default: tailWindTheme.colors.bg,
     },
     text: {
-      disabledOnPrimaryDark: "#aeafb5",
+      disabledOnPrimaryDark: tailWindTheme.colors.disabledOnPrimaryDark,
     },
   },
   typography: {
@@ -75,7 +91,7 @@ const theme = createTheme({
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: parseInt(tailWindTheme.borderRadius.DEFAULT),
   },
   spacing: 4, //Match the spacing scale of tailwind when fontSize is 16px
   props: {
@@ -120,4 +136,4 @@ const theme = createTheme({
   ],
 });
 
-export default theme;
+export default MuiTheme;

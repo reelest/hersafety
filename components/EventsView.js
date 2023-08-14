@@ -1,0 +1,189 @@
+import sentenceCase from "@/utils/sentenceCase";
+
+import {
+  default as Table,
+  supplyHeader,
+  addHeaderClass,
+  addClassToColumns,
+  supplyValue,
+} from "@/components/Table";
+import styles from "./events_view.module.css";
+import { range } from "d3";
+import { formatTime } from "@/utils/formatNumber";
+import LoaderAnimation from "@/components/LoaderAnimation";
+import { daysToMs } from "@/utils/time_utils";
+import { useQuery } from "@/models/table";
+import Events from "@/models/event";
+import Card1 from "./Card1";
+import { Box, Divider, Typography } from "@mui/material";
+
+const months = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+];
+const days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
+function EventsView({ date = new Date() }) {
+  const { data: events } = useQuery(() => Events.all());
+  console.log(events);
+  const startOfDay = new Date(date.getTime());
+  startOfDay.setHours(0, 0, 0, 0);
+  const currentMonth = sentenceCase(months[date.getMonth()]);
+  const currentYear = date.getFullYear();
+  return (
+    <Card1
+      className="text-white w-96 mx-2 flex-grow-0 my-2"
+      boxClass="h-full px-6 py-4 2xl:py-6 max-h-96 overflow-y-auto"
+      sx={{ backgroundColor: "primary.dark" }}
+    >
+      <Typography variant="h6">Upcoming Events</Typography>
+      <Typography variant="caption" color="text.disabledOnPrimaryDark">
+        Date
+      </Typography>
+      <div className="mb-2 flex flex-wrap">
+        <Typography variant="body1">
+          {currentMonth} {currentYear}
+        </Typography>
+      </div>
+      <WeekView date={date} />
+      <Divider sx={{ backgroundColor: "gray.dark", my: 2 }} />
+      <ul>
+        {events ? (
+          events.length === 0 ? (
+            <Typography sx={{ textAlign: "center", py: 4 }}>
+              No upcoming events
+            </Typography>
+          ) : (
+            events
+              .filter((e) => e.date >= startOfDay)
+              .filter((e) => e.date <= startOfDay.getTime() + daysToMs(100))
+              .sort((a, b) => a.date - b.date)
+              .map(({ date, title, scope }, i) => (
+                <EventView
+                  key={i}
+                  date={date}
+                  title={title}
+                  scope={scope}
+                  isSelected={i == 0}
+                />
+              ))
+          )
+        ) : (
+          <LoaderAnimation small light />
+        )}
+      </ul>
+    </Card1>
+  );
+}
+/**
+ * @param {Date} props.date
+ * @param {Boolean} props.showHeader
+ * @param {Object} props
+ */
+const WeekView = ({ date }) => {
+  const day = date.getDay();
+  const firstDay = date.getDate() - day;
+  return (
+    <Table
+      cols={7}
+      rows={1}
+      className="w-full leading relative -left-2"
+      headerClass=""
+      renderHooks={[
+        supplyHeader((col) => sentenceCase(days[col])),
+        addHeaderClass(`text-center text-disabled ${styles["week-header"]}`),
+        addClassToColumns("text-center", range(7)),
+        supplyValue((row, col) => (
+          <Box
+            as="span"
+            sx={{
+              backgroundColor: col === day ? "primary.light" : "transparent",
+            }}
+            className={`inline-block ${
+              col === day
+                ? "w-8 h-8 inline-flex items-center justify-center rounded-full"
+                : ""
+            }`}
+          >
+            {firstDay + col}
+          </Box>
+        )),
+      ]}
+    />
+  );
+};
+
+const EventView = ({ date, title, scope, isSelected }) => {
+  const day = sentenceCase(days[date.getDay()]);
+  const monthDate = date.getDate();
+  const time = formatTime(date).toLowerCase();
+  const toScopeString = (scope) => {
+    let mask = Object.keys(scope).filter((e) => scope[e]);
+    return mask.length === 0
+      ? ""
+      : "All " +
+          (mask.length === 1
+            ? mask[0]
+            : mask.slice(0, -1).join(", ") + " and " + mask[mask.length - 1]);
+  };
+  return (
+    <Box
+      className={`flex rounded px-4 items-center my-2`}
+      sx={{
+        backgroundColor: isSelected ? "primary.light" : "transparent",
+        py: isSelected ? 1 : 0,
+      }}
+    >
+      <Box
+        className={`text-center w-16 flex-shrink-0 mr-4 py-2 rounded-md flex flex-col items-center justify-center`}
+        sx={{
+          backgroundColor: isSelected ? "transparent" : "primary.light",
+        }}
+      >
+        <Typography
+          paragraph
+          className="font-10"
+          sx={{ color: "primary.dark" }}
+        >
+          {day}
+        </Typography>
+        <p className="font-32b leading-none">{monthDate}</p>
+      </Box>
+      <div className="w-0 flex-grow">
+        <h4 className="font-20t text-white leading-normal w-auto overflow-hidden whitespace-nowrap text-ellipsis">
+          {title}
+        </h4>
+        <Typography
+          className={`font-12 `}
+          sx={{
+            color: isSelected ? "primary.dark" : "text.disabled",
+          }}
+        >
+          {toScopeString(scope)}
+        </Typography>
+        <p>
+          <Typography
+            className="rounded p-0.5"
+            sx={{
+              backgroundColor: isSelected ? "white" : "primary.light",
+              color: isSelected ? "primary.dark" : null,
+            }}
+          >
+            {time}
+          </Typography>
+        </p>
+      </div>
+    </Box>
+  );
+};
+
+export default EventsView;

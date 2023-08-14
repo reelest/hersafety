@@ -1,4 +1,3 @@
-import { Model } from "@/models/model";
 import Students from "@/models/student";
 import Teachers from "@/models/teacher";
 import Parents from "@/models/parent";
@@ -7,19 +6,18 @@ import { useUser } from "./auth";
 import usePromise from "@/utils/usePromise";
 import { useRef } from "react";
 import { useUpdate } from "react-use";
-const Roles = new Model("roles", null, { role: "guest" });
+import { UserRoles } from "@/models/user";
 
-console.log(78);
-const lookupRole = async (uid) => (await Roles.getOrCreate(uid)).role;
+const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid)).role;
 export const updateUserRole = async (uid, role) => {
-  await Roles.item(uid).set({ role });
+  await UserRoles.item(uid).set({ role });
 };
 /**
  *
  * @param {string} role
- * @returns {Model} model
+ * @returns {Table} table
  */
-export const mapRoleToModel = (role) => {
+export const mapRoleToTable = (role) => {
   switch (role) {
     case "student":
       return Students;
@@ -34,7 +32,7 @@ export const mapRoleToModel = (role) => {
 const loadUserData = async (user) => {
   const role = await lookupRole(user.uid);
   if (role !== "guest") {
-    const data = await mapRoleToModel(role).getOrCreate(user.uid);
+    const data = await mapRoleToTable(role).getOrCreate(user.uid);
     if (data.isLocalOnly()) {
       data.email = user.email;
       data.emailVerified = user.emailVerified;
@@ -60,8 +58,9 @@ export default function useUserData() {
         return data;
       } else return user;
     } catch (e) {
-      console.error(e);
-      setTimeout(retry, (retryDelay.current *= 2));
+      retryDelay.current = Math.min(retryDelay.current * 2, 60000);
+      console.error(e, `Retrying in ${retryDelay.current / 1000} seconds`);
+      setTimeout(retry, retryDelay.current);
     }
   }, [user]);
 }

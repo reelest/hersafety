@@ -4,14 +4,17 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import { More } from "iconsax-react";
 import Skeleton from "@mui/material/Skeleton";
-export default function Card2({ icon: Icon, color = "#dbdbdf", label, value }) {
+import Template from "./Template";
+export default function Card2({ icon: Icon, color = "white", label, value }) {
   return (
-    <Paper
-      className="flex items-start justify-between mx-2"
-      elevation={2}
-      sx={{ backgroundColor: color, minWidth: "12rem" }}
+    <Card2Wrapper
+      color={color}
+      sx={{
+        border: "1px solid rgba(0,0,0,0.05)",
+        maxHeight: "10rem",
+      }}
     >
-      <div className="p-4 pb-2">
+      <div className="p-4 pl-6  pb-2">
         <Box
           sx={{
             backgroundColor: "primary.dark",
@@ -21,18 +24,35 @@ export default function Card2({ icon: Icon, color = "#dbdbdf", label, value }) {
             mb: 1,
           }}
         >
-          <Icon size={16} color="white" />
+          <Icon size={16} color="white" className="block" />
         </Box>
-        <Typography variant="caption">
+        <Typography variant="body2">
           {label ?? <Skeleton width={200} />}
         </Typography>
-        <Typography variant="h5" as="h3" sx={{ my: 1 }}>
+        <Typography variant="h4" as="h3" sx={{ my: 1 }}>
           {value ?? <Skeleton width="100%" />}
         </Typography>
       </div>
       <IconButton>
         <More />
       </IconButton>
-    </Paper>
+    </Card2Wrapper>
+  );
+}
+
+export function Card2Wrapper({ color = "transparent", ...props }) {
+  return (
+    <Template
+      props={props}
+      as={Paper}
+      className="flex items-start justify-between mx-2 basis-48 flex-grow"
+      elevation={2}
+      sx={{
+        backgroundColor: color,
+        minWidth: "12rem",
+        maxWidth: "24rem",
+        my: 2,
+      }}
+    />
   );
 }

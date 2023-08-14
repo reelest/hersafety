@@ -9,6 +9,7 @@ import {
   query,
   getDocs,
   onSnapshot,
+  runTransaction,
 } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { useEffect, useRef, useState } from "react";
@@ -20,17 +21,17 @@ import { noop } from "@/utils/none";
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
  */
 export const noFirestore = firestore === null;
-export class Model {
+export class Table {
   constructor(_collectionID, ItemClass = Item, Empty = {}) {
     this._ref = noFirestore
       ? { path: _collectionID }
       : collection(firestore, _collectionID);
     this.Item = ItemClass ?? Item;
-    this.converter = Model.converter(this);
+    this.converter = Table.converter(this);
     this.Empty = Empty;
-    global[_collectionID + "Model"] = this;
+    global[_collectionID + "Table"] = this;
   }
-  static converter(model) {
+  static converter(table) {
     return {
       toFirestore: (item) => {
         return item.data();
@@ -38,7 +39,12 @@ export class Model {
       /** @param {import("firebase/firestore").QueryDocumentSnapshot} snapshot */
       fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
-        return new model.Item(snapshot.ref, Object.assign(model.Empty, data));
+        return new table.Item(
+          snapshot.ref,
+          Object.assign(table.Empty, data),
+          false,
+          table
+        );
       },
     };
   }
@@ -59,10 +65,10 @@ export class Model {
     return this.request(...params.map(([key, op, val]) => where(key, op, val)));
   }
   item(id, isCreate) {
-    return new this.Item(this.ref(id), this.Empty, isCreate);
+    return new this.Item(this.ref(id), this.Empty, isCreate, this);
   }
   async getOrCreate(id) {
-    const m = new this.Item(this.ref(id), this.Empty, true);
+    const m = new this.Item(this.ref(id), this.Empty, true, this);
     try {
       await m.load();
     } catch (e) {
@@ -71,7 +77,7 @@ export class Model {
     return m;
   }
   create() {
-    return new this.Item(this.ref(), this.Empty, true);
+    return new this.Item(this.ref(), this.Empty, true, this);
   }
   ref(...id) {
     return noFirestore ? { path: "server-side" } : doc(this._ref, ...id);
@@ -133,26 +139,29 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   return state;
 }
 
-export function createSharedQuery(query, { watch = false }) {
+/**TODO stop: unsubscribing to save requests */
+export function createSharedQuery(query, { watch = false } = {}) {
   const dedupeIndex = { current: 0 };
-  return createSubscription((setState) => {
-    setState({
+  return createSubscription(
+    (setState) => {
+      let lastState;
+      return sendQuery(
+        dedupeIndex,
+        () => lastState,
+        (s) => {
+          lastState = s;
+          setState(s);
+        },
+        watch,
+        () => query
+      );
+    },
+    {
       data: null,
       error: null,
       loading: true,
-    });
-    let lastState;
-    return sendQuery(
-      dedupeIndex,
-      () => lastState,
-      (s) => {
-        lastState = s;
-        setState(s);
-      },
-      watch,
-      () => query
-    );
-  });
+    }
+  );
 }
 
 const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
@@ -161,12 +170,12 @@ const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
   const query = createQuery();
   setState({ loading: true, ...getState() });
   const onSuccess = (e) => {
-    console.log({ e, success: true });
+    console.log({ e, success: true, query });
     if (p === dedupeIndex.current)
       setState({ loading: false, data: e, error: null });
   };
   const onError = (e) => {
-    console.log({ e, error: true });
+    console.log({ e, success: false, query });
     if (p === dedupeIndex.current)
       setState({ loading: false, error: e, ...getState() });
   };
@@ -183,8 +192,9 @@ const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
  * @property {import("firebase/firestore").DocumentReference} _ref
  */
 export class Item {
-  constructor(ref, data, isNew) {
+  constructor(ref, data, isNew, table) {
     Object.defineProperty(this, "_ref", { value: ref });
+    Object.defineProperty(this, "_table", { value: table });
     Object.defineProperty(this, "_id", { value: ref.id });
     Object.defineProperty(this, "_isLocalOnly", {
       writable: true,
@@ -207,7 +217,12 @@ export class Item {
     } else await updateDoc(this._ref, this.data());
   }
   async load() {
-    const data = await this.asQuery().get();
+    let data;
+    try {
+      data = await this.asQuery().get();
+    } catch (e) {
+      throw new Error(`Client is offline ${e}`);
+    }
     if (data === undefined) {
       throw new ItemDoesNotExist(this);
     }
@@ -233,7 +248,19 @@ export class Item {
     if (noFirestore) throw InvalidState("No Firestore!!");
     await deleteDoc(this._ref);
   }
-
+  /**
+   * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} cb
+   * @returns
+   */
+  async atomicUpdate(cb) {
+    return runTransaction(firestore, async (txn) => {
+      const doc = await txn.get(this._ref);
+      if (doc.exists()) {
+        return await cb(txn, doc.data());
+      }
+      return false;
+    });
+  }
   data() {
     if (!this._isValid)
       throw new InvalidState("Cannot read document that is not loaded");
@@ -244,6 +271,9 @@ export class Item {
   }
   isLocalOnly() {
     return this._isLocalOnly;
+  }
+  fullName() {
+    return this._ref.path;
   }
 }
 

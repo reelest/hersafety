@@ -1,6 +1,6 @@
-import { CountedModel } from "./counted_model";
+import { CountedTable } from "./counted_table";
 import { UserModel } from "./user";
 
 class Parent extends UserModel {}
-const Parents = new CountedModel("parents", Parent);
+const Parents = new CountedTable("parents", Parent);
 export default Parents;

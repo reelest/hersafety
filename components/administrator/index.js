@@ -2,18 +2,18 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   Calendar,
   Element3,
-  Money,
-  RowVertical,
   Teacher,
+  UserAdd,
   UserEdit,
   WalletMoney,
 } from "iconsax-react";
-import Overview from "./Overview";
-import Transactions from "./Transactions";
-import Users from "./Users";
-import Events from "./Events";
-import Academics from "./Academics";
+import Overview from "./OverviewPage";
+import Transactions from "./TransactionsPage";
+import Users from "./UsersPage";
+import Events from "./EventsPage";
+import Academics from "./AcademicsPage";
 import UserRedirect from "../UserRedirect";
+import RegistrationsPage from "./RegistrationsPage";
 const TABS = [
   {
     name: "Overview",
@@ -36,7 +36,12 @@ const TABS = [
     component: Academics,
   },
   {
-    name: "Events",
+    name: "Registrations",
+    icon: UserAdd,
+    component: RegistrationsPage,
+  },
+  {
+    name: "News & Events",
     icon: Calendar,
     component: Events,
   },

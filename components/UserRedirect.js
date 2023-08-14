@@ -19,7 +19,6 @@ export default function UserRedirect({
 }) {
   const userData = useUserData();
 
-  console.log({ userData });
   const router = useRouter();
   if (userData === undefined) {
     return <FullscreenLoader />;

@@ -9,18 +9,18 @@ import {
   WalletSearch,
   BatteryEmpty1,
 } from "iconsax-react";
-import { useQuery } from "../../models/model";
+import { useQuery } from "../../models/table";
 import Students from "../../models/student";
 import Teachers from "../../models/teacher";
 import Parents from "../../models/parent";
 import { Select } from "@mui/material";
 
-const useCount = (Model) => {
-  return useQuery(() => Model.counter.asQuery(), [], {
+const useCount = (Table) => {
+  return useQuery(() => Table.counter.asQuery(), [], {
     watch: true,
-  }).data;
+  }).data?.itemCount;
 };
-export default function Academics() {
+export default function AcademicsPage() {
   const numStudents = useCount(Students);
   const numTeachers = useCount(Teachers);
   const numParents = useCount(Parents);
@@ -38,17 +38,17 @@ export default function Academics() {
           <Card2
             icon={ArchiveBox}
             label="Total number of students"
-            value={numStudents?.value}
+            value={numStudents}
           />
           <Card2
             icon={ArchiveBox}
             label="Total number of parents"
-            value={numParents?.value}
+            value={numParents}
           />
           <Card2
             icon={ArchiveBox}
             label="Total number of teachers"
-            value={numTeachers?.value}
+            value={numTeachers}
           />
         </div>
       </Box>

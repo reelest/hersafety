@@ -1,6 +1,7 @@
 import ArrowLeftIcon from "@heroicons/react/20/solid/ArrowLeftIcon";
 import ArrowRightIcon from "@heroicons/react/20/solid/ArrowRightIcon";
 import TextButton from "./TextButton";
+import { Box, Button, ButtonBase } from "@mui/material";
 
 function Pager({
   controller: { page, hasNext, goto, hasPrev, goNext, goPrev, numPages },
@@ -14,7 +15,10 @@ function Pager({
   ].filter(Boolean);
   while (pages.length < Math.min(numPages, 3)) pages.push("");
   return (
-    <div className="bg-transparentGray rounded-full px-4 py-2 flex items-center">
+    <Box
+      className="rounded-full px-4 py-2 flex items-center"
+      sx={{ backgroundColor: "gray.light" }}
+    >
       <TextButton className="group mr-4" onClick={goPrev} disabled={!hasPrev}>
         <ArrowLeftIcon
           className="text-accent1 group-disabled:text-disabled inline mx-1"
@@ -23,15 +27,17 @@ function Pager({
         Prev
       </TextButton>
       {pages.map((e) => (
-        <button
+        <ButtonBase
           key={e}
           onClick={() => goto(e)}
-          className={`w-6 font-20 h-6 flex items-center justify-center rounded-full mx-1 ${
-            e === page ? "bg-accent1 text-white" : ""
-          }`}
+          className="w-6 font-20 h-6 flex items-center justify-center rounded-full mx-1"
+          sx={{
+            backgroundColor: e === page ? "primary.light" : "",
+            color: e === page ? "white" : "",
+          }}
         >
           {e || ""}
-        </button>
+        </ButtonBase>
       ))}
       <TextButton className="ml-4 group" onClick={goNext} disabled={!hasNext}>
         Next
@@ -40,7 +46,7 @@ function Pager({
           width={20}
         />
       </TextButton>
-    </div>
+    </Box>
   );
 }
 export default Pager;

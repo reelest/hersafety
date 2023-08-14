@@ -11,6 +11,8 @@ import { SearchInput } from "./SearchInput";
 import Spacer from "./Spacer";
 import { HambergerMenu, Menu } from "iconsax-react";
 import { useUser } from "@/logic/auth";
+import useBreakpoints from "@/utils/useBreakpoints";
+import { setSidebar } from "./DashboardLayout";
 export default function SectionHeader({ title, onSearch }) {
   const user = useUser();
   return (
@@ -18,8 +20,8 @@ export default function SectionHeader({ title, onSearch }) {
       className="flex max-sm:flex-wrap px-4 sm:px-8 h-15 items-center justify-end py-2"
       sx={{
         borderRadius: 0,
-        backgroundColor: "background.default",
-        borderBottom: "1px solid #dddddd",
+        backgroundColor: "white",
+        borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
       }}
       elevation={2}
     >
@@ -27,13 +29,18 @@ export default function SectionHeader({ title, onSearch }) {
         className="w-full sm:w-auto justify-between items-center flex"
         sx={{ mr: { sm: 8 }, my: { xs: 2, sm: 0 } }}
       >
-        <Hidden smUp>
-          <IconButton>
+        <Hidden lgUp>
+          <IconButton
+            className="relative -left-2"
+            onClick={() => {
+              setSidebar(true);
+            }}
+          >
             <HambergerMenu />
           </IconButton>
         </Hidden>
         <Typography variant="h5" as="h1">
-          {title}
+          {title} - {useBreakpoints().stop}
         </Typography>
         <Hidden smUp>
           <Avatar />
@@ -42,11 +49,11 @@ export default function SectionHeader({ title, onSearch }) {
       <Spacer style={{ width: "1px" }} />
       <SearchInput />
       <Spacer style={{ width: "1px" }} />
-      <Hidden smDown>
-        <Box
-          className="flex justify-between items-center"
-          sx={{ ml: { xs: 2, sm: 8 } }}
-        >
+      <Box
+        className="flex justify-between items-center"
+        sx={{ ml: { xs: 2, sm: 8 } }}
+      >
+        <Hidden xlDown>
           <div className="text-right">
             <Typography sx={{ fontWeight: "bold" }}>
               {user ? user.displayName ?? "No name provided" : <Skeleton />}
@@ -55,9 +62,11 @@ export default function SectionHeader({ title, onSearch }) {
               {user ? user.role ?? "No role provided" : <Skeleton />}
             </Typography>
           </div>
+        </Hidden>
+        <Hidden smDown>
           <Avatar className="ml-4" />
-        </Box>
-      </Hidden>
+        </Hidden>
+      </Box>
     </Paper>
   );
 }
