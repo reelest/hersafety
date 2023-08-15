@@ -1,7 +1,5 @@
 import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Link from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
@@ -12,14 +10,11 @@ import Form, {
   FormErrors,
   FormField,
   FormSubmit,
-  REQUIRED_EMAIL,
-  REQUIRED_PASSWORD,
 } from "@/components/Form";
 import { resetPassword, signIn } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
-import Header from "@/components/Header";
 
 export default function SignIn() {
   return (
@@ -29,8 +24,7 @@ export default function SignIn() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="CSMS Website" />
       </Head>
-      <Header />
-
+      
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box
@@ -50,9 +44,6 @@ export default function SignIn() {
           </Typography>
           <Box
             component={Form}
-            validationRules={{
-              email: REQUIRED_EMAIL,
-            }}
             initialValue={{
               email: "",
             }}

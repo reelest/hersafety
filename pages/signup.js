@@ -1,7 +1,5 @@
 import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Link from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
@@ -12,10 +10,7 @@ import Form, {
   CONFIRM_PASSWORD,
   FormErrors,
   FormField,
-  FormRadio,
   FormSubmit,
-  REQUIRED_EMAIL,
-  REQUIRED_PASSWORD,
 } from "@/components/Form";
 import { signIn, signUp } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
@@ -51,11 +46,7 @@ export default function SignUp({ isSignIn }) {
             </Typography>
             <Box
               component={Form}
-              validationRules={{
-                email: REQUIRED_EMAIL,
-                password: REQUIRED_PASSWORD,
-                ...(isSignIn ? {} : { confirmpassword: CONFIRM_PASSWORD }),
-              }}
+              validationRules={isSignIn?null:[CONFIRM_PASSWORD]}
               initialValue={{
                 email: "",
                 password: "",

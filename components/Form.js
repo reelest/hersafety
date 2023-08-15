@@ -29,11 +29,13 @@ const FormContext = createContext();
 
 export default function Form({
   children,
+  validationRules = {},
   initialValue = {},
   onSubmit = null,
   ...props
 }) {
   const handler = useFormHandler(initialValue, async function handle(fd, e) {
+    validationRules.forEach(e=>e.validate(templateRef.current, handler.data))
     if (!showErrors) setShowErrors(true);
     if (isFormValid) {
       if (onSubmit) {
@@ -177,9 +179,19 @@ export function FormErrors({ lines = 2 }) {
   ) : null;
 }
 
-export const REQUIRED = { required: true, minlength: 1 };
-export const REQUIRED_NUMBER = { required: true, numbers: true };
-export const REQUIRED_PHONE = { required: true, phone: true };
-export const REQUIRED_EMAIL = { required: true, email: true };
-export const CONFIRM_PASSWORD = { required: true, equalField: "password" };
-export const REQUIRED_PASSWORD = { required: true, minlength: 8 };
+export function formValidator(validate) {
+  return {
+    validate: (form, data)=>{
+      if(data)
+    },
+    with: (...args) => formValidator((form) => validate(form, ...args)),
+  };
+}
+
+export const CONFIRM_PASSWORD = formValidator(
+  (data, field = "confirmpassword", match = "password") => {
+    return (
+      Object.hasOwnProperty.call(data, field) && data[field] === data[match]
+    );
+  }
+);
