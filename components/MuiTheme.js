@@ -21,6 +21,13 @@ const MuiTheme = createTheme({
         LinkComponent: LinkBehavior,
       },
     },
+    MuiFilledInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          backgroundColor: theme.palette.gray.light,
+        }),
+      },
+    },
     MuiOutlinedInput: {
       styleOverrides: {
         notchedOutline: {
@@ -55,6 +62,9 @@ const MuiTheme = createTheme({
     },
     text: {
       disabledOnPrimaryDark: tailWindTheme.colors.disabledOnPrimaryDark,
+    },
+    error: {
+      main: tailWindTheme.colors.error,
     },
   },
   typography: {

@@ -1,37 +1,36 @@
-import Image from "next/image";
 import AppLogo from "./AppLogo";
 import Spacer from "./Spacer";
 import Template from "./Template";
-import { useClickAway } from "react-use";
-import { useRef } from "react";
 import { useRouter } from "next/router";
 import { doLogOut } from "../logic/auth";
 import { Setting, Logout } from "iconsax-react";
 import {
   Box,
-  useTheme,
   Link,
   Typography,
   SwipeableDrawer,
-  Button,
   ButtonBase,
 } from "@mui/material";
+import createSubscription from "@/utils/createSubscription";
+import { noop } from "@/utils/none";
+import delay from "@/utils/delay";
+import { useEffect } from "react";
+
+export const [useSidebar, , setSidebar] = createSubscription(noop, false);
+
 export function useActiveTab(tabs) {
   return useRouter().query["tab"] || tabs[0]?.name?.toLowerCase?.();
 }
-export default function Sidebar({
-  children,
-  onClose,
-  onOpen,
-  isOpen,
-  isStatic = false,
-  tabs = [],
-}) {
+
+export default function Sidebar({ children, isStatic = false, tabs = [] }) {
   const selected = useActiveTab(tabs);
+  const isOpen = useSidebar();
+  useEffect(() => setSidebar(false), [selected]);
+  console.log({ isOpen });
   return (
     <SwipeableDrawer
-      onOpen={onOpen}
-      onClose={onClose}
+      onOpen={() => setSidebar(true)}
+      onClose={() => setSidebar(false)}
       variant={isStatic ? "permanent" : "temporary"}
       open={isOpen}
       sx={{
@@ -65,8 +64,8 @@ export default function Sidebar({
             icon={Logout}
             as={ButtonBase}
             onClick={() => {
-              console.log("clicking");
               doLogOut();
+              setSidebar(false);
             }}
           >
             Log out
@@ -85,7 +84,6 @@ const TabLink = ({
   isActivated,
   ...props
 }) => {
-  const theme = useTheme();
   return (
     <Template
       as={Link}

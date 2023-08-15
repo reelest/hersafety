@@ -1,10 +1,10 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import SectionHeader from "../SectionHeader";
+import PageHeader from "../PageHeader";
 import Card2, { Card2Wrapper } from "../Card2";
 
 import { ArchiveBox } from "iconsax-react";
-import { useQuery } from "../../models/table";
+import { useQuery } from "../../models/model";
 import Students from "../../models/student";
 import Teachers from "../../models/teacher";
 import Parents from "../../models/parent";
@@ -16,8 +16,8 @@ import RegistrationsView from "./RegistrationsView";
 import PaymentsView from "./PaymentsView";
 import SessionSelect from "../SessionSelect";
 
-const useCount = (Table) => {
-  return useQuery(() => Table.counter.asQuery(), [], {
+const useCount = (Model) => {
+  return useQuery(() => Model.counter.asQuery(), [], {
     watch: true,
   }).data?.itemCount;
 };
@@ -33,7 +33,7 @@ export default function OverviewPage() {
     (numTeachers || 1);
   return (
     <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
-      <SectionHeader title="User Dashboard" />
+      <PageHeader title="User Dashboard" />
       <Box className="px-4 sm:px-8 py-8">
         <div className="flex flex-wrap justify-between">
           <Typography variant="h6" as="h2">
@@ -63,7 +63,7 @@ export default function OverviewPage() {
             value={numRegistrations}
           />
         </div>
-        <div className="flex flex-wrap pt-6 -mx-2">
+        <div className="flex flex-wrap pt-6 -mx-2 max-sm:justify-center">
           <Card2Wrapper
             color="white"
             className=" px-4 py-4 items-center flex-grow"

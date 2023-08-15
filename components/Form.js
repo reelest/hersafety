@@ -1,16 +1,20 @@
 import Template from "./Template";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import useFormHandler from "@/utils/useFormHandler";
 // import ImagePicker from "./ImagePicker";
-import {
-  defaultMessages,
-  defaultRules,
-  useValidation,
-} from "react-simple-form-validator";
+import useValidation from "@/utils/useBrowserFormValidation";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import ThemedButton from "@mui/material/Button";
-import { useTheme } from "@mui/material";
+import {
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  FormLabel,
+  Radio,
+  RadioGroup,
+  Switch,
+} from "@mui/material";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -25,7 +29,6 @@ const FormContext = createContext();
 
 export default function Form({
   children,
-  validationRules = {},
   initialValue = {},
   onSubmit = null,
   ...props
@@ -49,27 +52,11 @@ export default function Form({
 
   const [showErrors, setShowErrors] = useState(false);
   const [isLoading, setLoading] = useState(false);
+  const ref = useRef();
   const { isFieldInError, getErrorMessages, isFormValid, getErrorsInField } =
-    useValidation({
-      fieldsRules: validationRules,
-      locale: "en",
-      rules: {
-        phone: (_, val) => /^\+?\d+$/.test(val),
-        equalField: (field, val) => val === handler.data[field],
-        ...defaultRules,
-      },
-      messages: {
-        ...defaultMessages,
-        en: {
-          ...defaultMessages.en,
-          phone: "Invalid phone number",
-          equalField: defaultMessages.en.equalPassword,
-        },
-      },
-      state: handler.data,
-    });
+    useValidation(ref);
   return (
-    <Template as="form" {...handler.form()} props={props}>
+    <Template as="form" {...handler.form()} props={props} templateRef={ref}>
       <FormContext.Provider
         value={{
           handler,
@@ -92,37 +79,82 @@ export default function Form({
  * @param {import("react-native-paper").TextInputProps} param0
  * @returns
  */
-export function FormField({ name, type, ...props }) {
-  const theme = useTheme();
+export function FormField({ name, type, label, ...props }) {
   const { isFieldInError, handler, showErrors } = useContext(FormContext);
+  const control =
+    type === "checkbox" ? Checkbox : type === "switch" ? Switch : null;
   return (
     <Template
-      as={type === "checkbox" ? Checkbox : TextField}
-      type={type}
+      as={control ? FormFieldWrapper : TextField}
+      control={control}
+      label={label}
+      autoFocus
+      error={isFieldInError(name) && showErrors}
+      variant="standard"
+      fullWidth
+      // InputLabelProps={{ shrink: true }}
+      margin="dense"
       props={props}
-      {...(type === "checkbox"
+      {...(control
         ? handler.checkbox(name)
+        : type === "radio"
+        ? {}
         : handler.textInput(name, type))}
-      sx={{
-        borderColor:
-          isFieldInError && showErrors ? theme.palette.error.main : undefined,
-      }}
     />
   );
 }
 
-// export function FormImage({ name, ...props }) {
-//   const { handler } = useContext(FormContext);
+function FormFieldWrapper({
+  control: Component,
+  id,
+  name,
+  value,
+  onChange,
+  label,
+  helperText,
+  props,
+  ...props2
+}) {
+  return (
+    <FormControl {...{ ...props2, ...props }}>
+      <FormControlLabel
+        control={<Component {...{ id, name, checked: value, onChange }} />}
+        label={label}
+      />
+      {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
+    </FormControl>
+  );
+}
 
-//   return (
-//     <Template
-//       as={ImagePicker}
-//       image={handler.data[name]}
-//       setImage={(e) => handler.set(name, e)}
-//       props={props}
-//     />
-//   );
-// }
+export function FormRadio({
+  name,
+  values = [],
+  labels = values,
+  label,
+  helperText,
+  ...props
+}) {
+  const { handler } = useContext(FormContext);
+  return (
+    <FormField as={FormControl} type="radio" {...props}>
+      <FormLabel>{label}</FormLabel>
+      <RadioGroup {...handler.radio(name)}>
+        {values.map((e, i) => (
+          <FormControlLabel
+            key={e}
+            control={<Radio value={e} />}
+            label={labels[i] ?? e}
+          />
+        ))}
+      </RadioGroup>
+      {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
+    </FormField>
+  );
+}
+
+export function FormImage(props) {
+  return <FormField type="image" {...props} />;
+}
 
 export function FormSubmit({ name, disabled, ...props }) {
   const { handler, isLoading } = useContext(FormContext);

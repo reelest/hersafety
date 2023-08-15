@@ -25,11 +25,11 @@ export default function UserRedirect({
   } else if (userData === null) {
     if (redirectOnNoUser) {
       if (!isServerSide) router.replace("/login");
-      return null;
+      return <FullscreenLoader />;
     }
   } else if (redirectOnUser) {
     if (!isServerSide) router.replace(DASHBOARD_URL[userData.role ?? "guest"]);
-    return null;
+    return <FullscreenLoader />;
   }
   return children;
 }

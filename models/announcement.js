@@ -1,5 +1,5 @@
-import { Table, Item } from "./table";
+import { Model, Item } from "./model";
 
 class Announcement extends Item {}
-const Announcements = new Table("annoucements", Announcement);
+const Announcements = new Model("annoucements", Announcement);
 export default Announcements;

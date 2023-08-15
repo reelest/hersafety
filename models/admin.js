@@ -1,6 +1,6 @@
-import { CountedTable } from "./counted_table";
-import { UserModel } from "./user";
+import { CountedModel } from "./counted_model";
+import { UserModelItem } from "./user";
 
-class Admin extends UserModel {}
-const Admins = new CountedTable("administrators", Admin);
+class Admin extends UserModelItem {}
+const Admins = new CountedModel("administrators", Admin);
 export default Admins;

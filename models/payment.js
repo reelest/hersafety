@@ -1,4 +1,4 @@
-import { CountedItem, CountedTable } from "./counted_table";
+import { CountedItem, CountedModel } from "./counted_model";
 
 class Payment extends CountedItem {
   name = "";
@@ -14,5 +14,5 @@ class Payment extends CountedItem {
     return m.toLocaleTimeString();
   }
 }
-const Payments = new CountedTable("payments", Payment);
+const Payments = new CountedModel("payments", Payment);
 export default Payments;

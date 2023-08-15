@@ -1,4 +1,4 @@
-import { useQuery } from "@/models/table";
+import { useQuery } from "@/models/model";
 import { supplyValue } from "../Table";
 import ThemedTable from "../ThemedTable";
 import Registrations from "@/models/registration";

@@ -1,8 +1,8 @@
 import { Box, Typography, Button } from "@mui/material";
-import SectionHeader from "../SectionHeader";
+import PageHeader from "../PageHeader";
 import { Add } from "iconsax-react";
 import SessionSelect from "../SessionSelect";
-import { useQuery } from "@/models/table";
+import { useQuery } from "@/models/model";
 import Registrations from "@/models/registration";
 import ThemedTable from "../ThemedTable";
 import { addHeaderClass, supplyValue } from "../Table";
@@ -18,7 +18,7 @@ export default function RegistrationsPage() {
         isOpen={formVisible}
         onClose={() => setFormVisible(false)}
       />
-      <SectionHeader title="User Dashboard" />
+      <PageHeader title="User Dashboard" />
       <Box className="px-4 sm:px-8 py-8">
         <div className="flex flex-wrap justify-between">
           <Typography variant="h6" as="h2">

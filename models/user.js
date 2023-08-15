@@ -1,13 +1,13 @@
 import { increment } from "firebase/firestore";
-import { CountedItem } from "./counted_table";
-import { Table } from "./table";
+import { CountedItem } from "./counted_model";
+import { Model } from "./model";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
 
-export const UserRoles = new Table("roles", null, { role: "guest" });
+export const UserRoles = new Model("roles", null, { role: "guest" });
 
-export class UserModel extends CountedItem {
+export class UserModelItem extends CountedItem {
   firstName = "";
   lastName = "";
   email = "";

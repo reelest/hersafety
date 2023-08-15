@@ -9,15 +9,16 @@ import { useUpdate } from "react-use";
 import { UserRoles } from "@/models/user";
 
 const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid)).role;
+
 export const updateUserRole = async (uid, role) => {
   await UserRoles.item(uid).set({ role });
 };
 /**
  *
  * @param {string} role
- * @returns {Table} table
+ * @returns {Model} model
  */
-export const mapRoleToTable = (role) => {
+export const mapRoleToModel = (role) => {
   switch (role) {
     case "student":
       return Students;
@@ -32,7 +33,7 @@ export const mapRoleToTable = (role) => {
 const loadUserData = async (user) => {
   const role = await lookupRole(user.uid);
   if (role !== "guest") {
-    const data = await mapRoleToTable(role).getOrCreate(user.uid);
+    const data = await mapRoleToModel(role).getOrCreate(user.uid);
     if (data.isLocalOnly()) {
       data.email = user.email;
       data.emailVerified = user.emailVerified;
@@ -62,5 +63,5 @@ export default function useUserData() {
       console.error(e, `Retrying in ${retryDelay.current / 1000} seconds`);
       setTimeout(retry, retryDelay.current);
     }
-  }, [user]);
+  }, [user, retryDelay.current]);
 }

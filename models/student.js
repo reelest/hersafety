@@ -1,7 +1,7 @@
-import { CountedTable } from "./counted_table";
-import { UserModel } from "./user";
+import { CountedModel } from "./counted_model";
+import { UserModelItem } from "./user";
 
-class Student extends UserModel {
+class Student extends UserModelItem {
   bloodGroup = "";
   genotype = "";
   disability = "";
@@ -9,5 +9,5 @@ class Student extends UserModel {
   parentId1 = "";
   parentId2 = "";
 }
-const Students = new CountedTable("students", Student);
+const Students = new CountedModel("students", Student);
 export default Students;

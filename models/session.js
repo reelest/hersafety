@@ -1,11 +1,11 @@
 import { arrayRemove, arrayUnion, increment } from "firebase/firestore";
-import { CountedItem, CountedTable } from "./counted_table";
-import { Table } from "./table";
+import { CountedItem, CountedModel } from "./counted_model";
+import { Model } from "./model";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
 
-export const UserRoles = new Table("roles", null, { role: "guest" });
+export const UserRoles = new Model("roles", null, { role: "guest" });
 
 class Session extends CountedItem {
   name = "";
@@ -22,9 +22,9 @@ class Session extends CountedItem {
   }
 }
 
-class SessionTable extends CountedTable {
+class SessionModel extends CountedModel {
   async initCounter(doc) {
     doc.sessions = arrayUnion();
   }
 }
-export const Sessions = new SessionTable("sessions", Session);
+export const Sessions = new SessionModel("sessions", Session);

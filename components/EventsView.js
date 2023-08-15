@@ -12,7 +12,7 @@ import { range } from "d3";
 import { formatTime } from "@/utils/formatNumber";
 import LoaderAnimation from "@/components/LoaderAnimation";
 import { daysToMs } from "@/utils/time_utils";
-import { useQuery } from "@/models/table";
+import { useQuery } from "@/models/model";
 import Events from "@/models/event";
 import Card1 from "./Card1";
 import { Box, Divider, Typography } from "@mui/material";

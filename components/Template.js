@@ -9,12 +9,14 @@ export default function Template({
   style = None,
   sx = null,
   templateAs,
+  templateRef: ref1,
   props: {
     className: className2 = "",
     style: styles2 = null,
-    sx: sx2 = None,
+    sx: sx2 = null,
     children: children2,
     templateAs: templateAs2,
+    templateRef: ref2,
     as: as2,
     ...props2
   },
@@ -28,6 +30,14 @@ export default function Template({
       sx: sx ? (sx2 ? { ...sx, ...sx2 } : sx) : sx2,
       as: templateAs2 || templateAs,
       className: `${className} ${className2}`,
+      ref: ref1
+        ? ref2
+          ? (e) => {
+              ref1 &&
+                (typeof ref1 === "function" ? ref1(e) : (ref1.current = e));
+            }
+          : ref1
+        : ref2,
       ...mergeProps(props, props2, mergeableEvents),
     },
     children && children2

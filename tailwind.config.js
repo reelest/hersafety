@@ -8,6 +8,7 @@ module.exports = {
         primaryDark: "#070441",
         secondary: "#ff8200",
         bg: "#f9f9fc",
+        error: "#d32f2f",
         // primaryLight: MuiTheme.palette.primary.light,
         // error: MuiTheme.palette.error.main,
         // disabled: MuiTheme.palette.text.disabled,

@@ -1,4 +1,4 @@
-import { Table, Item } from "./table";
+import { Model, Item } from "./model";
 
 class Event extends Item {
   date = Date.now();
@@ -10,5 +10,5 @@ class Event extends Item {
     admins: true,
   };
 }
-const Events = new Table("events", Event);
+const Events = new Model("events", Event);
 export default Events;

@@ -12,8 +12,8 @@ import Spacer from "./Spacer";
 import { HambergerMenu, Menu } from "iconsax-react";
 import { useUser } from "@/logic/auth";
 import useBreakpoints from "@/utils/useBreakpoints";
-import { setSidebar } from "./DashboardLayout";
-export default function SectionHeader({ title, onSearch }) {
+import { setSidebar } from "./Sidebar";
+export default function PageHeader({ title, onSearch }) {
   const user = useUser();
   return (
     <Paper

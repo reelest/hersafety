@@ -17,21 +17,23 @@ import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
 import { InvalidState, ItemDoesNotExist, checkError } from "./errors";
 import { noop } from "@/utils/none";
+import getModelTypeInfo from "./model_type_info";
 /**
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
  */
 export const noFirestore = firestore === null;
-export class Table {
-  constructor(_collectionID, ItemClass = Item, Empty = {}) {
+export class Model {
+  constructor(_collectionID, ItemClass = Item, Empty = {}, meta) {
     this._ref = noFirestore
       ? { path: _collectionID }
       : collection(firestore, _collectionID);
     this.Item = ItemClass ?? Item;
-    this.converter = Table.converter(this);
+    this.converter = Model.converter(this);
     this.Empty = Empty;
-    global[_collectionID + "Table"] = this;
+    this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
+    global[_collectionID + "Model"] = this;
   }
-  static converter(table) {
+  static converter(model) {
     return {
       toFirestore: (item) => {
         return item.data();
@@ -39,11 +41,11 @@ export class Table {
       /** @param {import("firebase/firestore").QueryDocumentSnapshot} snapshot */
       fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
-        return new table.Item(
+        return new model.Item(
           snapshot.ref,
-          Object.assign(table.Empty, data),
+          Object.assign(model.Empty, data),
           false,
-          table
+          model
         );
       },
     };
@@ -192,10 +194,9 @@ const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
  * @property {import("firebase/firestore").DocumentReference} _ref
  */
 export class Item {
-  constructor(ref, data, isNew, table) {
+  constructor(ref, data, isNew, model) {
     Object.defineProperty(this, "_ref", { value: ref });
-    Object.defineProperty(this, "_table", { value: table });
-    Object.defineProperty(this, "_id", { value: ref.id });
+    Object.defineProperty(this, "_model", { value: model });
     Object.defineProperty(this, "_isLocalOnly", {
       writable: true,
       value: !!isNew,
@@ -271,6 +272,9 @@ export class Item {
   }
   isLocalOnly() {
     return this._isLocalOnly;
+  }
+  id() {
+    return this._ref.id();
   }
   fullName() {
     return this._ref.path;

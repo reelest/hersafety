@@ -12,6 +12,7 @@ import Form, {
   CONFIRM_PASSWORD,
   FormErrors,
   FormField,
+  FormRadio,
   FormSubmit,
   REQUIRED_EMAIL,
   REQUIRED_PASSWORD,
@@ -30,94 +31,96 @@ export default function SignUp({ isSignIn }) {
         <meta name="description" content="CSMS Website" />
       </Head>
 
-      <Container component="main" maxWidth="xs">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 32,
-            marginBottom: 32,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 2, bgcolor: "secondary.main" }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
-            {isSignIn ? "Sign In" : "Create Account"}
-          </Typography>
+      <UserRedirect redirectOnUser>
+        <Container component="main" maxWidth="xs">
+          <CssBaseline />
           <Box
-            component={Form}
-            validationRules={{
-              email: REQUIRED_EMAIL,
-              password: REQUIRED_PASSWORD,
-              ...(isSignIn ? {} : { confirmpassword: CONFIRM_PASSWORD }),
+            sx={{
+              marginTop: 32,
+              marginBottom: 32,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
-            initialValue={{
-              email: "",
-              password: "",
-            }}
-            onSubmit={isSignIn ? signIn : signUp}
-            noValidate
-            sx={{ mt: 2 }}
           >
-            <FormErrors />
-            <FormField
-              margin="normal"
-              required
-              fullWidth
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-            />
-            <FormField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              autoComplete={isSignIn ? "current-password" : "new-password"}
-            />
-            {isSignIn ? (
-              <FormControlLabel
-                control={<Checkbox value="remember" color="primary" />}
-                label="Remember me"
-              />
-            ) : (
+            <Avatar sx={{ m: 2, bgcolor: "secondary.main" }}>
+              <LockOutlinedIcon />
+            </Avatar>
+            <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
+              {isSignIn ? "Sign In" : "Create Account"}
+            </Typography>
+            <Box
+              component={Form}
+              validationRules={{
+                email: REQUIRED_EMAIL,
+                password: REQUIRED_PASSWORD,
+                ...(isSignIn ? {} : { confirmpassword: CONFIRM_PASSWORD }),
+              }}
+              initialValue={{
+                email: "",
+                password: "",
+              }}
+              onSubmit={isSignIn ? signIn : signUp}
+              noValidate
+              sx={{ mt: 2 }}
+            >
+              <FormErrors />
               <FormField
                 margin="normal"
                 required
                 fullWidth
-                name="confirmpassword"
-                label="Confirm Password"
-                type="password"
-                autoComplete="new-password"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
               />
-            )}
-            <FormSubmit
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 6, mb: 4 }}
-            >
-              {isSignIn ? "Sign In" : "Create Account"}
-            </FormSubmit>
-            <Grid container>
-              <Grid item>
-                <Link href={isSignIn ? "/signup" : "/login"} variant="body2">
-                  {isSignIn
-                    ? "Don't have an account? Sign Up"
-                    : "Already an account? Log In"}
-                </Link>
+              <FormField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                autoComplete={isSignIn ? "current-password" : "new-password"}
+              />
+              {isSignIn ? (
+                <FormField
+                  type="checkbox"
+                  color="primary"
+                  label="Remember me"
+                />
+              ) : (
+                <FormField
+                  margin="normal"
+                  required
+                  fullWidth
+                  name="confirmpassword"
+                  label="Confirm Password"
+                  type="password"
+                  autoComplete="new-password"
+                />
+              )}
+              <FormSubmit
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 6, mb: 4 }}
+              >
+                {isSignIn ? "Sign In" : "Create Account"}
+              </FormSubmit>
+              <Grid container>
+                <Grid item>
+                  <Link href={isSignIn ? "/signup" : "/login"} variant="body2">
+                    {isSignIn
+                      ? "Don't have an account? Sign Up"
+                      : "Already an account? Log In"}
+                  </Link>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           </Box>
-        </Box>
-      </Container>
-      <UserRedirect redirectOnUser />
+        </Container>
+      </UserRedirect>
       <Footer />
     </>
   );

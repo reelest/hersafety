@@ -1,22 +1,13 @@
 import useBreakpoints from "@/utils/useBreakpoints";
 import Sidebar, { useActiveTab } from "./Sidebar";
 import NoSsr from "@mui/material/NoSsr";
-import createSubscription from "@/utils/createSubscription";
 
-export const [useSidebar, , setSidebar] = createSubscription();
 const DashboardLayout = ({ renderChild = _renderChild, tabs }) => {
-  const isOpen = useSidebar();
   const isWideScreen = useBreakpoints().lg;
   return (
     <div className="flex h-screen w-screen">
       <NoSsr>
-        <Sidebar
-          isOpen={isOpen}
-          onOpen={() => setSidebar(true)}
-          onClose={() => setSidebar(false)}
-          isStatic={isWideScreen}
-          tabs={tabs}
-        />
+        <Sidebar isStatic={isWideScreen} tabs={tabs} />
       </NoSsr>
 
       <main className="flex-grow  overflow-y-scroll">

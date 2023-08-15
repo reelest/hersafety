@@ -1,4 +1,4 @@
-import { Table } from "./table";
+import { Model } from "./model";
 
-const Misc = new Table("misc");
+const Misc = new Model("misc");
 export default Misc;
