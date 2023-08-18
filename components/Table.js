@@ -3,9 +3,9 @@ import Template from "./Template";
 import ThemedButton from "@mui/material/Button";
 import mergeProps from "@/utils/mergeProps";
 import LoaderAnimation from "./LoaderAnimation";
-import { useMemo, useRef, useState } from "react";
+import { isValidElement, useMemo, useRef, useState } from "react";
 import uniq from "@/utils/uniq";
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 const borderSpacings = [
   "border-spacing-y-0",
@@ -60,7 +60,8 @@ export default function Table({
           </tr>
         ) : (
           range(rows).map((row) => (
-            <tr
+            <Box
+              as="tr"
               key={row}
               onClick={onClickRow ? (e) => onClickRow(e, row) : undefined}
               {...(typeof rowProps === "function" ? rowProps(row) : {})}
@@ -68,14 +69,14 @@ export default function Table({
               {range(cols).map((j) =>
                 callHooks(data, row, j, [], {}, renderHooks)
               )}
-            </tr>
+            </Box>
           ))
         )}
       </tbody>
     </table>
   );
   if (scrollable)
-    return <div className="max-w-full px-1 overflow-x-auto">{table}</div>;
+    return <div className="overflow-x-auto -mx-3 px-1">{table}</div>;
   else return table;
 }
 
@@ -104,6 +105,9 @@ export const TableButton = (props) => (
  * @typedef {(input: TableCellInfo & {next: TableRenderHook})=>Partial<TableCellInfo>} TableRenderHook
  */
 
+const toReactComponent = (e) => {
+  return isValidElement(e) ? e : String(e ?? "--");
+};
 /**
  * @param {TableCellInfo}
  * @returns {import("react").Component}
@@ -111,11 +115,11 @@ export const TableButton = (props) => (
 const renderTableCell = ({ data, row, col, classes, attrs }) => {
   return row >= 0 ? (
     <td key={row + ";" + col} className={classes.join(" ")} {...attrs}>
-      {Array.isArray(data) ? data[row][col] : data}
+      {toReactComponent(Array.isArray(data) ? data[row][col] : data)}
     </td>
   ) : (
     <th key={col} className={classes.join(" ")} {...attrs}>
-      {Array.isArray(data) ? data[col] : data}
+      {toReactComponent(Array.isArray(data) ? data[col] : data)}
     </th>
   );
 };
@@ -196,13 +200,13 @@ export const onClickHeader =
       : next();
 /**
  * Hook that supplies the value of a cell in a table
- * @param {(row:number, col:number)=>TableCellValue} getValue
+ * @param {(row:number, col:number, data: TableCellValue|null)=>TableCellValue} getValue
  * @returns {TableRenderHook}
  */
 export const supplyValue =
   (getValue) =>
-  ({ row, col, next }) =>
-    row >= 0 ? next({ data: getValue(row, col) }) : next();
+  ({ row, col, data, next }) =>
+    row >= 0 ? next({ data: getValue(row, col, data) }) : next();
 
 /**
  * Hook that maps the row number on page to the actual row number in data

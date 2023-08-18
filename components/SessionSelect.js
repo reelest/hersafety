@@ -1,5 +1,5 @@
 import { Sessions } from "@/models/session";
-import { createSharedQuery, useQuery } from "@/models/model";
+import { createSharedQuery, useQuery } from "@/models/query";
 import createSubscription from "@/utils/createSubscription";
 import useArrayState from "@/utils/useArrayState";
 import { MenuItem, Select, Typography } from "@mui/material";

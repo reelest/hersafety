@@ -12,7 +12,7 @@ import sentenceCase from "@/utils/sentenceCase";
  *    maxLength: number,
  *    minValue: number,
  *    maxValue: number,
- *    options?: Array<any>,
+ *    options?: Array<{value: string, label: string}>,
  *    pattern?: RegexExp,
  *    stringType?: StringType,
  *    objectType?: ModelTypeInfo,
@@ -44,12 +44,18 @@ function _getModelPropInfo(key, template, Meta, path) {
 
   return {
     type,
-    required: Meta.type ?? true,
+    required: Meta.required ?? true,
     minLength: Meta.minLength ?? 0,
     maxLength: Meta.maxLength ?? Number.MAX_SAFE_INTEGER,
     minValue: Meta.minValue ?? 0,
     maxValue: Meta.maxLength ?? Number.MAX_SAFE_INTEGER,
-    options: Meta.options,
+    options: Meta.options
+      ? Meta.options.length === 0 || isObject(Meta.options[0])
+        ? Meta.options
+        : Meta.options.map((e) =>
+            isObject(e) ? e : { value: e, label: sentenceCase(String(e)) }
+          )
+      : undefined,
     pattern: Meta.pattern,
     stringType: type === "string" ? Meta.stringType ?? "text" : undefined,
     objectType:
@@ -62,6 +68,10 @@ function _getModelPropInfo(key, template, Meta, path) {
         : undefined,
     label: Meta.label ?? sentenceCase(key.replace(/[A-Z]/g, " $&")),
   };
+}
+
+function isObject(e) {
+  return e && typeof e === "object";
 }
 
 /**

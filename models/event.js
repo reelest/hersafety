@@ -1,6 +1,6 @@
 import { Model, Item } from "./model";
 
-class Event extends Item {
+export class Event extends Item {
   date = Date.now();
   title = "Untitled";
   scope = {

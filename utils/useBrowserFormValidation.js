@@ -1,27 +1,50 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import range from "./range";
 /**
  *
  * @param {import("react").Ref<HTMLFormElement> & {current: HTMLFormElement}} ref
  */
-export default function useBrowserFormValidation(ref) {
+export default function useBrowserFormValidation(ref, data, validationRules) {
+  useEffect(() => {
+    range(ref.current.elements.length).forEach((e) =>
+      ref.current.elements.item(e).setCustomValidity("")
+    );
+    validationRules.forEach((e) => e.validate(ref.current, data));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, ref, ...validationRules]);
+  const getField = (name) => {
+    if (ref?.current) {
+      if (!ref.current.elements[name])
+        console.error(new Error("Unknown field " + name));
+      return ref.current.elements[name];
+    }
+  };
   return {
-    isFieldInError: (name) => {
-      return ref?.current ? ref.current.elements[name].validity.valid : false;
-    },
-    getErrorMessages: () => {
-      return ref?.current
+    isFieldInError: (name) =>
+      getField(name) ? !getField(name).validity.valid : false,
+    getErrorMessages: () =>
+      ref?.current
         ? range(ref.current.elements.length).map(
-            (e) => ref.current.elements.item(e).validity.validationMessage
+            (e) => ref.current.elements.item(e).validationMessage
           )
-        : "No form reference provided";
+        : "No form reference provided",
+    getErrorsInField: (name) => getField(name)?.validationMessage ?? "",
+    isFormValid: true, //depend on form to provide validity
+  };
+}
+
+export function formValidator(field, validate) {
+  return {
+    validate: (form, data) => {
+      let e;
+      if (
+        Object.hasOwnProperty.call(form.elements, field) &&
+        (e = validate(data, field))
+      ) {
+        form.elements[field].setCustomValidity(e);
+      }
     },
-    getErrorsInField: (name) => {
-      return ref?.current
-        ? ref.current.elements[name].validity.validationMessage
-        : "";
-    },
-    isFormValid: () => {
-      return ref?.current ? ref.current.validity.valid : false;
-    },
+    with: (field, ...args) =>
+      formValidator(field, (...args2) => validate(...args2, ...args)),
   };
 }

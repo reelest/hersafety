@@ -4,7 +4,7 @@ import PageHeader from "../PageHeader";
 import Card2, { Card2Wrapper } from "../Card2";
 
 import { ArchiveBox } from "iconsax-react";
-import { useQuery } from "../../models/model";
+import { useQuery } from "@/models/query";
 import Students from "../../models/student";
 import Teachers from "../../models/teacher";
 import Parents from "../../models/parent";

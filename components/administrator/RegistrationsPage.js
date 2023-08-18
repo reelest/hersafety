@@ -2,16 +2,25 @@ import { Box, Typography, Button } from "@mui/material";
 import PageHeader from "../PageHeader";
 import { Add } from "iconsax-react";
 import SessionSelect from "../SessionSelect";
-import { useQuery } from "@/models/model";
+import { useQuery } from "@/models/query";
 import Registrations from "@/models/registration";
 import ThemedTable from "../ThemedTable";
-import { addHeaderClass, supplyValue } from "../Table";
-import { useState } from "react";
+import {
+  TableButton,
+  addClassToColumns,
+  addHeaderClass,
+  supplyValue,
+} from "../Table";
+import { useEffect, useState } from "react";
 import RegistrationsForm from "./RegistrationsForm";
+import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 
 export default function RegistrationsPage() {
-  const { data: registrations } = useQuery(() => Registrations.all());
+  const { data: registrations } = useQuery(() => Registrations.all(), [], {
+    watch: true,
+  });
   const [formVisible, setFormVisible] = useState(false);
+  const [selected, setSelected] = useState(-1);
   return (
     <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
       <RegistrationsForm
@@ -24,7 +33,6 @@ export default function RegistrationsPage() {
           <Typography variant="h6" as="h2">
             Registrations
           </Typography>
-          <SessionSelect />
         </div>
         <div className="flex flex-wrap pt-6 -mx-2 justify-center">
           <Button
@@ -37,6 +45,22 @@ export default function RegistrationsPage() {
         </div>
         <ThemedTable
           title="Registrations"
+          selected={selected}
+          setSelected={setSelected}
+          headerButtons={
+            <TableButton
+              disabled={selected === -1}
+              onClick={async () => {
+                if (await confirm("Delete selected item?")) {
+                  await registrations[selected].delete();
+                  setSelected(-1);
+                }
+              }}
+            >
+              Delete
+              <TrashIcon className="ml-0.5 relative" width={20} />
+            </TableButton>
+          }
           headers={[
             "Name",
             "Email",
@@ -48,6 +72,8 @@ export default function RegistrationsPage() {
           results={registrations}
           renderHooks={[
             addHeaderClass("whitespace-nowrap"),
+            addClassToColumns("min-w-[14rem]", [0]),
+            addClassToColumns("whitespace-nowrap", [4]),
             supplyValue((row, col) => {
               const item = registrations[row];
               switch (col) {
@@ -56,7 +82,7 @@ export default function RegistrationsPage() {
                 case 1:
                   return item.email;
                 case 2:
-                  return item.entranceClass;
+                  return item.getClass();
                 case 3:
                   return item.gender;
                 case 4:

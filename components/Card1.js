@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Portal } from "@headlessui/react";
 import createSubscription from "@/utils/createSubscription";
 import { noop } from "@/utils/none";
-import { Box } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 
 const [, onShow, show] = createSubscription(noop);
 /** @type {typeof Card1Wrapper} */
@@ -42,7 +42,8 @@ function Card1Wrapper({ expand, boxClass, onClose, children, ...props }) {
     <>
       {expand ? <ClickAway target={ref} onClose={onClose} /> : null}
       <Template
-        as={Box}
+        as={Paper}
+        elevation={2}
         templateAs={expand ? motion.div : "div"}
         initial={{ y: "100%" }}
         animate={{ y: 0 }}

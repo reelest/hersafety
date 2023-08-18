@@ -13,6 +13,9 @@ export function SearchInput() {
         flexGrow: 10,
         maxWidth: "27rem",
         backgroundColor: "gray.light",
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: "transparent",
+        },
       }}
       size="small"
     />

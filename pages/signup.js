@@ -46,7 +46,7 @@ export default function SignUp({ isSignIn }) {
             </Typography>
             <Box
               component={Form}
-              validationRules={isSignIn?null:[CONFIRM_PASSWORD]}
+              validationRules={[CONFIRM_PASSWORD]}
               initialValue={{
                 email: "",
                 password: "",

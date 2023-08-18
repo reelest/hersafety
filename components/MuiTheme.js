@@ -30,13 +30,10 @@ const MuiTheme = createTheme({
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        notchedOutline: {
-          borderColor: "transparent",
-        },
+        borderWidth: 1,
         root: ({ theme }) => ({
           "&:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline": {
             borderColor: theme.palette.primary.dark,
-            borderWidth: "2px",
           },
         }),
       },
@@ -120,29 +117,39 @@ const MuiTheme = createTheme({
       "2xl": 1536,
     },
   },
-
+  // Use tailwind shadows instead
   shadows: [
     "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    // sm 1
+    "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    // DEFAULT 2 - 3
+    "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    // md 4 - 6
+    "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    // lg 7 - 10
+    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    // xl 11 - 15
+    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    // 2xl 16 - 24
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "0 25px 50px -12px rgb(0 0 0 / 0.25)",
   ],
 });
 

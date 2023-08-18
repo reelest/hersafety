@@ -5,7 +5,7 @@ import delay from "@/utils/delay";
 
 export default function FullscreenLoader() {
   const theme = useTheme();
-  const delaying = usePromise(async () => await delay(5000), []);
+  const delaying = usePromise(async () => (await delay(10000)) || true, []);
   return (
     <div
       style={{ color: theme.palette.primary.light }}

@@ -9,7 +9,7 @@ import {
   WalletSearch,
   BatteryEmpty1,
 } from "iconsax-react";
-import { useQuery } from "../../models/model";
+import { useQuery } from "@/models/query";
 import Students from "../../models/student";
 import Teachers from "../../models/teacher";
 import Parents from "../../models/parent";

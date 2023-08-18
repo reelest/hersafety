@@ -1,4 +1,4 @@
-import { useQuery } from "@/models/model";
+import { useQuery } from "@/models/query";
 import { supplyValue } from "../Table";
 import ThemedTable from "../ThemedTable";
 import Registrations from "@/models/registration";
@@ -17,7 +17,7 @@ export default function RegistrationsView() {
             case 0:
               return item.getName();
             case 1:
-              return item.entranceClass;
+              return item.getClass();
             case 2:
               return item.gender;
           }

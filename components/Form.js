@@ -2,7 +2,7 @@ import Template from "./Template";
 import { createContext, useContext, useRef, useState } from "react";
 import useFormHandler from "@/utils/useFormHandler";
 // import ImagePicker from "./ImagePicker";
-import useValidation from "@/utils/useBrowserFormValidation";
+import useValidation, { formValidator } from "@/utils/useBrowserFormValidation";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import ThemedButton from "@mui/material/Button";
@@ -11,10 +11,14 @@ import {
   FormControlLabel,
   FormHelperText,
   FormLabel,
+  MenuItem,
   Radio,
   RadioGroup,
+  Select,
   Switch,
+  Typography,
 } from "@mui/material";
+import pick from "@/utils/pick";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -29,13 +33,12 @@ const FormContext = createContext();
 
 export default function Form({
   children,
-  validationRules = {},
+  validationRules = [],
   initialValue = {},
   onSubmit = null,
   ...props
 }) {
   const handler = useFormHandler(initialValue, async function handle(fd, e) {
-    validationRules.forEach(e=>e.validate(templateRef.current, handler.data))
     if (!showErrors) setShowErrors(true);
     if (isFormValid) {
       if (onSubmit) {
@@ -56,9 +59,17 @@ export default function Form({
   const [isLoading, setLoading] = useState(false);
   const ref = useRef();
   const { isFieldInError, getErrorMessages, isFormValid, getErrorsInField } =
-    useValidation(ref);
+    useValidation(ref, handler.data, validationRules);
   return (
-    <Template as="form" {...handler.form()} props={props} templateRef={ref}>
+    <Template
+      as="form"
+      {...handler.form()}
+      props={props}
+      onInvalid={() => {
+        setShowErrors(true);
+      }}
+      templateRef={ref}
+    >
       <FormContext.Provider
         value={{
           handler,
@@ -81,27 +92,46 @@ export default function Form({
  * @param {import("react-native-paper").TextInputProps} param0
  * @returns
  */
-export function FormField({ name, type, label, ...props }) {
-  const { isFieldInError, handler, showErrors } = useContext(FormContext);
+export function FormField({
+  name,
+  type,
+  label,
+  maxLength,
+  minLength,
+  pattern,
+  min,
+  max,
+  ...props
+}) {
+  const { isFieldInError, handler, showErrors, getErrorsInField } =
+    useContext(FormContext);
   const control =
     type === "checkbox" ? Checkbox : type === "switch" ? Switch : null;
   return (
     <Template
       as={control ? FormFieldWrapper : TextField}
       control={control}
+      className={
+        !handler.data[name] &&
+        (type === "date" || type === "datetime-local" || type === "time")
+          ? "empty-date-input" //used in globals.css
+          : null
+      }
       label={label}
-      autoFocus
       error={isFieldInError(name) && showErrors}
+      helperText={
+        isFieldInError(name) && showErrors ? getErrorsInField(name) : undefined
+      }
       variant="standard"
-      fullWidth
-      // InputLabelProps={{ shrink: true }}
       margin="dense"
+      fullWidth
       props={props}
       {...(control
         ? handler.checkbox(name)
         : type === "radio"
         ? {}
         : handler.textInput(name, type))}
+      inputProps={{ maxLength, minLength, pattern, min, max }}
     />
   );
 }
@@ -138,7 +168,7 @@ export function FormRadio({
 }) {
   const { handler } = useContext(FormContext);
   return (
-    <FormField as={FormControl} type="radio" {...props}>
+    <FormField as={FormControl} name={name} type="radio" {...props}>
       <FormLabel>{label}</FormLabel>
       <RadioGroup {...handler.radio(name)}>
         {values.map((e, i) => (
@@ -150,6 +180,34 @@ export function FormRadio({
         ))}
       </RadioGroup>
       {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
+    </FormField>
+  );
+}
+
+export function FormSelect({ values = [], labels = values, ...props }) {
+  const native = values.length > 100;
+  const Option = native ? "option" : MenuItem;
+  return (
+    <FormField
+      select
+      {...props}
+      type="select"
+      SelectProps={{
+        native,
+      }}
+      InputLabelProps={
+        native
+          ? {
+              shrink: true,
+            }
+          : null
+      }
+    >
+      {values.map((e, i) => (
+        <Option key={labels[i] ?? e} value={e}>
+          {labels[i] ?? e}
+        </Option>
+      ))}
     </FormField>
   );
 }
@@ -172,26 +230,16 @@ export function FormSubmit({ name, disabled, ...props }) {
 export function FormErrors({ lines = 2 }) {
   const { showErrors, getErrorMessages, handler } = useContext(FormContext);
   return showErrors ? (
-    <p className="font-20 text-red-500">
+    <Typography paragraph className="text-error">
       {handler.error ? handler.error.message : null}
       {getErrorMessages().split("\n").slice(0, lines).join("\n")}
-    </p>
+    </Typography>
   ) : null;
 }
 
-export function formValidator(validate) {
-  return {
-    validate: (form, data)=>{
-      if(data)
-    },
-    with: (...args) => formValidator((form) => validate(form, ...args)),
-  };
-}
-
 export const CONFIRM_PASSWORD = formValidator(
-  (data, field = "confirmpassword", match = "password") => {
-    return (
-      Object.hasOwnProperty.call(data, field) && data[field] === data[match]
-    );
+  "confirmpassword",
+  (data, field, match = "password") => {
+    return data[field] === data[match] && "Passwords do not match";
   }
 );

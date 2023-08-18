@@ -1,11 +1,12 @@
 import ArrowLeftIcon from "@heroicons/react/20/solid/ArrowLeftIcon";
 import ArrowRightIcon from "@heroicons/react/20/solid/ArrowRightIcon";
 import TextButton from "./TextButton";
-import { Box, Button, ButtonBase } from "@mui/material";
+import { Box, Button, ButtonBase, useTheme } from "@mui/material";
 
 function Pager({
   controller: { page, hasNext, goto, hasPrev, goNext, goPrev, numPages },
 }) {
+  const theme = useTheme();
   const pages = [
     !hasNext && page - 2 > 0 && page - 2,
     hasPrev && page - 1,
@@ -30,10 +31,11 @@ function Pager({
         <ButtonBase
           key={e}
           onClick={() => goto(e)}
-          className="w-6 font-20 h-6 flex items-center justify-center rounded-full mx-1"
+          className="w-6 font-20 h-6 flex items-center justify-center  mx-1"
           sx={{
             backgroundColor: e === page ? "primary.light" : "",
             color: e === page ? "white" : "",
+            borderRadius: "9999px",
           }}
         >
           {e || ""}

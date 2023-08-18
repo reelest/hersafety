@@ -1,4 +1,4 @@
-import { noop } from "@/utils/none";
+import { None, noop } from "@/utils/none";
 import {
   Box,
   IconButton,
@@ -7,9 +7,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Form, { FormField } from "./Form";
+import Form, { FormField, FormSelect, FormSubmit } from "./Form";
+import { useState } from "react";
 const FORM_SECTION = "!modelform-section";
-export default function ModelForm({ model, item }) {
+export default function ModelForm({ model, item, onSubmit = noop, ...props }) {
   const sections = { DEFAULT: [] };
   Object.keys(model.Meta).forEach((e) => {
     let section = sections.DEFAULT;
@@ -22,19 +23,49 @@ export default function ModelForm({ model, item }) {
     section.push(e);
   });
   return (
-    <Form>
-      {Object.keys(sections).map((e) => (
-        <>
-          {e === "DEFAULT" ? null : e}
-          {sections[e].map((e) => createFormField(e, model.Meta[e]))}
-        </>
-      ))}
+    <Form
+      key={item?.id?.()}
+      onSubmit={async (data) => {
+        await item.set(data);
+        onSubmit();
+      }}
+      initialValue={item ? item.data() : None}
+      {...props}
+      className="flex flex-wrap"
+    >
+      <Typography
+        variant="body2"
+        color="text.disabled"
+        className="text-right w-full"
+      >
+        {item ? item.id() : "Loading..."}
+      </Typography>
+      {Object.keys(sections)
+        .map((e) => [
+          e === "DEFAULT" ? null : (
+            <Typography key={"!modelform-header-" + e} variant="h5">
+              {e}
+            </Typography>
+          ),
+          sections[e].map((e) =>
+            createFormField(e, model.Meta[e], { disabled: !item })
+          ),
+        ])
+        .flat()}
+      <div className="w-full"></div>
+      <FormSubmit
+        sx={{ mt: 12, display: "block", ml: "auto" }}
+        variant="contained"
+        size="large"
+        disabled={!item}
+      >
+        {item?.isLocalOnly?.() ? "Save" : "Update"}
+      </FormSubmit>
     </Form>
   );
 }
 /** @type {Array<import("@/models/model_type_info").StringType>} */
 const INPUT_TYPES = ["email", "password", "tel", "url"];
-/** @type {Record<, string} */
 
 /** @param {import("@/models/model_type_info").ModelPropInfo} meta*/
 function collectInputProps(meta) {
@@ -44,8 +75,8 @@ function collectInputProps(meta) {
     let value = meta[key];
     if (value === undefined) return acc;
     switch (key) {
-      case "required":
-      case "label":
+      // case "label": Handled by commonProps
+      // case "required":
       case "minLength":
       case "maxLength":
         break;
@@ -64,6 +95,10 @@ function collectInputProps(meta) {
             ? INPUT_TYPES.includes(meta.stringType)
               ? meta.stringType
               : "text"
+            : value === "datetime"
+            ? "datetime-local"
+            : value === "number"
+            ? "text"
             : value;
         break;
       default:
@@ -73,33 +108,78 @@ function collectInputProps(meta) {
     return acc;
   }, {});
 }
+
+const PATTERNS = {
+  date: {
+    re: "(\\d{4})-([1-9]|[01][0-2])-([1-9]|[0-3][0-9])",
+    desc: "YYYY-MM-DD",
+  },
+  time: {
+    re: "([1-9]|[0-2][0-2]):([1-9]|[1-6][0-9])",
+    desc: "HH:MM",
+  },
+  datetime: {
+    re: "(\\d{4})-([1-9]|[01][0-2])-([1-9]|[0-3][0-9])[T ]([1-9]|[0-2][0-2]):([1-9]|[1-6][0-9])",
+    desc: "YYYY-MM-DD HH:MM",
+  },
+};
+
 /**
  *
- * @param {string} key
+ * @param {string} name
  * @param {import("@/models/model_type_info").ModelPropInfo} meta
  */
-function createFormField(key, meta) {
+function createFormField(name, meta, { disabled } = {}) {
+  const commonProps = {
+    name: name,
+    key: name,
+    label: meta.label,
+    disabled,
+    fullWidth: false,
+    required: meta.required,
+    sx: { minWidth: "15em", flexGrow: 1, mx: 1 },
+  };
   switch (meta.type) {
     case "hidden":
       return null;
     case "string":
     case "number":
+      if (meta.options) {
+        return (
+          <FormSelect
+            {...commonProps}
+            values={meta.options.map((e) => e.value)}
+            labels={meta.options.map((e) => e.label)}
+          />
+        );
+      }
       return (
         <FormField
+          {...commonProps}
+          fullWidth
           multiline={meta.stringType === "longtext"}
-          name={key}
-          key={key}
+          {...(meta.type === "number"
+            ? { inputMode: "numeric", pattern: "[0-9]*" }
+            : None)}
           {...collectInputProps(meta)}
         />
       );
     case "boolean":
+      return <FormField {...commonProps} type="checkbox" />;
+    case "date":
+    case "datetime":
+    case "time":
       return (
         <FormField
-          {...meta}
-          type="checkbox"
-          name={key}
-          key={key}
-          label={meta.label}
+          {...commonProps}
+          pattern={PATTERNS[meta.type].re}
+          {...collectInputProps(meta)}
+          onInvalid={(e) => {
+            if (e.target.validity.patternMismatch)
+              e.target.setCustomValidity(
+                `Value must match pattern ${PATTERNS[meta.type].desc}`
+              );
+          }}
         />
       );
     default:

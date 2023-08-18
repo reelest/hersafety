@@ -22,6 +22,7 @@ class FormHandler {
     this.setData(this.data);
   }
   set(key, value) {
+    if (!key) console.error(new Error("UNdefined key"));
     this.data[key] = value;
     this._update();
   }
@@ -31,7 +32,7 @@ class FormHandler {
       name: id,
       type: "submit",
       onClick: async () => {
-        id ?? this.set(id, true);
+        if (id) this.set(id, true);
       },
     };
   }

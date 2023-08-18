@@ -78,8 +78,8 @@ export class CountedModel extends Model {
     /** Item._isLocalOnly should never be set to true manually especially for CountedItems as it breaks safety checks/speedups in Item.save. */
     if (isCreate)
       throw new Error(
-        "Synthetic ids are not allowed for counted models. To create one anyway, use `new Table.Item(Table.ref(id), Table.Empty, true, Table)`"
+        "Synthetic ids are not allowed for counted models. To create one anyway, use `new Table.Item(Table.ref(id), true, Table)`"
       );
-    return new this.Item(this.ref(id), this.Empty, false, this);
+    return new this.Item(this.ref(id), false, this);
   }
 }

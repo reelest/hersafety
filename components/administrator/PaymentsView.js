@@ -1,4 +1,4 @@
-import { useQuery } from "@/models/model";
+import { useQuery } from "@/models/query";
 import ThemedTable from "../ThemedTable";
 import Payments from "@/models/payment";
 import { supplyValue } from "../Table";

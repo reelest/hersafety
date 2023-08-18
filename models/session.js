@@ -1,13 +1,10 @@
 import { arrayRemove, arrayUnion, increment } from "firebase/firestore";
 import { CountedItem, CountedModel } from "./counted_model";
-import { Model } from "./model";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
 
-export const UserRoles = new Model("roles", null, { role: "guest" });
-
-class Session extends CountedItem {
+export class Session extends CountedItem {
   name = "";
 
   async onDeleteItem(txn) {

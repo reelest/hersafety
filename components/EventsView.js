@@ -12,7 +12,7 @@ import { range } from "d3";
 import { formatTime } from "@/utils/formatNumber";
 import LoaderAnimation from "@/components/LoaderAnimation";
 import { daysToMs } from "@/utils/time_utils";
-import { useQuery } from "@/models/model";
+import { useQuery } from "@/models/query";
 import Events from "@/models/event";
 import Card1 from "./Card1";
 import { Box, Divider, Typography } from "@mui/material";
@@ -41,11 +41,11 @@ function EventsView({ date = new Date() }) {
   const currentYear = date.getFullYear();
   return (
     <Card1
-      className="text-white w-96 mx-2 flex-grow-0 my-2"
-      boxClass="h-full px-6 py-4 2xl:py-6 max-h-96 overflow-y-auto"
-      sx={{ backgroundColor: "primary.dark" }}
+      className="w-96 mx-2 flex-grow-0 my-2"
+      boxClass="h-full px-6 py-5 2xl:py-6 max-h-96 overflow-y-auto"
+      sx={{ backgroundColor: "primary.dark", color: "white" }}
     >
-      <Typography variant="h6">Upcoming Events</Typography>
+      <Typography variant="h5">Upcoming Events</Typography>
       <Typography variant="caption" color="text.disabledOnPrimaryDark">
         Date
       </Typography>

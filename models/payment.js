@@ -1,6 +1,6 @@
 import { CountedItem, CountedModel } from "./counted_model";
 
-class Payment extends CountedItem {
+export class Payment extends CountedItem {
   name = "";
   description = "";
   amount = "";

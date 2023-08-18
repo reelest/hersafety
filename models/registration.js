@@ -1,9 +1,6 @@
 import { CountedItem, CountedModel } from "./counted_model";
-
+import { Class, Country, Gender } from "./model_types";
 export class Registration extends CountedItem {
-  static Meta = {
-    email: {},
-  };
   firstName = "";
   lastName = "";
   email = "";
@@ -17,6 +14,16 @@ export class Registration extends CountedItem {
   getName() {
     return `${this.firstName} ${this.lastName}`;
   }
+  getClass() {
+    return this.getString("entranceClass");
+  }
 }
-const Registrations = new CountedModel("registrations", Registration);
+const Registrations = new CountedModel("registrations", Registration, null, {
+  gender: Gender,
+  dateOfBirth: {
+    type: "date",
+  },
+  nationality: Country,
+  entranceClass: Class,
+});
 export default Registrations;
