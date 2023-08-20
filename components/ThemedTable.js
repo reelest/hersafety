@@ -19,9 +19,14 @@ function ThemedTable({
   renderHooks = [],
   selected,
   setSelected,
+  pager: _pager,
   ...props
 }) {
-  const { data, ...controller } = usePager(results || [], 10);
+  const defaultPager = usePager(results || [], 10);
+  /** @type {typeof defaultPager} */
+  const pager = _pager ?? defaultPager;
+  console.log({ _pager });
+  const { data, pageSize, ...controller } = pager;
   return (
     <TableWrapper {...props}>
       <Table
@@ -29,7 +34,7 @@ function ThemedTable({
         data={results}
         scrollable
         cols={headers.length}
-        rows={Math.min(10, results?.length)}
+        rows={Math.min(pageSize, results?.length)}
         headers={headers}
         rowSpacing={1}
         headerClass="text-disabled text-left"
@@ -47,7 +52,7 @@ function ThemedTable({
             : null
         }
         renderHooks={[
-          pageData(controller.page, 10),
+          pageData(controller.page, pageSize),
           addHeaderClass("first:pl-4 pr-2 last:pr-0 font-20t"),
           addClassToColumns(
             "first:pl-4 pr-4 pt-1 pb-1 first:rounded-l last:rounded-r"

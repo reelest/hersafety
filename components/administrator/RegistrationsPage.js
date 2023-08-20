@@ -2,7 +2,7 @@ import { Box, Typography, Button } from "@mui/material";
 import PageHeader from "../PageHeader";
 import { Add } from "iconsax-react";
 import SessionSelect from "../SessionSelect";
-import { useQuery } from "@/models/query";
+import { usePagedQuery, useQuery } from "@/models/query";
 import Registrations from "@/models/registration";
 import ThemedTable from "../ThemedTable";
 import {
@@ -16,9 +16,14 @@ import RegistrationsForm from "./RegistrationsForm";
 import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 
 export default function RegistrationsPage() {
-  const { data: registrations } = useQuery(() => Registrations.all(), [], {
-    watch: true,
-  });
+  console.log("popo");
+  const { data: registrations, pager } = usePagedQuery(
+    () => Registrations.all(),
+    [],
+    {
+      watch: true,
+    }
+  );
   const [formVisible, setFormVisible] = useState(false);
   const [selected, setSelected] = useState(-1);
   return (
@@ -47,6 +52,7 @@ export default function RegistrationsPage() {
           title="Registrations"
           selected={selected}
           setSelected={setSelected}
+          pager={pager}
           headerButtons={
             <TableButton
               disabled={selected === -1}

@@ -89,6 +89,7 @@ export default function UsersPage() {
       watch: true,
     }
   );
+  console.log({ registrations });
   return (
     <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
       <UsersForm isOpen={formVisible} onClose={() => setFormVisible(false)} />
