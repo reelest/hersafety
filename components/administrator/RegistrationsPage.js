@@ -16,7 +16,6 @@ import RegistrationsForm from "./RegistrationsForm";
 import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 
 export default function RegistrationsPage() {
-  console.log("popo");
   const { data: registrations, pager } = usePagedQuery(
     () => Registrations.all(),
     [],

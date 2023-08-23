@@ -10,8 +10,9 @@ import {
   endBefore,
   limitToLast,
   getCountFromServer,
+  documentId,
 } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
 import { noop } from "@/utils/none";
@@ -20,6 +21,7 @@ import { range } from "d3";
 import usePromise from "@/utils/usePromise";
 import useRefresher from "@/utils/useRefresher";
 import usePager from "@/utils/usePager";
+import useLogger from "@/utils/useLogger";
 
 export const DEFAULT_ORDERING = "!model-default-ordering";
 export const DEFAULT_ORDERING_DESCENDING = "!model-default-descending";
@@ -65,6 +67,7 @@ class LocalCache {
       throw new Error("Unknown policy passed to LocalCache.update");
     this._ensureLocked();
     const data = snapshot.docs;
+    const x = this.end - this.start;
     this.data.splice(
       this.start,
       policy === LocalCache.ASSUME_DELETED_POLICY ? this.end - this.start : 0,
@@ -72,6 +75,9 @@ class LocalCache {
     );
     this.end = this.start + data.length;
     this._ensureUnique();
+    console.log(
+      "Added " + (data.length - x) + " unique items at start " + this.start
+    );
     return this.get();
   }
 
@@ -79,6 +85,7 @@ class LocalCache {
     const data = this.data;
     const mid = data.slice(this.start, this.end).map((e) => e.id);
     let l = 0;
+    let m = data.length;
     for (let i = this.start - 1; i >= 0; i--) {
       if (data[i] && mid.includes(data[i].id)) {
         data.splice(i, 1);
@@ -89,6 +96,7 @@ class LocalCache {
     for (let i = data.length - 1; i >= this.end; i--) {
       if (data[i] && mid.includes(data[i].id)) data.splice(i, 1);
     }
+    console.log("Removed " + (m - data.length) + " non-unique items");
   }
   /**
    * @returns {Array<import("./model").Item>}
@@ -139,8 +147,9 @@ class LocalCache {
     if (offset > 0) {
       this.data.splice(0, offset);
     } else {
-      this.data.splice(0, 0, ...range(offset).map(null));
+      this.data.splice(0, 0, ...range(offset).map(() => null));
     }
+    console.log("Updating start to match current index " + offset);
     this.setPage(start);
   }
   async reset() {
@@ -178,17 +187,15 @@ class LocalCache {
  * @param {MultiQuery} query
  */
 
-const PAGE_DIRECTION_FORWARDS = 2;
-const PAGE_DIRECTION_BACKWARDS = 1;
+const PAGE_DIRECTION_FORWARDS = 1;
+const PAGE_DIRECTION_BACKWARDS = -1;
 export class MultiQuery {
   _pageSize = 2;
-  _currentPage = 0;
   _scrollDirection = PAGE_DIRECTION_FORWARDS;
   _filters = [];
-  _orderBy = [];
+  _ordering = [];
   _onError = console.error;
   _unsubscribe = null;
-  _count = 0;
   _query = null;
   /**
    *
@@ -198,34 +205,37 @@ export class MultiQuery {
     //Used for filtering
     this.model = model;
     this.cache = new LocalCache();
-    console.trace("Creating query " + model._ref.path);
+    console.log("Creating query " + model._ref.path);
     // A subscription that notifies listeners when this query completes
     [, this._subscribe, this._dispatch] = createSubscription(() => {
       console.log("Starting subscriptions");
       this.start();
       return () => {
+        console.log("Stopping subscriptions");
         this._unsubscribe();
         this._unsubscribe = null;
       };
     });
-    this.cache.run(() => this.orderBy());
+    this.orderBy();
   }
   // Construct a firebase query from this Query's state
-  // Also, the cache, _filters, _pageSize and _orderBy must only be changed using their respective methods.
+  // Also, the cache, _filters, _pageSize and _ordering must only be changed using their respective methods.
   get query() {
     return noFirestore
       ? null
-      : this._query ||
-          (this._query = query(
-            this.model._ref,
-            ...this._filters,
-            ...this._orderBy,
-            ...(this._scrollDirection === PAGE_DIRECTION_FORWARDS
-              ? this.cache.nextAnchor(this._pageSize)
-              : this.cache.prevAnchor(this._pageSize))
-          ).withConverter(this.model.converter));
+      : this._query || (this._query = this._createQuery());
   }
-
+  _createQuery() {
+    console.log("Recreating query....", this.cache.start);
+    return query(
+      this.model._ref,
+      ...this._filters,
+      ...this._ordering,
+      ...(this._scrollDirection === PAGE_DIRECTION_FORWARDS
+        ? this.cache.nextAnchor(this._pageSize)
+        : this.cache.prevAnchor(this._pageSize))
+    ).withConverter(this.model.converter);
+  }
   // A Query can be in one of 4 states: stopped, stopped-busy, running, running-busy
   // A query starts running once it has at least one listener
   isRunning() {
@@ -267,7 +277,7 @@ export class MultiQuery {
 
   start() {
     if (this.isRunning()) this._unsubscribe();
-    console.log("Restarting snapshot");
+    console.log("Restarting snapshot busy:" + this.isBusy());
     const _unsubscribe = (this._unsubscribe = this.isBusy()
       ? noop
       : onSnapshot(this.query, {
@@ -288,9 +298,9 @@ export class MultiQuery {
   }
 
   async seek(index) {
-    if (typeof index !== "number" || index < 0)
+    if (typeof index !== "number" || index < 0 || Number.isNaN(index))
       throw new Error("Invalid index: " + index + " supplied");
-    if (index === this.cache.start) return;
+    if (index === this.cache.start && this.cache.hasData()) return;
     if (
       index < this.cache.start && index !== 0
         ? this.cache.hasPrevAnchor(index + this._pageSize)
@@ -341,14 +351,16 @@ export class MultiQuery {
   }
   async getCount(max) {
     return await this.cache.run(async () => {
-      return (this._count = await getCountFromServer(
-        query(
-          this.model._ref,
-          ...this._filters,
-          ...this._orderBy,
-          ...(isNaN(max) ? [] : [max(Number(max) + 1)])
+      return (
+        await getCountFromServer(
+          query(
+            this.model._ref,
+            ...this._filters,
+            ...this._ordering,
+            ...(isNaN(max) ? [] : [max(Number(max) + 1)])
+          )
         )
-      ));
+      ).data().count;
     });
   }
   get sentinelValue() {
@@ -359,12 +371,11 @@ export class MultiQuery {
    */
   sentinel(cb, watch = true) {
     console.debug(`${watch ? "Watching" : "Reading"} for new values`);
-    const m = this.sentinelValue;
     const _query = query(
       this.model._ref,
       ...this._filters,
-      ...this._orderBy,
-      startAfter(m),
+      ...this._ordering,
+      startAfter(this.sentinelValue),
       limit(1)
     );
     if (watch)
@@ -387,15 +398,20 @@ export class MultiQuery {
       this.cache.start === 0
     )
       return 0;
+    if (!this.cache.data[this.cache.start]) {
+      await this.seek(this.cache.start);
+    }
     this.cache.run(async () => {
-      const index = await getCountFromServer(
-        query(
-          this.model._ref,
-          ...this._filters,
-          ...this._orderBy,
-          endBefore(this.cache.data[this.cache.start - 1])
+      const index = (
+        await getCountFromServer(
+          query(
+            this.model._ref,
+            ...this._filters,
+            ...this._ordering,
+            endBefore(this.cache.data[this.cache.start])
+          )
         )
-      );
+      ).data().count;
       this.cache.syncStart(index);
     });
   }
@@ -415,12 +431,17 @@ export class MultiQuery {
       secondDescending ??
       this.model.Meta[SECONDARY_ORDERING_DESCENDING] ??
       false;
-    this._orderBy = [];
+    this._ordering = [];
     if (key) {
-      this._orderBy.push(orderBy(key, descending ? "asc" : "desc"));
+      this._ordering.push(orderBy(key, descending ? "asc" : "desc"));
     }
-    if (secondKey)
-      this._orderBy.push(orderBy(secondKey, secondDescending ? "asc" : "desc"));
+    if (secondKey && secondKey !== key)
+      this._ordering.push(
+        orderBy(secondKey, secondDescending ? "asc" : "desc")
+      );
+    if (this._ordering.length === 0) {
+      this._ordering.push(orderBy(documentId()));
+    }
     this.cache.reset().then(() => this.restart());
     return this;
   }
@@ -452,25 +473,18 @@ export class DocumentQuery {
   }
 }
 
-export function usePagedQuery(
-  createQuery,
-  deps = [],
-  { count: _defaultCount, ...opts }
-) {
+// TODO: Be more efficient in updating the count and the index. Previous attempts had issues.
+export function usePagedQuery(createQuery, deps = [], { ...opts }) {
   const {
     _query: query,
+    _reload,
     data,
     loading,
     ...rest
   } = useQuery(createQuery, deps, opts);
 
   //Get count of items
-  const [countChanged, updateCount] = useRefresher();
-  const count =
-    usePromise(
-      async () => (query ? _defaultCount ?? (await query.getCount()) : 0),
-      [query, countChanged, _defaultCount]
-    ) ?? Number.MAX_SAFE_INTEGER;
+  const [count, setCount] = useState(Number.MAX_SAFE_INTEGER);
 
   // Track current page
   const pager = usePager(
@@ -482,47 +496,79 @@ export function usePagedQuery(
     },
     query?._pageSize ?? 1
   );
-  const { page, goto } = pager;
+  const { page: _page, goto } = pager;
+  const page = _page - 1;
 
-  // Sync query with page
-  // Sync current page before going to the first page
+  //Synchronize pager state with query state and query state with database state
+  const sync = useStable(async () => {
+    if (!query) return;
+    console.log("Syncing");
+    const _count = await query.getCount();
+    if (_count !== count) return setCount(_count);
+    const maxPage = Math.floor((count - 1) / query._pageSize);
+    const y = query.cache.start;
+    query.syncIndex().then(() => {
+      const x = query.cache.start;
+      if (x === y) {
+        if (query.page !== page) _reload();
+        query.seek(Math.min(Math.max(0, page), maxPage) * query._pageSize);
+      } else {
+        goto(Math.floor(x / query._pageSize));
+      }
+    });
+  });
+
   useEffect(() => {
-    if (query) {
-      if (page === 0 && query.page === 1)
-        query.syncCurrentPage().then(() => {
-          const x = query.cache.start;
-          if (x === query._pageSize) {
-            query.seek(0);
-          } else {
-            goto(query.page);
-            updateCount();
-          }
-        });
-      else query.seek(page * query._pageSize);
-    }
-  }, [page, query, goto, updateCount]);
+    sync();
+  }, [query, page, sync]);
 
-  // Update count when on the last page
+  useLogger({
+    count,
+  });
+  useLogger({
+    page,
+  });
+  useLogger({
+    pageSize: query?._pageSize ?? 1,
+    loading,
+  });
+
+  // Update count when on the last page if a new item is added after the last page
   const isOnLastPage =
-    query && query.page === Math.floor(count / query._pageSize);
+    query &&
+    query.page === Math.floor((count - 1) / query._pageSize) &&
+    !loading;
   const sentinelValue = query?.sentinelValue;
   useEffect(() => {
-    if (query && isOnLastPage && data.length === query._pageSize) {
+    if (query && isOnLastPage && data?.length === query._pageSize) {
+      console.log("Adding sentinel " + query.page + ":" + count);
       return query.sentinel((e) => {
-        if (e) updateCount();
+        if (e) sync();
       }, opts.watch);
     }
   }, [
-    isOnLastPage,
-    updateCount,
-    query,
+    count,
     data?.length,
-    sentinelValue,
+    isOnLastPage,
     opts.watch,
+    query,
+    sentinelValue,
+    sync,
   ]);
+
+  // Update count when data is incomplete since it means stuff has been deleted
+  // TODO: test how this interacts with the null padded data
+  useEffect(() => {
+    if (
+      data?.length !== undefined &&
+      ((data.length < query._pageSize && !isOnLastPage) || data.length === 0)
+    )
+      sync();
+  }, [data?.length, isOnLastPage, query, sync]);
 
   return { data, loading, pager, ...rest };
 }
+
 export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   const dedupeIndex = useRef(0);
   const [state, setState] = useState({
@@ -571,7 +617,12 @@ const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
   const p = ++dedupeIndex.current;
   /**@type {MultiQuery} */
   const query = createQuery();
-  setState({ ...getState(), loading: true, _query: query });
+  setState({
+    ...getState(),
+    loading: true,
+    _query: query,
+    _reload: () => setState({ ...getState(), loading: true }),
+  });
   if (!query) return;
   const onSuccess = (e) => {
     console.log({ e, success: true, query });

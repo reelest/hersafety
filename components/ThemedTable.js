@@ -25,7 +25,6 @@ function ThemedTable({
   const defaultPager = usePager(results || [], 10);
   /** @type {typeof defaultPager} */
   const pager = _pager ?? defaultPager;
-  console.log({ _pager });
   const { data, pageSize, ...controller } = pager;
   return (
     <TableWrapper {...props}>
@@ -52,7 +51,9 @@ function ThemedTable({
             : null
         }
         renderHooks={[
-          pageData(controller.page, pageSize),
+          ...[_pager ? null : pageData(controller.page, pageSize)].filter(
+            Boolean
+          ),
           addHeaderClass("first:pl-4 pr-2 last:pr-0 font-20t"),
           addClassToColumns(
             "first:pl-4 pr-4 pt-1 pb-1 first:rounded-l last:rounded-r"
