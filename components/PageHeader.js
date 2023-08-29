@@ -13,8 +13,9 @@ import { HambergerMenu, Menu } from "iconsax-react";
 import { useUser } from "@/logic/auth";
 import useBreakpoints from "@/utils/useBreakpoints";
 import { setSidebar } from "./Sidebar";
+import useUserData from "@/logic/user_data";
 export default function PageHeader({ title, onSearch }) {
-  const user = useUser();
+  const user = useUserData();
   return (
     <Paper
       className="flex max-sm:flex-wrap px-4 sm:px-8 h-15 items-center justify-end py-2"
@@ -56,10 +57,10 @@ export default function PageHeader({ title, onSearch }) {
         <Hidden xlDown>
           <div className="text-right">
             <Typography sx={{ fontWeight: "bold" }}>
-              {user ? user.displayName ?? "No name provided" : <Skeleton />}
+              {user ? user.getName() ?? "No name provided" : <Skeleton />}
             </Typography>
             <Typography variant="body2">
-              {user ? user.role ?? "No role provided" : <Skeleton />}
+              {user ? user.getRole() ?? "No role provided" : <Skeleton />}
             </Typography>
           </div>
         </Hidden>
