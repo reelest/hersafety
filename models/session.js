@@ -8,12 +8,12 @@ export class Session extends CountedItem {
   name = "";
 
   async onDeleteItem(txn) {
-    txn.update(this._counterRef, {
+    return this.getCounter().update(txn, {
       sessions: arrayRemove(this.name),
     });
   }
   async onAddItem(txn) {
-    txn.update(this._counterRef, {
+    this.getCounter().update(txn, {
       sessions: arrayUnion(this.name),
     });
   }

@@ -8,6 +8,9 @@ export class Student extends UserModelItem {
   registrationId = "";
   parentId1 = "";
   parentId2 = "";
+  getRole() {
+    return "student";
+  }
 }
 const Students = new CountedModel("students", Student);
 export default Students;

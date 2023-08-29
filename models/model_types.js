@@ -11,6 +11,10 @@ export const Class = {
   })),
 };
 
+export const Hidden = {
+  type: "hidden",
+};
+
 export const Country = {
   options: COUNTRIES.map((e) => ({
     value: e.countryCode,

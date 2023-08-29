@@ -14,6 +14,7 @@ import Events from "./EventsPage";
 import Academics from "./AcademicsPage";
 import UserRedirect from "../UserRedirect";
 import RegistrationsPage from "./RegistrationsPage";
+import Head from "next/head";
 const TABS = [
   {
     name: "Overview",
@@ -48,8 +49,15 @@ const TABS = [
 ];
 export default function Administrators() {
   return (
-    <UserRedirect redirectOnNoUser>
-      <DashboardLayout tabs={TABS} />
-    </UserRedirect>
+    <>
+      <Head>
+        <title>CSMS Administartor Dashboard</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="CSMS Administrator Dashboard" />
+      </Head>
+      <UserRedirect redirectOnNoUser>
+        <DashboardLayout tabs={TABS} />
+      </UserRedirect>
+    </>
   );
 }

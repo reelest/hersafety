@@ -7,8 +7,10 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase_init";
 import createSubscription from "@/utils/createSubscription";
-export const [useUser] = createSubscription((setUser) =>
-  onAuthStateChanged(auth, setUser)
+export const [useUser, , , getUser] = createSubscription(
+  /** @type {import("@/utils/createSubscription").SubscribeInit<import("firebase/auth").User>} */ (
+    (setUser) => onAuthStateChanged(auth, setUser)
+  )
 );
 export const signIn = async ({ email, password }) => {
   await signInWithEmailAndPassword(auth, email, password);

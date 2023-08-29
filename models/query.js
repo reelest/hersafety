@@ -12,14 +12,12 @@ import {
   getCountFromServer,
   documentId,
 } from "firebase/firestore";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
 import { noop } from "@/utils/none";
-import { Model, noFirestore } from "./model";
+import { noFirestore } from "./model";
 import { range } from "d3";
-import usePromise from "@/utils/usePromise";
-import useRefresher from "@/utils/useRefresher";
 import usePager from "@/utils/usePager";
 import useLogger from "@/utils/useLogger";
 
@@ -32,6 +30,9 @@ export const SECONDARY_ORDERING_DESCENDING = "!model-secondary-descending";
  * The first instinct might be to data the ids in buckets but since sort order,
  * and filtering might change, I instead choose to use something similar to what
  * text editors use to synchronize text on the screen.
+ *
+ * The bulk of the issues with pagination are basically what to do when the table changes
+ * while we are using it. usePagedQuery handles this.
  *
  * @typedef {import("firebase/firestore").QuerySnapshot} QuerySnapshot
  * @typedef {import("firebase/firestore").QueryDocumentSnapshot} QueryDocumentSnapshot
@@ -62,12 +63,11 @@ class LocalCache {
    * @param {number} policy
    * @returns
    */
-  update(snapshot, policy = LocalCache.ASSUME_DELETED_POLICY) {
+  onNewData(snapshot, policy = LocalCache.ASSUME_DELETED_POLICY) {
     if (policy !== LocalCache.ASSUME_DELETED_POLICY)
-      throw new Error("Unknown policy passed to LocalCache.update");
+      throw new Error("Unknown policy passed to LocalCache.onNewData");
     this._ensureLocked();
     const data = snapshot.docs;
-    const x = this.end - this.start;
     this.data.splice(
       this.start,
       policy === LocalCache.ASSUME_DELETED_POLICY ? this.end - this.start : 0,
@@ -75,9 +75,6 @@ class LocalCache {
     );
     this.end = this.start + data.length;
     this._ensureUnique();
-    console.log(
-      "Added " + (data.length - x) + " unique items at start " + this.start
-    );
     return this.get();
   }
 
@@ -85,7 +82,6 @@ class LocalCache {
     const data = this.data;
     const mid = data.slice(this.start, this.end).map((e) => e.id);
     let l = 0;
-    let m = data.length;
     for (let i = this.start - 1; i >= 0; i--) {
       if (data[i] && mid.includes(data[i].id)) {
         data.splice(i, 1);
@@ -96,7 +92,6 @@ class LocalCache {
     for (let i = data.length - 1; i >= this.end; i--) {
       if (data[i] && mid.includes(data[i].id)) data.splice(i, 1);
     }
-    console.log("Removed " + (m - data.length) + " non-unique items");
   }
   /**
    * @returns {Array<import("./model").Item>}
@@ -114,7 +109,7 @@ class LocalCache {
     this.end = Math.min(this.start + pageSize, this.data.length);
     console.assert(
       this.hasNextAnchor(this.start) || this.hasPrevAnchor(this.end),
-      "current page must have an anchor for retrieving data"
+      "current page must have an anchor for retrieving data and getting index"
     );
   }
   hasNextAnchor(start) {
@@ -144,12 +139,12 @@ class LocalCache {
     this._ensureLocked();
 
     const offset = this.start - start;
+    if (offset === 0) return;
     if (offset > 0) {
       this.data.splice(0, offset);
     } else {
-      this.data.splice(0, 0, ...range(offset).map(() => null));
+      this.data.splice(0, 0, ...range(-offset).map(() => null));
     }
-    console.log("Updating start to match current index " + offset);
     this.setPage(start);
   }
   async reset() {
@@ -184,49 +179,56 @@ class LocalCache {
 
 /**
  *
- * @param {MultiQuery} query
+ * @param {QueryCursor} query
  */
 
 const PAGE_DIRECTION_FORWARDS = 1;
 const PAGE_DIRECTION_BACKWARDS = -1;
-export class MultiQuery {
-  _pageSize = 2;
+export class QueryCursor {
+  _pageSize = 100;
   _scrollDirection = PAGE_DIRECTION_FORWARDS;
   _filters = [];
   _ordering = [];
   _onError = console.error;
   _unsubscribe = null;
+  _anchorValue = null;
   _query = null;
+  _isLoaded = false;
   /**
    *
-   * @param {Model} model
+   * @param {import("./model").Model} model
    */
   constructor(model) {
     //Used for filtering
     this.model = model;
     this.cache = new LocalCache();
-    console.log("Creating query " + model._ref.path);
+    console.debug("Creating query cursor " + model._ref.path);
     // A subscription that notifies listeners when this query completes
     [, this._subscribe, this._dispatch] = createSubscription(() => {
-      console.log("Starting subscriptions");
       this.start();
       return () => {
-        console.log("Stopping subscriptions");
-        this._unsubscribe();
+        const x = this._unsubscribe;
         this._unsubscribe = null;
+        x();
       };
     });
     this.orderBy();
   }
-  // Construct a firebase query from this Query's state
+
+  // Construct a firebase query from this MultiQuery's state
   // Also, the cache, _filters, _pageSize and _ordering must only be changed using their respective methods.
   get query() {
     return noFirestore
       ? null
       : this._query || (this._query = this._createQuery());
   }
+
   _createQuery() {
-    console.log("Recreating query....", this.cache.start);
+    console.warn("Recreating " + this.model._ref.path + " query....");
+    this._anchorValue =
+      this._scrollDirection === PAGE_DIRECTION_FORWARDS
+        ? this.cache.hasNextAnchor(this.cache.start)
+        : this.cache.hasPrevAnchor(this.cache.end);
     return query(
       this.model._ref,
       ...this._filters,
@@ -236,6 +238,7 @@ export class MultiQuery {
         : this.cache.prevAnchor(this._pageSize))
     ).withConverter(this.model.converter);
   }
+
   // A Query can be in one of 4 states: stopped, stopped-busy, running, running-busy
   // A query starts running once it has at least one listener
   isRunning() {
@@ -260,7 +263,8 @@ export class MultiQuery {
       });
     } else {
       const x = await this.cache.run(async () => {
-        return this.cache.update(await getDocs(this.query));
+        this._isLoaded = true;
+        return this.cache.onNewData(await getDocs(this.query));
       });
       // Restart subscription just in case a listener subscribed while this was running.
       // This could unintentionally resume a paused subscription ie
@@ -277,20 +281,30 @@ export class MultiQuery {
 
   start() {
     if (this.isRunning()) this._unsubscribe();
-    console.log("Restarting snapshot busy:" + this.isBusy());
-    const _unsubscribe = (this._unsubscribe = this.isBusy()
+    console.debug("Restarting snapshot busy:" + this.isBusy());
+    let query;
+    this._isLoaded = false;
+
+    this._unsubscribe = this.isBusy()
       ? noop
-      : onSnapshot(this.query, {
+      : onSnapshot((query = this.query), {
           next: (snapshot) => {
-            if (_unsubscribe === this._unsubscribe) {
-              this.cache.run(() => this._dispatch(this.cache.update(snapshot)));
-            }
+            this.cache.run(() => {
+              if (query === this.query) {
+                this._isLoaded = true;
+                this._dispatch(this.cache.onNewData(snapshot));
+              }
+            });
           },
           error: (error) => {
             this._onError?.(error);
           },
-        }));
-    if (this.cache.hasData()) this._dispatch(this.cache.get());
+        });
+    // Must come after to prevent messing with this.isBusy
+    if (this.cache.hasData())
+      this.cache.run(() => {
+        if (!this._isLoaded) this._dispatch(this.cache.get());
+      });
   }
   restart() {
     this._query = null;
@@ -298,51 +312,73 @@ export class MultiQuery {
   }
 
   async seek(index) {
+    // Ensure index is valid
     if (typeof index !== "number" || index < 0 || Number.isNaN(index))
       throw new Error("Invalid index: " + index + " supplied");
-    if (index === this.cache.start && this.cache.hasData()) return;
-    if (
-      index < this.cache.start && index !== 0
-        ? this.cache.hasPrevAnchor(index + this._pageSize)
-        : this.cache.hasNextAnchor(index)
-    ) {
-      if (index < this.cache.start && index > this.cache.start - this._pageSize)
-        this._scrollDirection = PAGE_DIRECTION_BACKWARDS;
-      else this._scrollDirection = PAGE_DIRECTION_FORWARDS;
-      await this.cache.run(() => {
-        this.cache.setPage(index, this._pageSize);
-      });
-      this.restart();
-    } else {
-      try {
-        await this._bulkLoadUpTo(index);
-      } finally {
+    try {
+      if (
+        await this.cache.run(async () => {
+          const scrollDirection =
+            index < this.cache.start &&
+            index > this.cache.start - this._pageSize &&
+            index !== 0
+              ? PAGE_DIRECTION_BACKWARDS
+              : PAGE_DIRECTION_FORWARDS;
+          const anchor =
+            scrollDirection === PAGE_DIRECTION_BACKWARDS
+              ? this.cache.hasPrevAnchor(index + this._pageSize)
+              : this.cache.hasNextAnchor(index);
+          if (anchor) {
+            if (
+              anchor === this._anchorValue &&
+              scrollDirection === this._scrollDirection
+            ) {
+              console.debug(
+                "Ignored the attempt to seek when anchors are unchanged."
+              );
+              return false;
+            }
+            this._scrollDirection = scrollDirection;
+            this.cache.setPage(index, this._pageSize);
+          } else {
+            await this._bulkLoadUpTo(index);
+          }
+          return true;
+        })
+      ) {
         this.restart();
-      }
+        return true;
+      } else return false;
+    } catch (e) {
+      this.restart();
+      throw e;
     }
   }
 
-  async _bulkLoadUpTo(targetSize) {
+  async _bulkLoadUpTo(targetIndex) {
     this._scrollDirection = PAGE_DIRECTION_FORWARDS;
-    let currentSize = this.cache.closestAnchor(targetSize);
-    while (currentSize < targetSize) {
-      await this.cache.run(async () => {
-        this.restart(); //stops any subscriptions
-        let prevPageSize = this._pageSize;
-        this._pageSize = Math.min(
-          targetSize - currentSize,
-          this._pageSize * 10
-        );
-        this.cache.setPage(currentSize);
-        let m = this.query;
-        this._pageSize = prevPageSize;
-        this.cache.update(await getDocs(m));
-      });
+    let closestIndex = this.cache.closestAnchor(targetIndex);
+    console.debug("Bulk loading...");
+    while (closestIndex < targetIndex) {
+      this.restart(); //stops any subscriptions
+      let prevPageSize = this._pageSize;
+      this._pageSize = Math.min(
+        targetIndex - closestIndex,
+        this._pageSize * 10
+      );
+      console.debug("seek from " + closestIndex + " -> +" + this._pageSize);
+      this.cache.setPage(closestIndex);
+      let query = this.query;
+      this._pageSize = prevPageSize;
+      this.cache.onNewData(await getDocs(query));
       // TODO allow cancellation or something
-      const m = this.cache.closestAnchor(targetSize);
-      if (currentSize <= m) break;
-      currentSize = m;
+      const m = this.cache.closestAnchor(targetIndex);
+      if (closestIndex > m) {
+        return console.debug("failed " + m + " vs " + closestIndex);
+      }
+      closestIndex = m;
     }
+    this.cache.setPage(targetIndex);
   }
 
   // Pager methods
@@ -398,17 +434,23 @@ export class MultiQuery {
       this.cache.start === 0
     )
       return 0;
-    if (!this.cache.data[this.cache.start]) {
-      await this.seek(this.cache.start);
-    }
+
     this.cache.run(async () => {
+      if (!this.cache.data[this.cache.start])
+        return console.warn(
+          "Cannot get index until documents have been loaded"
+        );
       const index = (
         await getCountFromServer(
           query(
             this.model._ref,
             ...this._filters,
             ...this._ordering,
-            endBefore(this.cache.data[this.cache.start])
+            ...[
+              this.cache.data[this.cache.start]
+                ? endBefore(this.cache.data[this.cache.start])
+                : null,
+            ].filter(Boolean)
           )
         )
       ).data().count;
@@ -452,7 +494,7 @@ export class MultiQuery {
   }
 }
 
-export class DocumentQuery {
+export class DocumentQueryCursor {
   constructor(query) {
     this.query = query;
   }
@@ -473,8 +515,7 @@ export class DocumentQuery {
   }
 }
 
-// TODO: Be more efficient in updating the count and the index. Previous attempts had issues.
-export function usePagedQuery(createQuery, deps = [], { ...opts }) {
+export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
   const {
     _query: query,
     _reload,
@@ -498,24 +539,43 @@ export function usePagedQuery(createQuery, deps = [], { ...opts }) {
   );
   const { page: _page, goto } = pager;
   const page = _page - 1;
-
+  const lastCheckCountT = useRef(-1);
   //Synchronize pager state with query state and query state with database state
   const sync = useStable(async () => {
     if (!query) return;
-    console.log("Syncing");
-    const _count = await query.getCount();
-    if (_count !== count) return setCount(_count);
+    const now = Date.now();
+    // Refreshes happen every 2 seconds to 1 hour depending on how close to the edge we are.
+    const frequency =
+      2000 * 3 ** Math.min(7.5, Math.max(0, pager.numPages - 1 - page));
     const maxPage = Math.floor((count - 1) / query._pageSize);
     const y = query.cache.start;
-    query.syncIndex().then(() => {
-      const x = query.cache.start;
-      if (x === y) {
-        if (query.page !== page) _reload();
-        query.seek(Math.min(Math.max(0, page), maxPage) * query._pageSize);
-      } else {
-        goto(Math.floor(x / query._pageSize));
-      }
-    });
+    if (lastCheckCountT.current + frequency < now) {
+      console.debug(
+        "Synchronizing query state " +
+          (lastCheckCountT.current < 1
+            ? "forcefully"
+            : "with after delay " + frequency + "ms")
+      );
+      const _count = await query.getCount();
+      lastCheckCountT.current = now;
+      if (_count !== count) setCount(_count);
+      await query.syncIndex();
+    } else
+      console.debug(
+        "Deferring sync for " +
+          frequency +
+          "ms for page " +
+          page +
+          " of " +
+          pager.numPages
+      );
+    const x = query.cache.start;
+    if (x === y) {
+      const index = Math.max(0, Math.min(page, maxPage)) * query._pageSize;
+      if (await query.seek(index)) _reload();
+    } else {
+      goto(Math.floor(x / query._pageSize));
+    }
   });
 
   useEffect(() => {
@@ -537,11 +597,11 @@ export function usePagedQuery(createQuery, deps = [], { ...opts }) {
   const isOnLastPage =
     query &&
     query.page === Math.floor((count - 1) / query._pageSize) &&
-    !loading;
+    !loading &&
+    query._isLoaded;
   const sentinelValue = query?.sentinelValue;
   useEffect(() => {
     if (query && isOnLastPage && data?.length === query._pageSize) {
-      console.log("Adding sentinel " + query.page + ":" + count);
       return query.sentinel((e) => {
         if (e) sync();
       }, opts.watch);
@@ -562,8 +622,10 @@ export function usePagedQuery(createQuery, deps = [], { ...opts }) {
     if (
       data?.length !== undefined &&
       ((data.length < query._pageSize && !isOnLastPage) || data.length === 0)
-    )
+    ) {
+      lastCheckCountT.current = -1;
       sync();
+    }
   }, [data?.length, isOnLastPage, query, sync]);
 
   return { data, loading, pager, ...rest };
@@ -581,7 +643,7 @@ export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   const getState = useStable(() => state);
 
   useEffect(
-    () => sendQuery(dedupeIndex, getState, setState, watch, createQuery),
+    () => startQuery(dedupeIndex, getState, setState, watch, createQuery),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [watch, ...deps]
   );
@@ -594,7 +656,7 @@ export function createSharedQuery(query, { watch = false } = {}) {
   return createSubscription(
     (setState) => {
       let lastState;
-      return sendQuery(
+      return startQuery(
         dedupeIndex,
         () => lastState,
         (s) => {
@@ -613,28 +675,34 @@ export function createSharedQuery(query, { watch = false } = {}) {
   );
 }
 
-const sendQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
+const startQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
   const p = ++dedupeIndex.current;
-  /**@type {MultiQuery} */
-  const query = createQuery();
+  /**@type {QueryCursor} */
+  const query =
+    /* await. Too many issues, just combine with usePromise instead */ createQuery();
   setState({
     ...getState(),
     loading: true,
     _query: query,
-    _reload: () => setState({ ...getState(), loading: true }),
+    _reload: () => {
+      setState({ ...getState(), loading: true });
+      if (!watch) {
+        query.get().then(onSuccess, onError);
+      }
+    },
   });
   if (!query) return;
   const onSuccess = (e) => {
-    console.log({ e, success: true, query });
+    console.debug({ e, success: true, query });
     if (p === dedupeIndex.current)
       setState({ ...getState(), loading: false, data: e, error: null });
-    else console.log("Ignored result because query cahnged");
+    else console.debug("Ignored result because query cahnged");
   };
   const onError = (e) => {
-    console.log({ e, success: false, query });
+    console.debug({ e, success: false, query });
     if (p === dedupeIndex.current)
       setState({ ...getState(), loading: false, error: e });
-    else console.log("Ignored result because query cahnged");
+    else console.debug("Ignored result because query cahnged");
   };
   if (watch) {
     return query.watch(onSuccess, onError);

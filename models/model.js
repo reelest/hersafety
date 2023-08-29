@@ -10,18 +10,25 @@ import { firestore } from "@/logic/firebase_init";
 import { InvalidState, ItemDoesNotExist, checkError } from "./errors";
 import getModelTypeInfo from "./model_type_info";
 import pick from "@/utils/pick";
-import { MultiQuery, DocumentQuery } from "./query";
+import { DocumentQueryCursor, QueryCursor } from "./query";
 /**
  * @typedef {[string, import("firebase/firestore").WhereFilterOp, any]} FilterParam
  */
 export const noFirestore = firestore === null;
+/**
+ * @template {Item} T
+ */
 export class Model {
-  constructor(_collectionID, ItemClass = Item, Empty, meta) {
+  /**
+   * @param {string} _collectionID
+   * @param {T} [ItemClass=Item]
+   * @param {Partial<import("./model_type_info").ModelTypeInfo>} meta
+   */
+  constructor(_collectionID, ItemClass = Item, meta) {
     this._ref = noFirestore
       ? { path: _collectionID }
       : collection(firestore, _collectionID);
     this.Item = ItemClass ?? Item;
-    this.Empty = Empty ?? {};
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
     global[_collectionID + "Model"] = this;
@@ -41,7 +48,7 @@ export class Model {
     };
   }
   request() {
-    return new MultiQuery(this);
+    return new QueryCursor(this);
   }
   all() {
     return this.request();
@@ -52,9 +59,20 @@ export class Model {
   filter(key, op, val) {
     return this.all().filter(key, op, val);
   }
+  /**
+   * @param {string} id
+   * @param {boolean} isCreate
+   * @returns {T}
+   */
   item(id, isCreate) {
     return new this.Item(this.ref(id), isCreate, this);
   }
+  /**
+   * @param {string} id
+   * @param {boolean} isCreate
+   * @returns {Promise<T>}
+   */
+
   async getOrCreate(id) {
     const m = new this.Item(this.ref(id), true, this);
     try {
@@ -64,11 +82,16 @@ export class Model {
     }
     return m;
   }
+  /**
+   * @returns {T}
+   */
   create() {
     return new this.Item(this.ref(), true, this);
   }
   ref(...id) {
-    return noFirestore ? { path: "server-side" } : doc(this._ref, ...id);
+    return noFirestore
+      ? { path: "server-side", id: "server-side" }
+      : doc(this._ref, ...id);
   }
 }
 
@@ -88,7 +111,6 @@ export class Item {
       writable: true,
       value: !!isNew,
     });
-    Object.assign(this, model.Empty);
   }
   async save() {
     if (noFirestore) throw InvalidState("No Firestore!!");
@@ -98,7 +120,7 @@ export class Item {
       // Might refactor out later
       await setDoc(this._ref, this.data(), { merge: true });
       this._isLocalOnly = false;
-    } else await updateDoc(this._ref, this.data());
+    } else await this.update();
   }
   async load() {
     let data;
@@ -121,16 +143,24 @@ export class Item {
     Object.assign(this, pick(data, Object.keys(this)));
     if (this._isLocalOnly) {
       await this.save();
-    } else await updateDoc(this._ref, data);
+    } else await this.update(null, data);
     return this;
+  }
+
+  async update(txn, data = this.data()) {
+    if (txn) txn.update(this._ref, data);
+    else await updateDoc(this._ref, data);
   }
   // Deleting a document does not make it local only. Other clients might have copies of it.
   // While they would typically not be able to update it,
   // if restoration was made possible by marking it as local only,
   // each client would be able to restore potentially conflicting versions of the same document.
-  async delete() {
+  async delete(txn) {
     if (noFirestore) throw InvalidState("No Firestore!!");
-    await deleteDoc(this._ref);
+    if (txn) txn.delete(this._ref);
+    else {
+      await deleteDoc(this._ref);
+    }
   }
   /**
    * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} cb
@@ -151,7 +181,7 @@ export class Item {
     return Object.assign({}, this);
   }
   asQuery() {
-    return new DocumentQuery(this._ref);
+    return new DocumentQueryCursor(this._ref);
   }
   isLocalOnly() {
     return this._isLocalOnly;
@@ -159,7 +189,7 @@ export class Item {
   id() {
     return this._ref.id;
   }
-  fullName() {
+  uniqueName() {
     return this._ref.path;
   }
   getString(name) {

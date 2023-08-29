@@ -67,7 +67,7 @@ function ThemedTable({
         <Typography variant="body2" sx={{ mr: 4 }}>
           Total
         </Typography>
-        <span className="font-20t text-disabled">{results?.length}</span>
+        <span className="font-20t text-disabled">{controller.count}</span>
         <Spacer />
         <Pager controller={controller} />
       </div>

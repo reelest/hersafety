@@ -10,7 +10,13 @@ import {
 import Form, { FormField, FormSelect, FormSubmit } from "./Form";
 import { useState } from "react";
 const FORM_SECTION = "!modelform-section";
-export default function ModelForm({ model, item, onSubmit = noop, ...props }) {
+export default function ModelForm({
+  model,
+  item,
+  submitText,
+  onSubmit = noop,
+  ...props
+}) {
   const sections = { DEFAULT: [] };
   Object.keys(model.Meta).forEach((e) => {
     let section = sections.DEFAULT;
@@ -27,7 +33,7 @@ export default function ModelForm({ model, item, onSubmit = noop, ...props }) {
       key={item?.id?.()}
       onSubmit={async (data) => {
         await item.set(data);
-        onSubmit();
+        await onSubmit();
       }}
       initialValue={item ? item.data() : None}
       {...props}
@@ -59,7 +65,7 @@ export default function ModelForm({ model, item, onSubmit = noop, ...props }) {
         size="large"
         disabled={!item}
       >
-        {item?.isLocalOnly?.() ? "Save" : "Update"}
+        {submitText ?? (item?.isLocalOnly?.() ? "Save" : "Update")}
       </FormSubmit>
     </Form>
   );

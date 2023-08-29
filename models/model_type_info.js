@@ -35,7 +35,7 @@ function inferType(value, key) {
     case "object":
       return m;
     default:
-      throw Error("Failed to infer prop type for " + key);
+      throw Error("Failed to infer prop type for " + key + " value: " + value);
   }
 }
 

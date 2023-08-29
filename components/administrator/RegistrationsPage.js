@@ -17,10 +17,10 @@ import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 
 export default function RegistrationsPage() {
   const { data: registrations, pager } = usePagedQuery(
-    () => Registrations.all(),
+    () => Registrations.all().pageSize(10),
     [],
     {
-      watch: true,
+      watch: false,
     }
   );
   const [formVisible, setFormVisible] = useState(false);

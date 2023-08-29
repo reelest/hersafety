@@ -8,30 +8,30 @@ const createdCounters = new Set();
 export const ensureCounter = async (model) => {
   const counter = model.counter;
   if (process.env.NODE_ENV !== "production") {
-    if (createdCounters.has(counter.fullName())) return true;
+    if (createdCounters.has(counter.uniqueName())) return true;
     else {
       const doc = await counter._model.getOrCreate(counter._ref.id);
       if (doc.isLocalOnly()) {
-        console.log("Creating counter " + doc.fullName());
+        console.log("Creating counter " + doc.uniqueName());
         await model.initCounter(doc);
         await doc.save();
       }
-      createdCounters.add(counter.fullName());
+      createdCounters.add(counter.uniqueName());
     }
   }
 };
 export class CountedItem extends Item {
-  getCounterRef() {
-    return this._model.counter._ref;
+  getCounter() {
+    return this._model.counter;
   }
   async onAddItem(txn) {
-    txn.update(this.getCounterRef(), {
+    this.getCounter().update(txn, {
       itemCount: increment(1),
     });
   }
 
   async onDeleteItem(txn) {
-    txn.update(this.getCounterRef(), {
+    this.getCounter().update(txn, {
       itemCount: increment(-1),
     });
   }
@@ -55,8 +55,11 @@ export class CountedItem extends Item {
     });
   }
 }
+class MetadataItem extends Item {
+  itemCount = 0;
+}
 
-const Metadata = new Model("metadata", null, { itemCount: 0 });
+const Metadata = new Model("metadata", MetadataItem);
 export class CountedModel extends Model {
   constructor(_collectionID, ItemClass = CountedItem, ...props) {
     super(_collectionID, ItemClass ?? CountedItem, ...props);

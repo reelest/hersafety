@@ -6,27 +6,22 @@ import Box from "@mui/material/Box";
 import { Lock as LockOutlinedIcon } from "iconsax-react";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import Form, {
-  FormErrors,
-  FormField,
-  FormSubmit,
-} from "@/components/Form";
-import { resetPassword, signIn } from "@/logic/auth";
+import Form, { FormErrors, FormField, FormSubmit } from "@/components/Form";
+import { resetPassword } from "@/logic/auth";
 import UserRedirect from "@/components/UserRedirect";
 import Footer from "@/components/Footer";
 import Head from "next/head";
 
-export default function SignIn() {
+export default function ForgotPassword() {
   return (
     <>
       <Head>
-        <title>CSMS</title>
+        <title>CSMS - Reset Password</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="CSMS Website" />
+        <meta name="description" content="Reset password to CSMS Dashboard" />
       </Head>
-      
+
       <Container component="main" maxWidth="xs">
-        <CssBaseline />
         <Box
           sx={{
             marginTop: 32,

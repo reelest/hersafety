@@ -18,7 +18,7 @@ export class Registration extends CountedItem {
     return this.getString("entranceClass");
   }
 }
-const Registrations = new CountedModel("registrations", Registration, null, {
+const Registrations = new CountedModel("registrations", Registration, {
   gender: Gender,
   dateOfBirth: {
     type: "date",

@@ -1,5 +1,5 @@
 import Admins from "@/models/admin";
-import { useQuery } from "@/models/query";
+import { usePagedQuery, useQuery } from "@/models/query";
 import Registrations from "@/models/registration";
 import Students from "@/models/student";
 import Teachers from "@/models/teacher";
@@ -28,6 +28,11 @@ import {
 import ThemedTable from "../ThemedTable";
 
 import SuccessDialog from "@/components/SuccessDialog";
+import ActivationRequests, {
+  ActivationRequest,
+} from "@/models/activation_requests";
+import { mapRoleToModel } from "@/logic/user_data";
+import { UserRoles } from "@/models/user";
 
 function a11yProps(index) {
   return {
@@ -42,25 +47,32 @@ const TABS /*variable*/ = [
     name /* property */: "Admin",
     header: "Admins",
     model: Admins,
+    headers: [
+      "Name",
+      "Email",
+      "Phone Number",
+      "Last Login",
+      "Profile Completed",
+    ],
     renderHooks: [
       addHeaderClass("whitespace-nowrap"),
       addClassToColumns("min-w-[14rem]", [0]),
       addClassToColumns("whitespace-nowrap", [4]),
       supplyValue((row, col, admins) => {
-        const item = admins[row];
+        const item = /** @type {import("../../models/admin").Admin} */ (
+          admins[row]
+        );
         switch (col) {
           case 0:
             return item.getName();
           case 1:
             return item.email;
           case 2:
-            return item.getClass();
+            return item.phoneNumber;
           case 3:
-            return item.gender;
+            return item.lastLogin;
           case 4:
-            return item.dateOfBirth;
-          case 5:
-            return item.stateOfOrigin;
+            return item.profileCompleted;
         }
       }),
     ],
@@ -82,17 +94,13 @@ export default function UsersPage() {
   const [selected, setSelected] = useState(-1);
   const [activeTab, setActiveTab] = useState(0);
 
-  const { data: registrations } = useQuery(
-    () => TABS[activeTab].model.all(),
-    [activeTab],
-    {
-      watch: true,
-    }
-  );
-  console.log({ registrations });
   return (
     <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
-      <UsersForm isOpen={formVisible} onClose={() => setFormVisible(false)} />
+      <UsersForm
+        isOpen={formVisible}
+        onClose={() => setFormVisible(false)}
+        model={TABS[activeTab].model}
+      />
       <PageHeader title="User Dashboard" />
 
       <Box className="px-4 sm:px-8 py-8">
@@ -122,48 +130,59 @@ export default function UsersPage() {
             <UserAdd size={32} className="ml-2" />
           </Button>
         </div>
-        <ThemedTable
-          title={TABS[activeTab].header}
+        <UsersTable
+          activeTab={activeTab}
           selected={selected}
           setSelected={setSelected}
-          headerButtons={
-            <TableButton
-              disabled={selected === -1}
-              onClick={async () => {
-                if (await confirm("Delete selected item?")) {
-                  await registrations[selected].delete();
-                  setSelected(-1);
-                }
-              }}
-            >
-              Delete
-              <TrashIcon className="ml-0.5 relative" width={20} />
-            </TableButton>
-          }
-          headers={[
-            "Name",
-            "Email",
-            "Entrance Class",
-            "Gender",
-            "DOB",
-            "State of Origin",
-          ]}
-          results={registrations}
-          renderHooks={TABS[activeTab].renderHooks}
-          sx={{ width: "100%", flexGrow: 1, mx: 0, mt: 8 }}
         />
       </Box>
+      <ActivationRequestsTable />
     </Box>
   );
 }
 
-function UsersForm({ isOpen = false, edit, onClose = noop }) {
+function UsersTable({ activeTab, selected, setSelected }) {
+  const { data: users, loading } = useQuery(
+    () => TABS[activeTab].model.all().pageSize(10),
+    [activeTab],
+    {
+      watch: true,
+    }
+  );
+  return (
+    <ThemedTable
+      title={TABS[activeTab].header}
+      selected={selected}
+      setSelected={setSelected}
+      headerButtons={
+        <TableButton
+          disabled={selected === -1}
+          onClick={async () => {
+            if (await confirm("Delete selected item?")) {
+              await users[selected].delete();
+              setSelected(-1);
+            }
+          }}
+        >
+          Delete
+          <TrashIcon className="ml-0.5 relative" width={20} />
+        </TableButton>
+      }
+      headers={TABS[activeTab].headers}
+      results={loading ? null : users}
+      renderHooks={TABS[activeTab].renderHooks}
+      sx={{ width: "100%", flexGrow: 1, mx: 0, mt: 8 }}
+    />
+  );
+}
+
+function UsersForm({ isOpen = false, edit, model: Model, onClose = noop }) {
   const [item, setItem] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    setItem(isOpen ? edit || Registrations.create() : null);
-  }, [edit, isOpen]);
+    setItem(isOpen ? edit || Model.create() : null);
+  }, [edit, isOpen, Model]);
   return (
     <Modal onClose={onClose} open={isOpen} className="p-4">
       {/* Modal must have only one child */}
@@ -188,11 +207,70 @@ function UsersForm({ isOpen = false, edit, onClose = noop }) {
           )}
         </Typography>
         <ModelForm
-          model={Registrations}
+          model={Model}
           item={item}
           onSubmit={() => setSubmitted(true)}
         />
       </Paper>
     </Modal>
+  );
+}
+
+function ActivationRequestsTable() {
+  const { loading, data: users } = usePagedQuery(
+    () => ActivationRequests.all(),
+    [],
+    { watch: true }
+  );
+  const parseName = (name) => {
+    const a = name.split(" ");
+    return {
+      firstName: a[0],
+      lastName: a.length > 1 ? a[1] : "",
+    };
+  };
+  const activateItem = async (item) => {
+    const role = await UserRoles.getOrCreate(item.uid);
+    role.role = item.role;
+    await role.save();
+    const model = mapRoleToModel(item.role);
+    const user = await model.getOrCreate(item.uid);
+    await user.set({ email: item.email, ...parseName(item.name) });
+    await item.delete();
+  };
+  return (
+    <Box className="px-4 sm:px-8 py-8">
+      <ThemedTable
+        title={"Activation Requests"}
+        headers={["Name", "Email", "Role", "", ""]}
+        results={loading ? null : users}
+        renderHooks={[
+          addClassToColumns("w-0", [3, 4]),
+          supplyValue((row, col, data) => {
+            const item = /** @type {ActivationRequest}*/ (data[row]);
+            switch (col) {
+              case 0:
+                return item.name;
+              case 1:
+                return item.email;
+              case 2:
+                return item.role;
+              case 3:
+                return (
+                  <Button onClick={() => activateItem(item)}>Activate</Button>
+                );
+              case 4:
+                return (
+                  <Button color="error" onClick={() => item.delete()}>
+                    Delete
+                  </Button>
+                );
+            }
+          }),
+        ]}
+        data={loading ? null : users}
+        sx={{ width: "100%", flexGrow: 1, mx: 0, mt: 8 }}
+      />
+    </Box>
   );
 }
