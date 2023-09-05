@@ -27,13 +27,13 @@ async function markFileForAutoCleanup(path) {
     await item.save(txn);
   });
 }
-export async function deleteInTxn(txn, path) {
+async function deleteInTxn(txn, path) {
   return txn.set(FileTracker.ref(_id(ref(storage, path).fullPath)), {
     path: path,
     time: 0,
   });
 }
-export async function keepInTxn(txn, path) {
+async function keepInTxn(txn, path) {
   return txn.delete(FileTracker.ref(_id(ref(storage, path).fullPath)), {
     exists: true,
   });
@@ -45,31 +45,32 @@ const fileProps = Symbol();
  * @param {Array<String>} props
  * @param {typeof import("../models/lib/counted_model").CountedItem} ItemClass
  */
-export const trackFiles = (props, ItemClass) => {
+export const trackFiles = (ItemClass, props) => {
   ItemClass.markTriggersUpdateTxn(props);
   ItemClass.prototype[fileProps] = []
     .concat(ItemClass.prototype[fileProps])
     .concat(props)
     .filter(Boolean);
 };
-export async function onFilesUpdateItem(item, txn, newState, oldState) {
+export async function onFilesUpdateItem(item, txn, newState, prevState) {
+  if (!prevState) return;
   item[fileProps].forEach((e) => {
-    if (oldState[e] !== newState[e]) {
+    if (prevState[e] !== newState[e]) {
       console.log(
-        "Updating " + e + " from " + oldState[e] + " to " + newState[e]
+        "Updating " + e + " from " + prevState[e] + " to " + newState[e]
       );
-      if (oldState[e]) deleteInTxn(txn, oldState[e]);
+      if (prevState[e]) deleteInTxn(txn, prevState[e]);
       if (newState[e]) keepInTxn(txn, newState[e]);
     }
   });
 }
-export async function onFilesAddItem(item, txn, data) {
+export async function onFilesAddItem(item, txn, newState) {
   item[fileProps].forEach((e) => {
-    if (data[e]) keepInTxn(txn, data[e]);
+    if (newState[e]) keepInTxn(txn, newState[e]);
   });
 }
-export async function onFilesDeleteItem(item, txn, data) {
+export async function onFilesDeleteItem(item, txn, prevState) {
   item[fileProps].forEach((e) => {
-    if (data[e]) deleteInTxn(txn, data[e]);
+    if (prevState[e]) deleteInTxn(txn, prevState[e]);
   });
 }

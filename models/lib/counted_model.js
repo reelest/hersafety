@@ -27,11 +27,17 @@ export const ensureCounter = async (model) => {
  * It does this using transactions.
  * This is used for keeping counts, sums etc.
  */
+const NO_TRANSACTION_NEEDED = 0;
+const TRANSACTION_NEEDED_NO_PREV_STATE = 1;
+const TRANSACTION_NEEDED = 2;
 export class CountedItem extends Item {
-  #needsTransaction = false;
-  scheduleUpdateTransaction() {
-    console.log("Scheduling transac tion");
-    this.#needsTransaction = true;
+  #needsTransaction = NO_TRANSACTION_NEEDED;
+  scheduleUpdateTransaction(needsPrevState) {
+    console.log("Scheduling transaction.....");
+    this.#needsTransaction = Math.max(
+      this.#needsTransaction,
+      needsPrevState ? TRANSACTION_NEEDED : TRANSACTION_NEEDED_NO_PREV_STATE
+    );
   }
   getCounter() {
     return this._model.counter;
@@ -56,62 +62,80 @@ export class CountedItem extends Item {
   async onUpdateItem(txn, currentState, lastState) {
     // Do nothing
   }
+
   /**
    * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} onUpdate
    * @returns
    */
-  async atomicUpdate(onUpdate) {
-    return runTransaction(firestore, async (txn) => {
-      const doc = await txn.get(this._ref);
-      if (doc.exists()) {
-        return await onUpdate(txn, doc.data());
-      }
-      return false;
-    });
+  async atomicUpdate(onUpdate, needsPrevState = true, txn, prevState) {
+    if (txn) {
+      if (
+        needsPrevState &&
+        !prevState &&
+        this.#needsTransaction !== TRANSACTION_NEEDED_NO_PREV_STATE
+      )
+        throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
+      return await onUpdate(txn, prevState);
+    } else if (needsPrevState) {
+      return runTransaction(firestore, async (txn) => {
+        const doc = await txn.get(this._ref);
+        if (doc.exists()) {
+          return await onUpdate(txn, doc.data());
+        }
+        return false;
+      });
+    } else {
+      const batch = writeBatch(firestore);
+      return await onUpdate(batch);
+    }
   }
-  async _update(txn, newState, oldState = null) {
+  async _update(txn, newState, prevState = null) {
     console.log("Updating....");
-    if (this.#needsTransaction) {
-      if (txn) {
-        if (!oldState)
-          throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
-        console.log("Running in transaction");
-        await super._update(txn, newState);
-        return await this.onUpdateItem(txn, newState, oldState);
-      }
-      return this.atomicUpdate(async (txn, doc) =>
-        this._update(txn, newState, doc)
-      );
-    } else return super._update(txn, newState);
+    return this.atomicUpdate(
+      async (txn, prevState) => this._update(txn, newState, prevState),
+      this.#needsTransaction === TRANSACTION_NEEDED,
+      txn,
+      prevState
+    );
   }
-  async save(txn) {
+  async save(txn, prevState) {
     console.log("Saving.....");
     if (noFirestore) throw InvalidState("No Firestore!!");
     if (this._isLocalOnly) {
       //TODO: do this in a transaction
       await ensureCounter(this._model);
-      const _txn = txn ?? writeBatch(firestore);
-      _txn.set(this._ref, this.data());
-      await this.onAddItem(_txn, this.data());
-      if (!txn) await _txn.commit();
+      this.atomicUpdate(
+        async (txn) => {
+          txn.set(this._ref, this.data());
+          await this.onAddItem(txn, this.data());
+        },
+        false,
+        txn,
+        prevState
+      );
       this._isLocalOnly = false;
     } else await super.save(txn);
     this.#needsTransaction = false;
   }
-  async delete(txn, oldState) {
+  async delete(txn, prevState) {
     if (noFirestore) throw InvalidState("No Firestore!!");
     if (txn) {
-      await this.onDeleteItem(txn, oldState);
+      await this.onDeleteItem(txn, prevState);
       txn.delete(this._ref);
     } else {
-      if (!oldState)
+      if (!prevState)
         throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
-      await this.atomicUpdate(async (txn, doc) => {
-        this.delete(txn, doc);
-      });
+      await this.atomicUpdate(
+        async (txn, prevState) => {
+          this.delete(txn, prevState);
+        },
+        true,
+        txn,
+        prevState
+      );
     }
   }
-  static markTriggersUpdateTxn(props) {
+  static markTriggersUpdateTxn(props, needsPrevState = true) {
     props.forEach((e) => {
       let x;
       const descriptor = {
@@ -121,7 +145,7 @@ export class CountedItem extends Item {
         },
         set(v) {
           if (this._isLoaded && v !== x) {
-            this.scheduleUpdateTransaction();
+            this.scheduleUpdateTransaction(needsPrevState);
           }
           x = v;
         },
@@ -156,8 +180,8 @@ export class CountedModel extends Model {
     await ensureCounter(this);
     return (await this.counter.load()).itemCount;
   }
-  async initCounter(doc) {
-    doc.itemCount = increment(0);
+  async initCounter(item) {
+    item.itemCount = increment(0);
   }
   item(id, isCreate) {
     /** Item._isLocalOnly should never be set to true manually especially for CountedItems as it breaks safety checks/speedups in Item.save. */

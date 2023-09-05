@@ -26,8 +26,8 @@ export class Session extends CountedItem {
 }
 
 class SessionModel extends CountedModel {
-  async initCounter(doc) {
-    doc.sessions = arrayUnion();
+  async initCounter(item) {
+    item.sessions = arrayUnion();
   }
 }
 export const Sessions = new SessionModel("sessions", Session);

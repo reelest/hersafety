@@ -25,6 +25,11 @@ const baseScore = (query, text) =>
 const byLength = (a, b) => a.length - b.length;
 const notIn = (arr) => (e) => !arr.includes(e);
 
+/**
+ *
+ * @param {String} text
+ * @returns
+ */
 export function parseQuery(text) {
   const exactMatch = text
     .toLowerCase()

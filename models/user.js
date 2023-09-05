@@ -10,6 +10,7 @@ import {
   trackFiles,
 } from "@/logic/storage";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
+import { indexForSearch } from "@/logic/search";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
@@ -76,8 +77,9 @@ export class UserModelItem extends CountedItem {
       );
   }
 }
-trackFiles(["photoURL"], UserModelItem);
+trackFiles(UserModelItem, ["photoURL"]);
 UserModelItem.markTriggersUpdateTxn(["profileCompleted"]);
+indexForSearch(UserModelItem, ["profileCompleted"]);
 export const UserMeta = {
   dateCreated: Hidden,
   lastUpdated: Hidden,

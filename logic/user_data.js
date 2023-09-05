@@ -43,14 +43,14 @@ const loadUserData = async (user) => {
   if (role !== "guest") {
     return await mapRoleToModel(role).getOrCreate(
       user.uid,
-      async (data, txn) => {
-        if (data.isLocalOnly()) {
-          data.email = user.email;
-          data.emailVerified = user.emailVerified;
-          data.phoneNumber = user.phoneNumber;
+      async (item, txn) => {
+        if (item.isLocalOnly()) {
+          item.email = user.email;
+          item.emailVerified = user.emailVerified;
+          item.phoneNumber = user.phoneNumber;
         }
-        data.lastLogin = Date.now();
-        await data.save(txn);
+        item.lastLogin = Date.now();
+        await item.save(txn);
       }
     );
   }
@@ -68,9 +68,9 @@ export default function useUserData() {
   return usePromise(async () => {
     try {
       if (user) {
-        const data = await loadUserData(user);
+        const userData = await loadUserData(user);
         retryDelay.current = 1000;
-        return data;
+        return userData;
       } else return user;
     } catch (e) {
       retryDelay.current =
