@@ -1,7 +1,9 @@
 import { FormField } from "./Form";
 
-export default function ModelFormSelect({ prop, Model, ...props }) {
-  const items = Model.Meta[prop].itemQuery;
+export default function ModelFormSelect({ prop, meta, ...props }) {
+  const [filter, setFilter] = useState("");
+  const resultIterator = useMemo(()=>search(
+  const {data:items,loading} = usePagedQuery(()=>meta[prop].itemQuery);
   return (
     <FormField
       select
