@@ -24,9 +24,9 @@ export default function useBrowserFormValidation(ref, data, validationRules) {
       getField(name) ? !getField(name).validity.valid : false,
     getErrorMessages: () =>
       ref?.current
-        ? range(ref.current.elements.length).map(
-            (e) => ref.current.elements.item(e).validationMessage
-          )
+        ? range(ref.current.elements.length)
+            .map((e) => ref.current.elements.item(e).validationMessage)
+            .join("\n")
         : "No form reference provided",
     getErrorsInField: (name) => getField(name)?.validationMessage ?? "",
     isFormValid: true, //depend on form to provide validity

@@ -1,7 +1,15 @@
 import { increment } from "firebase/firestore";
-import { CountedItem } from "./counted_model";
-import { Item, Model } from "./model";
+import { CountedItem } from "./lib/counted_model";
+import { Item, Model } from "./lib/model";
 import pick from "@/utils/pick";
+import { Hidden } from "./lib/model_types";
+import {
+  onFilesAddItem,
+  onFilesDeleteItem,
+  onFilesUpdateItem,
+  trackFiles,
+} from "@/logic/storage";
+import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
@@ -17,14 +25,15 @@ export class UserModelItem extends CountedItem {
   otherNames = "";
   email = "";
   emailVerified = false;
-  phoneNumber = -1;
+  phoneNumber = "";
   dateCreated = Date.now();
-  lastUpdated = -1;
+  lastUpdated = Date.now();
+  photoURL = "";
   lastLogin = -1;
   profileCompleted = false;
 
   getName() {
-    return `${this.firstName} ${this.lastName}`;
+    return `${this.firstName} ${this.otherNames} ${this.lastName}`;
   }
   getRole() {
     return "guest";
@@ -34,33 +43,59 @@ export class UserModelItem extends CountedItem {
    * @param {import("firebase/auth").User} user
    */
   static of(user) {
-    const m = new UserModelItem();
+    const m = new UserModelItem(null, null, null);
     return Object.assign(m, pick(user, Object.keys(m)));
   }
-  async markCompleted(completed) {
-    if (this.profileCompleted === completed) return;
-    await this.atomicUpdate(async (txn, lastState) => {
-      const prevCompleted = lastState.profileCompleted;
-      if ((prevCompleted && !completed) || (completed && !prevCompleted)) {
-        this.getCounter().update(txn, {
-          completedProfiles: increment(completed ? 1 : -1),
-        });
-        this.update(txn, { profileCompleted: completed });
-      }
-    });
-    this.profileCompleted = completed;
+
+  async onUpdateItem(txn, currentState, lastState) {
+    await super.onUpdateItem(txn, currentState, lastState);
+    await onFilesUpdateItem(this, txn, currentState, lastState);
   }
+
   async onDeleteItem(txn, lastState) {
+    await super.onDeleteItem(txn, lastState);
+    await onFilesDeleteItem(this, txn, lastState);
     if (lastState.profileCompleted)
-      this.getCounter().update(txn, {
-        completedProfiles: increment(-1),
-      });
+      this.getCounter().set(
+        {
+          completedProfiles: increment(-1),
+        },
+        txn
+      );
     await UserRoles.item(this.id()).delete(txn);
   }
-  async onAddItem(txn, lastState) {
-    if (lastState.profileCompleted)
-      this.getCounter().update(txn, {
-        completedProfiles: increment(1),
-      });
+  async onAddItem(txn, currentState) {
+    await super.onAddItem(txn, currentState);
+    await onFilesAddItem(this, txn, currentState);
+    if (currentState.profileCompleted)
+      this.getCounter().set(
+        {
+          completedProfiles: increment(1),
+        },
+        txn
+      );
   }
 }
+trackFiles(["photoURL"], UserModelItem);
+UserModelItem.markTriggersUpdateTxn(["profileCompleted"]);
+export const UserMeta = {
+  dateCreated: Hidden,
+  lastUpdated: Hidden,
+  lastLogin: Hidden,
+  profileCompleted: Hidden,
+  emailVerified: Hidden,
+  otherNames: {
+    required: false,
+  },
+  photoURL: {
+    required: false,
+    type: "image",
+  },
+  [MODEL_ITEM_PREVIEW](item) {
+    return {
+      title: item.getName(),
+      description: item.email,
+      avatar: item.photoURL,
+    };
+  },
+};

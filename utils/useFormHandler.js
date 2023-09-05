@@ -44,7 +44,6 @@ class FormHandler {
       type,
       onChange: (e) => {
         this.set(id, e.target.value);
-        this._update();
       },
       value: this.data[id] || "",
     };
@@ -69,6 +68,7 @@ class FormHandler {
       name: id,
       onSubmit: async (e) => {
         try {
+          this.setError(null);
           await this.cb(this.data, e);
         } catch (e) {
           console.warn("Form error: ", e);

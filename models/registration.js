@@ -1,5 +1,5 @@
-import { CountedItem, CountedModel } from "./counted_model";
-import { Class, Country, Gender } from "./model_types";
+import { CountedItem, CountedModel } from "./lib/counted_model";
+import { Class, Country, Gender } from "./lib/model_types";
 export class Registration extends CountedItem {
   firstName = "";
   lastName = "";
@@ -15,7 +15,7 @@ export class Registration extends CountedItem {
     return `${this.firstName} ${this.lastName}`;
   }
   getClass() {
-    return this.getString("entranceClass");
+    return this.getPropertyLabel("entranceClass");
   }
 }
 const Registrations = new CountedModel("registrations", Registration, {

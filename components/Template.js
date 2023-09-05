@@ -29,7 +29,8 @@ export default function Template({
       style: style ? (styles2 ? { ...style, ...styles2 } : style) : styles2,
       sx: sx ? (sx2 ? { ...sx, ...sx2 } : sx) : sx2,
       as: templateAs2 || templateAs,
-      className: `${className} ${className2}`,
+      className:
+        className || className2 ? `${className} ${className2}` : undefined,
       ref: ref1
         ? ref2
           ? (e) => {

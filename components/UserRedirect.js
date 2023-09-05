@@ -5,7 +5,7 @@ import FullscreenLoader from "./FullscreenLoader";
 import useUserData from "@/logic/user_data";
 
 const DASHBOARD_URL = {
-  administrator: "/admin",
+  admin: "/admin",
   student: "/student",
   parent: "/parent",
   teacher: "/teacher",
@@ -27,7 +27,7 @@ export default function UserRedirect({
       return <FullscreenLoader />;
     }
   } else if (redirectOnUser) {
-    if (!isServerSide) router.replace(DASHBOARD_URL[userData.role ?? "guest"]);
+    if (!isServerSide) router.replace(DASHBOARD_URL[userData.getRole()]);
     return <FullscreenLoader />;
   }
   return children;

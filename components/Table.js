@@ -3,9 +3,17 @@ import Template from "./Template";
 import ThemedButton from "@mui/material/Button";
 import mergeProps from "@/utils/mergeProps";
 import LoaderAnimation from "./LoaderAnimation";
-import { isValidElement, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  isValidElement,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import uniq from "@/utils/uniq";
 import { Box, Typography } from "@mui/material";
+import { noop } from "@/utils/none";
 
 const borderSpacings = [
   "border-spacing-y-0",
@@ -24,19 +32,20 @@ export default function Table({
   headers,
   scrollable,
   headerClass = "border-b text-left",
-  bodyClass = "font-20 leading-relaxed",
+  bodyClass = "leading-relaxed",
   rowProps,
   rowSpacing = 0,
   onClickRow,
   className = "w-full leading",
   renderHooks = [],
 }) {
+  const [selected, setSelected] = useContext(TableContext);
   const table = (
     <table
       ref={tableRef}
-      className={`${className} ${rowSpacing > 0 ? "border-separate" : ""} ${
-        borderSpacings[rowSpacing]
-      }`}
+      className={`${className} ${
+        rowSpacing > 0 ? "border-separate" : "border-collapse"
+      } ${borderSpacings[rowSpacing]}`}
     >
       <thead className={headerClass}>
         <tr>
@@ -63,7 +72,13 @@ export default function Table({
             <Box
               as="tr"
               key={row}
-              onClick={onClickRow ? (e) => onClickRow(e, row) : undefined}
+              onClick={
+                onClickRow
+                  ? (e) => onClickRow(e, row)
+                  : setSelected
+                  ? () => setSelected(selected === row ? -1 : row)
+                  : null
+              }
               {...(typeof rowProps === "function" ? rowProps(row) : {})}
             >
               {range(cols).map((j) =>
@@ -80,15 +95,26 @@ export default function Table({
   else return table;
 }
 
+export const TableContext = createContext([-1, noop]);
+
 export const TableHeader = (props) => (
   <Template
     props={props}
     className="flex justify-between mb-4 items-baseline"
   />
 );
-export const TableButton = (props) => (
-  <Template props={props} as={ThemedButton} variant="text" color="secondary" />
-);
+export const TableButton = ({ onClick, ...props }) => {
+  const [selected] = useContext(TableContext);
+  return (
+    <Template
+      props={props}
+      as={ThemedButton}
+      variant="text"
+      color="secondary"
+      onClick={(e) => onClick(selected, e)}
+    />
+  );
+};
 
 /**
  * Render Hooks

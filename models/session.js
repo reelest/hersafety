@@ -1,5 +1,5 @@
 import { arrayRemove, arrayUnion, increment } from "firebase/firestore";
-import { CountedItem, CountedModel } from "./counted_model";
+import { CountedItem, CountedModel } from "./lib/counted_model";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
@@ -8,14 +8,20 @@ export class Session extends CountedItem {
   name = "";
 
   async onDeleteItem(txn) {
-    return this.getCounter().update(txn, {
-      sessions: arrayRemove(this.name),
-    });
+    return this.getCounter().set(
+      {
+        sessions: arrayRemove(this.name),
+      },
+      txn
+    );
   }
   async onAddItem(txn) {
-    this.getCounter().update(txn, {
-      sessions: arrayUnion(this.name),
-    });
+    this.getCounter().set(
+      {
+        sessions: arrayUnion(this.name),
+      },
+      txn
+    );
   }
 }
 

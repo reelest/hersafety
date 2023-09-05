@@ -1,10 +1,9 @@
 import Admins from "@/models/admin";
-import { usePagedQuery, useQuery } from "@/models/query";
+import { usePagedQuery, useQuery } from "@/models/lib/query";
 import Registrations from "@/models/registration";
 import Students from "@/models/student";
 import Teachers from "@/models/teacher";
 import { noop } from "@/utils/none";
-import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 import {
   Box,
   Button,
@@ -15,8 +14,13 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { CloseCircle, UserAdd } from "iconsax-react";
-import { useEffect, useState } from "react";
+import {
+  CloseCircle,
+  Edit as EditIcon,
+  Trash as TrashIcon,
+  UserAdd,
+} from "iconsax-react";
+import { useContext, useEffect, useState } from "react";
 import ModelForm from "../ModelForm";
 import PageHeader from "../PageHeader";
 import {
@@ -28,11 +32,11 @@ import {
 import ThemedTable from "../ThemedTable";
 
 import SuccessDialog from "@/components/SuccessDialog";
-import ActivationRequests, {
-  ActivationRequest,
-} from "@/models/activation_requests";
+import ActivationRequests from "@/models/activation_requests";
 import { mapRoleToModel } from "@/logic/user_data";
 import { UserRoles } from "@/models/user";
+import { activateUser, createUser } from "@/logic/admin";
+import ModelFormDialog from "../ModelFormDialog";
 
 function a11yProps(index) {
   return {
@@ -81,23 +85,86 @@ const TABS /*variable*/ = [
     name: "Teacher",
     header: "Teachers",
     model: Teachers,
+    headers: [
+      "Name",
+      "Email",
+      "Phone Number",
+      "Last Login",
+      "Profile Completed",
+    ],
+    renderHooks: [
+      addHeaderClass("whitespace-nowrap"),
+      addClassToColumns("min-w-[14rem]", [0]),
+      addClassToColumns("whitespace-nowrap", [4]),
+      supplyValue((row, col, admins) => {
+        const item = /** @type {import("../../models/admin").Admin} */ (
+          admins[row]
+        );
+        switch (col) {
+          case 0:
+            return item.getName();
+          case 1:
+            return item.email;
+          case 2:
+            return item.phoneNumber;
+          case 3:
+            return item.lastLogin;
+          case 4:
+            return item.profileCompleted;
+        }
+      }),
+    ],
   },
   {
     name: "Student",
     header: "Students",
     model: Students,
+    headers: [
+      "Name",
+      "Email",
+      "Phone Number",
+      "Last Login",
+      "Profile Completed",
+    ],
+    renderHooks: [
+      addHeaderClass("whitespace-nowrap"),
+      addClassToColumns("min-w-[14rem]", [0]),
+      addClassToColumns("whitespace-nowrap", [4]),
+      supplyValue((row, col, admins) => {
+        const item = /** @type {import("../../models/admin").Admin} */ (
+          admins[row]
+        );
+        switch (col) {
+          case 0:
+            return item.getName();
+          case 1:
+            return item.email;
+          case 2:
+            return item.phoneNumber;
+          case 3:
+            return item.lastLogin;
+          case 4:
+            return item.profileCompleted;
+        }
+      }),
+    ],
   },
 ];
 
 export default function UsersPage() {
   const [formVisible, setFormVisible] = useState(false);
-  const [selected, setSelected] = useState(-1);
   const [activeTab, setActiveTab] = useState(0);
-
+  const [edit, setEdit] = useState(null);
+  useEffect(() => {
+    if (!formVisible) {
+      setEdit(null);
+    }
+  }, [formVisible]);
   return (
     <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
       <UsersForm
         isOpen={formVisible}
+        edit={edit}
         onClose={() => setFormVisible(false)}
         model={TABS[activeTab].model}
       />
@@ -132,8 +199,10 @@ export default function UsersPage() {
         </div>
         <UsersTable
           activeTab={activeTab}
-          selected={selected}
-          setSelected={setSelected}
+          edit={(item) => {
+            setEdit(item);
+            setFormVisible(true);
+          }}
         />
       </Box>
       <ActivationRequestsTable />
@@ -141,7 +210,8 @@ export default function UsersPage() {
   );
 }
 
-function UsersTable({ activeTab, selected, setSelected }) {
+function UsersTable({ edit, activeTab }) {
+  const [selected, setSelected] = useState(-1);
   const { data: users, loading } = useQuery(
     () => TABS[activeTab].model.all().pageSize(10),
     [activeTab],
@@ -155,18 +225,31 @@ function UsersTable({ activeTab, selected, setSelected }) {
       selected={selected}
       setSelected={setSelected}
       headerButtons={
-        <TableButton
-          disabled={selected === -1}
-          onClick={async () => {
-            if (await confirm("Delete selected item?")) {
-              await users[selected].delete();
-              setSelected(-1);
-            }
-          }}
-        >
-          Delete
-          <TrashIcon className="ml-0.5 relative" width={20} />
-        </TableButton>
+        <div>
+          <TableButton
+            color="primary"
+            disabled={selected === -1}
+            onClick={async () => {
+              edit(users[selected]);
+            }}
+          >
+            <EditIcon className="mr-1 relative" width={20} />
+            Edit
+          </TableButton>
+          <TableButton
+            color="error"
+            disabled={selected === -1}
+            onClick={async () => {
+              if (await confirm("Delete selected item?")) {
+                await users[selected].delete();
+                setSelected(-1);
+              }
+            }}
+          >
+            <TrashIcon className="mr-0.5 relative" width={20} />
+            Delete
+          </TableButton>
+        </div>
       }
       headers={TABS[activeTab].headers}
       results={loading ? null : users}
@@ -176,43 +259,35 @@ function UsersTable({ activeTab, selected, setSelected }) {
   );
 }
 
-function UsersForm({ isOpen = false, edit, model: Model, onClose = noop }) {
-  const [item, setItem] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    setItem(isOpen ? edit || Model.create() : null);
-  }, [edit, isOpen, Model]);
+function UsersForm({ edit, model: Model, ...props }) {
   return (
-    <Modal onClose={onClose} open={isOpen} className="p-4">
-      {/* Modal must have only one child */}
-      <Paper className="h-full w-full mx-auto max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12">
-        <SuccessDialog
-          open={submitted}
-          onClose={() => {
-            setSubmitted(false);
-            if (!edit) onClose();
-          }}
-        />
-        <div className="text-right -mx-3.5 max-sm:-mx-0.5">
-          <IconButton onClick={onClose}>
-            <CloseCircle />
-          </IconButton>
-        </div>
-        <Typography variant="h4" sx={{ mb: 4 }}>
-          {edit ? (
-            <>Update Student Registration Info</>
-          ) : (
-            <>Register New Student</>
-          )}
-        </Typography>
-        <ModelForm
-          model={Model}
-          item={item}
-          onSubmit={() => setSubmitted(true)}
-        />
-      </Paper>
-    </Modal>
+    <ModelFormDialog
+      edit={edit}
+      title={
+        edit ? <>Update Student Registration Info</> : <>Register New Student</>
+      }
+      model={Model}
+      noSave={!edit}
+      onSubmit={async (data) => {
+        if (!edit) {
+          const DEFAULT_PASSWORD = "student987";
+          const uid = await createUser(data.email, DEFAULT_PASSWORD);
+          const success = await Model.getOrCreate(uid, async (user, txn) => {
+            if (!user.isLocalOnly()) {
+              return false;
+            } else {
+              console.log(user);
+              user.setData(data);
+              await user.save(txn);
+              return true;
+            }
+          });
+          if (!success)
+            throw new Error("User already exists with provided email address");
+        }
+      }}
+      {...props}
+    />
   );
 }
 
@@ -222,22 +297,7 @@ function ActivationRequestsTable() {
     [],
     { watch: true }
   );
-  const parseName = (name) => {
-    const a = name.split(" ");
-    return {
-      firstName: a[0],
-      lastName: a.length > 1 ? a[1] : "",
-    };
-  };
-  const activateItem = async (item) => {
-    const role = await UserRoles.getOrCreate(item.uid);
-    role.role = item.role;
-    await role.save();
-    const model = mapRoleToModel(item.role);
-    const user = await model.getOrCreate(item.uid);
-    await user.set({ email: item.email, ...parseName(item.name) });
-    await item.delete();
-  };
+
   return (
     <Box className="px-4 sm:px-8 py-8">
       <ThemedTable
@@ -257,7 +317,7 @@ function ActivationRequestsTable() {
                 return item.role;
               case 3:
                 return (
-                  <Button onClick={() => activateItem(item)}>Activate</Button>
+                  <Button onClick={() => activateUser(item)}>Activate</Button>
                 );
               case 4:
                 return (

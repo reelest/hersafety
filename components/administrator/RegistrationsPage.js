@@ -2,7 +2,7 @@ import { Box, Typography, Button } from "@mui/material";
 import PageHeader from "../PageHeader";
 import { Add } from "iconsax-react";
 import SessionSelect from "../SessionSelect";
-import { usePagedQuery, useQuery } from "@/models/query";
+import { usePagedQuery, useQuery } from "@/models/lib/query";
 import Registrations from "@/models/registration";
 import ThemedTable from "../ThemedTable";
 import {

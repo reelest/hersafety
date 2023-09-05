@@ -26,51 +26,46 @@ export default function Footer() {
         );
       }}
     >
-      <Box className="text-white" bgcolor="black" sx={{ py: 2, px: 8 }}>
+      <Box className="text-[#eeeeee]" bgcolor="#303030" sx={{ py: 2, px: 8 }}>
         <Container
           className="flex mx-auto flex-wrap max-lg:flex-col"
           sx={{ mt: 18 }}
         >
           <Box className="sm:basis-0 max-sm:w-full flex-grow flex items-center flex-col text-center">
             <AppLogo size={240} />
-            <p className="font-20 mt-12">{website.description}</p>
+            <p className="font-20 mt-12">{website?.description}</p>
           </Box>
           <Box sx={{ ml: 16 }} className="basis-1/2">
             <Typography
-              variant="h5"
+              variant="h6"
               className="border-l-8 border-primaryLight font-32b"
             >
               Contact Information
             </Typography>
-            <Typography variant="h6" className="font-24b mt-6">
-              Address:
-            </Typography>
-            <Typography paragraph>{website.address}</Typography>
-            <Typography variant="h6" className="font-24b mt-6">
-              Phone:
-            </Typography>
+            <Typography className="font-24b mt-6">Address:</Typography>
+            <Typography paragraph>{website?.address}</Typography>
+            <Typography className="font-24b mt-6">Phone:</Typography>
             <Typography paragraph>
-              {website.phone1Label} -{" "}
-              <Link color="common.white" href={`tel:${website.phone1}`}>
-                {formatPhoneNumber(website.phone1)}
+              {website?.phone1Label} -{" "}
+              <Link color="common.white" href={`tel:${website?.phone1}`}>
+                {formatPhoneNumber(website?.phone1)}
               </Link>
             </Typography>
-            {website.phone2Label ? (
+            {website?.phone2Label ? (
               <Typography paragraph>
-                {website.phone2Label} -{" "}
-                <Link color="common.white" href={`tel:${website.phone2}`}>
-                  {formatPhoneNumber(website.phone2)}
+                {website?.phone2Label} -{" "}
+                <Link color="common.white" href={`tel:${website?.phone2}`}>
+                  {formatPhoneNumber(website?.phone2)}
                 </Link>
               </Typography>
             ) : null}
-            <Typography variant="h6" className="font-24b mt-6">
-              Email:
-            </Typography>
+            <Typography className="font-24b mt-6">Email:</Typography>
             <Typography paragraph className="font-24 underline">
-              <Link color="common.white" href={`mailto:${website.email}`}>
-                {website.email}
+              <Link color="common.white" href={`mailto:${website?.email}`}>
+                {website?.email}
               </Link>
             </Typography>
+            <SocialBar />
           </Box>
         </Container>
         <Typography
@@ -95,24 +90,30 @@ const SocialBar = () => {
   const website = useWebsiteData();
   return (
     <div className="social-bar rounded mt-16 sm:mt-0 p-2 sm:p-3 sm:mx-6 md:mx-12 lg:mx-16 flex">
-      <Link
-        href={website.linkedInURL}
-        className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
-      >
-        <Image className="object-contain" src={linkedInIcon} alt="linkedIn" />
-      </Link>
-      <Link
-        href={website.facebookURL}
-        className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
-      >
-        <Image className="object-contain" src={facebookIcon} alt="facebook" />
-      </Link>
-      <Link
-        href={website.twitterURL}
-        className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
-      >
-        <Image className="object-contain" src={twitterIcon} alt="twitter" />
-      </Link>
+      {website?.linkedInURL ? (
+        <Link
+          href={website.linkedInURL}
+          className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
+        >
+          <Image className="object-contain" src={linkedInIcon} alt="linkedIn" />
+        </Link>
+      ) : null}
+      {website?.facebookURL ? (
+        <Link
+          href={website.facebookURL}
+          className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
+        >
+          <Image className="object-contain" src={facebookIcon} alt="facebook" />
+        </Link>
+      ) : null}
+      {website?.twitterURL ? (
+        <Link
+          href={website.twitterURL}
+          className="block h-12 w-12 mx-2 sm:mx-3 my-2 sm:my-3"
+        >
+          <Image className="object-contain" src={twitterIcon} alt="twitter" />
+        </Link>
+      ) : null}
     </div>
   );
 };

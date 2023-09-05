@@ -42,18 +42,24 @@ export default function Sidebar({ children, isStatic = false, tabs = [] }) {
       <nav className="text-white w-72 flex-shrink-0 pt-4 pb-8 flex flex-col justify-start h-full">
         <AppLogo className="block mx-auto relative right-2 mb-16 h-6 w-auto px-4" />
         <div className="flex flex-col flex-grow overflow-auto pl-8 pr-6">
-          {tabs.map(({ icon, name, id = name.toLowerCase() }) => (
-            <TabLink
-              key={name}
-              isSelected={id === selected}
-              icon={icon}
-              href={`?tab=${encodeURIComponent(id)}`}
-            >
-              {name}
-            </TabLink>
-          ))}
+          {tabs.map(({ icon, name, id = name.toLowerCase() }) =>
+            id === "settings" ? null : (
+              <TabLink
+                key={name}
+                isSelected={id === selected}
+                icon={icon}
+                href={`?tab=${encodeURIComponent(id)}`}
+              >
+                {name}
+              </TabLink>
+            )
+          )}
           <Spacer className="h-8 flex-shrink-0" />
-          <TabLink icon={Setting} href={"?tab=settings"}>
+          <TabLink
+            isSelected={"settings" === selected}
+            icon={Setting}
+            href={"?tab=settings"}
+          >
             Settings
           </TabLink>
           <TabLink

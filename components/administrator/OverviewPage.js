@@ -4,10 +4,10 @@ import PageHeader from "../PageHeader";
 import Card2, { Card2Wrapper } from "../Card2";
 
 import { ArchiveBox } from "iconsax-react";
-import { useQuery } from "@/models/query";
-import Students from "../../models/student";
-import Teachers from "../../models/teacher";
-import Parents from "../../models/parent";
+import { useQuery } from "@/models/lib/query";
+import Students from "@/models/student";
+import Teachers from "@/models/teacher";
+import Parents from "@/models/parent";
 import { Hidden } from "@mui/material";
 import Registrations from "@/models/registration";
 import PieChart from "../PieChart";

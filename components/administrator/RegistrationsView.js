@@ -1,15 +1,18 @@
-import { useQuery } from "@/models/query";
+import { usePagedQuery, useQuery } from "@/models/lib/query";
 import { supplyValue } from "../Table";
 import ThemedTable from "../ThemedTable";
 import Registrations from "@/models/registration";
 
 export default function RegistrationsView() {
-  const { data: registrations } = useQuery(() => Registrations.all());
+  const { data: registrations, pager } = usePagedQuery(() =>
+    Registrations.all().pageSize(10)
+  );
   return (
     <ThemedTable
       title="Registrations"
       headers={["Name", "Entrance Class", "Gender"]}
       results={registrations}
+      pager={pager}
       renderHooks={[
         supplyValue((row, col) => {
           const item = registrations[row];

@@ -4,7 +4,7 @@ export function formatPhoneNumber(number_string) {
   const [failed, countryCode, ...parts] = String(number_string ?? "").split(
     /^(\+\d\d\d)?(\d\d\d)?(?:(\d\d\d)?(\d\d\d)?|(\d?\d\d\d)?(\d\d\d)?)(\d\d\d\d?)?$/
   );
-  if (failed.length) return failed;
+  if (failed) return failed;
   return (
     (countryCode ? countryCode + " " : "") + parts.filter(Boolean).join("-")
   );

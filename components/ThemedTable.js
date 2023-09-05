@@ -2,6 +2,7 @@ import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 import Card1 from "./Card1";
 import Table, {
   TableButton,
+  TableContext,
   TableHeader,
   addClassToColumns,
   addHeaderClass,
@@ -18,8 +19,9 @@ function ThemedTable({
   headers,
   renderHooks = [],
   selected,
-  setSelected,
   pager: _pager,
+  tableRef,
+  onClickRow,
   ...props
 }) {
   const defaultPager = usePager(results || [], 10);
@@ -27,11 +29,13 @@ function ThemedTable({
   const pager = _pager ?? defaultPager;
   const { data, pageSize, ...controller } = pager;
   return (
-    <TableWrapper {...props}>
+    <TableWrapper selected={selected} {...props}>
       <Table
         loading={!results}
         data={results}
         scrollable
+        tableRef={tableRef}
+        onClickRow={onClickRow}
         cols={headers.length}
         rows={Math.min(pageSize, results?.length)}
         headers={headers}
@@ -42,14 +46,8 @@ function ThemedTable({
             backgroundColor: selected === row ? "primary.light" : "white",
             color: selected === row ? "white" : null,
           },
-
           className: row >= data.length ? "invisible" : "shadow-3",
         })}
-        onClickRow={
-          setSelected
-            ? (e, row) => setSelected(selected === row ? -1 : row)
-            : null
-        }
         renderHooks={[
           ...[_pager ? null : pageData(controller.page, pageSize)].filter(
             Boolean
@@ -75,15 +73,24 @@ function ThemedTable({
   );
 }
 
-const ThemedBox = function ({ title, headerButtons, children, ...props }) {
+const ThemedBox = function ({
+  title,
+  headerButtons,
+  children,
+  selected,
+  setSelected,
+  ...props
+}) {
   return (
-    <Card1 boxClass="px-6 py-5" className="my-2 mx-2" {...props}>
-      <TableHeader>
-        <Typography variant="h5">{title}</Typography>
-        {headerButtons}
-      </TableHeader>
-      {children}
-    </Card1>
+    <TableContext.Provider value={[selected, setSelected]}>
+      <Card1 boxClass="px-6 py-5" className="my-2 mx-2" {...props}>
+        <TableHeader>
+          <Typography variant="h5">{title}</Typography>
+          {headerButtons}
+        </TableHeader>
+        {children}
+      </Card1>
+    </TableContext.Provider>
   );
 };
 export default ThemedTable;

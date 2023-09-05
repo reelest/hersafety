@@ -2,10 +2,9 @@ import Template from "@/components/Template";
 import { useEffect, useRef } from "react";
 import { useClickAway } from "react-use";
 import { AnimatePresence, motion } from "framer-motion";
-import { Portal } from "@headlessui/react";
 import createSubscription from "@/utils/createSubscription";
 import { noop } from "@/utils/none";
-import { Box, Paper } from "@mui/material";
+import { Box, Dialog, Paper } from "@mui/material";
 
 const [, onShow, show] = createSubscription(noop);
 /** @type {typeof Card1Wrapper} */
@@ -14,11 +13,11 @@ export default function Card1({ children, expand, ...props }) {
     <>
       <AnimatePresence>
         {expand ? (
-          <Portal>
+          <Dialog>
             <Card1Wrapper {...props} expand>
               {children}
             </Card1Wrapper>
-          </Portal>
+          </Dialog>
         ) : null}
       </AnimatePresence>
       <Card1Wrapper {...props}>{expand ? null : children}</Card1Wrapper>

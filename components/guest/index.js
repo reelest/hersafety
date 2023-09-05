@@ -8,7 +8,7 @@ import ModelForm from "../ModelForm";
 import ActivationRequests from "@/models/activation_requests";
 import { useRef, useState } from "react";
 import { useUser } from "@/logic/auth";
-import { useQuery } from "@/models/query";
+import { useQuery } from "@/models/lib/query";
 import { UserRoles } from "@/models/user";
 const TABS = [
   {
@@ -23,7 +23,7 @@ function RequestActivation() {
   const user = useUser();
   const [sent, setSent] = useState(false);
   const activationRequests = useQuery(
-    () => user && ActivationRequests.filter("uid", "==", user.uid),
+    () => user && ActivationRequests.withFilter("uid", "==", user.uid),
     [user],
     { watch: false }
   )?.data?.length;

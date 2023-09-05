@@ -1,5 +1,5 @@
 import Template from "./Template";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import useFormHandler from "@/utils/useFormHandler";
 // import ImagePicker from "./ImagePicker";
 import useValidation, { formValidator } from "@/utils/useBrowserFormValidation";
@@ -7,10 +7,14 @@ import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import ThemedButton from "@mui/material/Button";
 import {
+  Box,
+  Button,
   FormControl,
   FormControlLabel,
   FormHelperText,
   FormLabel,
+  IconButton,
+  InputLabel,
   MenuItem,
   Radio,
   RadioGroup,
@@ -19,6 +23,8 @@ import {
   Typography,
 } from "@mui/material";
 import pick from "@/utils/pick";
+import Image from "next/image";
+import { Trash } from "iconsax-react";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -213,7 +219,108 @@ export function FormSelect({ values = [], labels = values, ...props }) {
 }
 
 export function FormImage(props) {
-  return <FormField type="image" {...props} />;
+  return <FormField as={ImageField} type="file" {...props} />;
+}
+
+export function ImageField({
+  id,
+  value,
+  label,
+  helperText,
+  onChange,
+  sx,
+  style,
+  className,
+  ...props
+}) {
+  const [src, setSrc] = useState(false);
+  useEffect(() => {
+    if (!value) {
+      return;
+    } else if (typeof value === "string") {
+      setSrc(value);
+      return;
+    } else {
+      const url = URL.createObjectURL(value);
+      setSrc(url);
+      return () => {
+        setSrc(null);
+        URL.revokeObjectURL(url);
+      };
+    }
+  }, [value]);
+  const expanded = !!value;
+  return (
+    <Template
+      as={Box}
+      className="flex flex-col relative items-center min-w-[5rem] rounded"
+      sx={{
+        m: 1,
+        mt: expanded ? 2 : 5.5,
+      }}
+      props={{ sx, style, className }}
+    >
+      {expanded ? (
+        <div className="absolute top-5 p-0 right-0 opacity-50 hover:opacity-100">
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              onChange({ target: { value: null } });
+            }}
+          >
+            <Trash />
+          </Button>
+        </div>
+      ) : null}
+      <InputLabel
+        className={"self-start" + (expanded ? "" : " mb-1")}
+        shrink={expanded}
+      >
+        {label}
+      </InputLabel>
+      <Box
+        as="img"
+        src={src}
+        alt={"Supplied image for " + props.name}
+        className="rounded-t"
+        sx={{
+          backgroundColor: "gray.light",
+          color: "primary.dark",
+          flexGrow: 1,
+          display: expanded ? "" : "none",
+          width: "auto",
+          minHeight: "10rem",
+          maxWidth: "20rem",
+        }}
+      />
+      <Button
+        as="label"
+        variant="contained"
+        for={id}
+        sx={{
+          width: "100%",
+          borderTopLeftRadius: expanded ? 0 : undefined,
+          borderTopRightRadius: expanded ? 0 : undefined,
+          textAlign: "center",
+        }}
+      >
+        {value ? "Replace Image" : "Pick Image"}
+      </Button>
+      <Template
+        as="input"
+        type="file"
+        className="block w-0 h-0 max-h-0 min-h-0 opacity-0"
+        id={id}
+        accept="image/*"
+        onChange={(e) => {
+          onChange({ target: { value: e.target.files[0] } });
+        }}
+        props={props}
+      />
+      {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
+    </Template>
+  );
 }
 
 export function FormSubmit({ name, disabled, ...props }) {

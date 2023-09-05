@@ -1,10 +1,12 @@
-import { CountedModel } from "./counted_model";
-import { UserModelItem } from "./user";
+import { CountedModel } from "./lib/counted_model";
+import { UserMeta, UserModelItem } from "./user";
 
 export class Admin extends UserModelItem {
   getRole() {
     return "admin";
   }
 }
-const Admins = new CountedModel("administrators", Admin);
+const Admins = new CountedModel("administrators", Admin, {
+  ...UserMeta,
+});
 export default Admins;

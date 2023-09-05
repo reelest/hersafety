@@ -2,7 +2,7 @@ import { None } from "@/utils/none";
 import sentenceCase from "@/utils/sentenceCase";
 
 /**
- * @typedef {("string"|"number"|"date"|"datetime"|"time"|"file"|"hidden"|"boolean"|"array"|"object")} ModelPropType
+ * @typedef {("string"|"number"|"date"|"datetime"|"time"|"file"|"image"|"hidden"|"boolean"|"array"|"object")} ModelPropType
  * @typedef {("email"|"tel"|"password"|"address"|"text"|"url"|"longtext")} StringType
  *
  * @typedef {{
@@ -17,6 +17,7 @@ import sentenceCase from "@/utils/sentenceCase";
  *    stringType?: StringType,
  *    objectType?: ModelTypeInfo,
  *    arrayType?: ModelPropInfo,
+ *    itemQuery?: import("./query").QueryCursor,
  *    label: string,
  *  }} ModelPropInfo
 
@@ -39,10 +40,19 @@ function inferType(value, key) {
   }
 }
 
+/**
+ *
+ * @param {string} key
+ * @param {Item} template
+ * @param {Partial<ModelPropInfo>} Meta
+ * @param {string} path
+ * @returns {ModelPropInfo}
+ */
 function _getModelPropInfo(key, template, Meta, path) {
   const type = Meta.type || inferType(template, path);
 
   return {
+    ...Meta,
     type,
     required: Meta.required ?? true,
     minLength: Meta.minLength ?? 0,
@@ -66,7 +76,8 @@ function _getModelPropInfo(key, template, Meta, path) {
       type === "array"
         ? _getModelPropInfo("$i", template?.[0], Meta.arrayType, path + "[]")
         : undefined,
-    label: Meta.label ?? sentenceCase(key.replace(/[A-Z]/g, " $&")),
+    itemQuery: Meta.itemQuery,
+    label: Meta.label ?? sentenceCase(key.replace(/([a-z])([A-Z])/g, "$1 $2")),
   };
 }
 
@@ -74,11 +85,6 @@ function isObject(e) {
   return e && typeof e === "object";
 }
 
-/**
- *
- * @param {import("./model").Model} Model
- * @returns {ModelTypeInfo}
- */
 function _getModelTypeInfo(template, meta, path) {
   const propNames = template ? Object.keys(template) : [];
   if (meta) {
@@ -100,6 +106,11 @@ function _getModelTypeInfo(template, meta, path) {
   }, {});
 }
 
+/**
+ *
+ * @param {import("./lib/model").Model} Model
+ * @returns {ModelTypeInfo}
+ */
 export default function getModelTypeInfo(Model, meta) {
   return _getModelTypeInfo(Model.create(), meta, Model._ref.path + "[]");
 }

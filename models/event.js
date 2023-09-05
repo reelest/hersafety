@@ -1,4 +1,4 @@
-import { Model, Item } from "./model";
+import { Model, Item } from "./lib/model";
 
 export class Event extends Item {
   date = Date.now();

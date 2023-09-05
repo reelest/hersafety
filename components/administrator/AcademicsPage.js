@@ -9,11 +9,11 @@ import {
   WalletSearch,
   BatteryEmpty1,
 } from "iconsax-react";
-import { useQuery } from "@/models/query";
-import Students from "../../models/student";
-import Teachers from "../../models/teacher";
-import Parents from "../../models/parent";
-import { Select } from "@mui/material";
+import { useQuery } from "@/models/lib/query";
+import Students from "@/models/student";
+import Teachers from "@/models/teacher";
+import Parents from "@/models/parent";
+import SessionSelect from "../SessionSelect";
 
 const useCount = (Model) => {
   return useQuery(() => Model.counter.asQuery(), [], {
@@ -32,7 +32,7 @@ export default function AcademicsPage() {
           <Typography variant="h6" as="h2">
             Academics
           </Typography>
-          <Select />
+          <SessionSelect />
         </div>
         <div className="flex py-8 -mx-2">
           <Card2

@@ -5,6 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import { More } from "iconsax-react";
 import Skeleton from "@mui/material/Skeleton";
 import Template from "./Template";
+import Spacer from "./Spacer";
 export default function Card2({ icon: Icon, color = "white", label, value }) {
   return (
     <Card2Wrapper
@@ -14,7 +15,7 @@ export default function Card2({ icon: Icon, color = "white", label, value }) {
         maxHeight: "10rem",
       }}
     >
-      <div className="p-4 pl-6  pb-2">
+      <div className="flex flex-col p-4 pl-6  pb-2">
         <Box
           sx={{
             backgroundColor: "primary.dark",
@@ -26,9 +27,11 @@ export default function Card2({ icon: Icon, color = "white", label, value }) {
         >
           <Icon size={16} color="white" className="block" />
         </Box>
+        <Spacer />
         <Typography variant="body2">
           {label ?? <Skeleton width={200} />}
         </Typography>
+        <Spacer />
         <Typography variant="h4" as="h3" sx={{ my: 1 }}>
           {value ?? <Skeleton width="100%" />}
         </Typography>
@@ -45,7 +48,7 @@ export function Card2Wrapper({ color = "transparent", ...props }) {
     <Template
       props={props}
       as={Paper}
-      className="flex items-start justify-between mx-2 basis-48 flex-grow"
+      className="flex justify-between mx-2 basis-48 flex-grow"
       elevation={2}
       sx={{
         backgroundColor: color,

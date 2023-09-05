@@ -1,7 +1,7 @@
 import { getUser } from "@/logic/auth";
-import { CountedModel } from "./counted_model";
-import { Item } from "./model";
-import { Hidden } from "./model_types";
+import { CountedModel } from "./lib/counted_model";
+import { Item } from "./lib/model";
+import { Hidden } from "./lib/model_types";
 
 export class ActivationRequest extends Item {
   name = getUser()?.displayName ?? "";

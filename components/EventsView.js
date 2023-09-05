@@ -12,7 +12,7 @@ import { range } from "d3";
 import { formatTime } from "@/utils/formatNumber";
 import LoaderAnimation from "@/components/LoaderAnimation";
 import { daysToMs } from "@/utils/time_utils";
-import { useQuery } from "@/models/query";
+import { useQuery } from "@/models/lib/query";
 import Events from "@/models/event";
 import Card1 from "./Card1";
 import { Box, Divider, Typography } from "@mui/material";
@@ -34,7 +34,6 @@ const months = [
 const days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
 function EventsView({ date = new Date() }) {
   const { data: events } = useQuery(() => Events.all());
-  console.log(events);
   const startOfDay = new Date(date.getTime());
   startOfDay.setHours(0, 0, 0, 0);
   const currentMonth = sentenceCase(months[date.getMonth()]);
@@ -92,6 +91,22 @@ function EventsView({ date = new Date() }) {
 const WeekView = ({ date }) => {
   const day = date.getDay();
   const firstDay = date.getDate() - day;
+  const lastMonth = date.getMonth(); /* - 1 + 1*/
+  const clamp = (e) =>
+    e > 0
+      ? e
+      : e +
+        (lastMonth === 9 ||
+        lastMonth === 4 ||
+        lastMonth === 6 ||
+        lastMonth === 11
+          ? 30
+          : lastMonth === 2
+          ? date.getFullYear() % 4 === 0
+            ? 29
+            : 28
+          : 31);
+
   return (
     <Table
       cols={7}
@@ -114,7 +129,7 @@ const WeekView = ({ date }) => {
                 : ""
             }`}
           >
-            {firstDay + col}
+            {clamp(firstDay + col)}
           </Box>
         )),
       ]}

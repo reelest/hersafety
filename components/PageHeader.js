@@ -14,6 +14,7 @@ import { useUser } from "@/logic/auth";
 import useBreakpoints from "@/utils/useBreakpoints";
 import { setSidebar } from "./Sidebar";
 import useUserData from "@/logic/user_data";
+import sentenceCase from "@/utils/sentenceCase";
 export default function PageHeader({ title, onSearch }) {
   const user = useUserData();
   return (
@@ -60,7 +61,7 @@ export default function PageHeader({ title, onSearch }) {
               {user ? user.getName() ?? "No name provided" : <Skeleton />}
             </Typography>
             <Typography variant="body2">
-              {user ? user.getRole() ?? "No role provided" : <Skeleton />}
+              {user ? sentenceCase(user.getRole()) : <Skeleton />}
             </Typography>
           </div>
         </Hidden>

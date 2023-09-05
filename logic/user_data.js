@@ -9,8 +9,9 @@ import { useUpdate } from "react-use";
 import { UserModelItem, UserRoles } from "@/models/user";
 import useListener from "@/utils/useListener";
 import useWindowRef from "@/utils/useWindowRef";
+import { noop } from "@/utils/none";
 
-const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid)).role;
+const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid, noop)).role;
 
 export const updateUserRole = async (uid, role) => {
   await UserRoles.item(uid).set({ role });
@@ -18,7 +19,7 @@ export const updateUserRole = async (uid, role) => {
 /**
  *
  * @param {string} role
- * @returns {Model} model
+ * @returns {import("../models/lib/model").Model<import("../models/user").UserModelItem>} model
  */
 export const mapRoleToModel = (role) => {
   switch (role) {
@@ -40,16 +41,18 @@ export const mapRoleToModel = (role) => {
 const loadUserData = async (user) => {
   const role = await lookupRole(user.uid);
   if (role !== "guest") {
-    const data = await mapRoleToModel(role).getOrCreate(user.uid);
-    if (data.isLocalOnly()) {
-      data.email = user.email;
-      data.emailVerified = user.emailVerified;
-      data.phoneNumber = user.phoneNumber;
-      data.lastLogin = Date.now();
-    }
-    data.lastLogin = Date.now();
-    await data.set({ lastLogin: true });
-    return data;
+    return await mapRoleToModel(role).getOrCreate(
+      user.uid,
+      async (data, txn) => {
+        if (data.isLocalOnly()) {
+          data.email = user.email;
+          data.emailVerified = user.emailVerified;
+          data.phoneNumber = user.phoneNumber;
+        }
+        data.lastLogin = Date.now();
+        await data.save(txn);
+      }
+    );
   }
   return UserModelItem.of(user);
 };
@@ -70,9 +73,10 @@ export default function useUserData() {
         return data;
       } else return user;
     } catch (e) {
-      retryDelay.current = Math.min(retryDelay.current * 2, 60000);
+      retryDelay.current =
+        retryDelay.current + Math.min(retryDelay.current, 60000);
       console.error(e, `Retrying in ${retryDelay.current / 1000} seconds`);
-      setTimeout(retry, retryDelay.current);
+      setTimeout(retry, Math.min(retryDelay.current, 60000));
     }
   }, [user, retryDelay.current]);
 }

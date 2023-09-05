@@ -20,6 +20,7 @@ import { noFirestore } from "./model";
 import { range } from "d3";
 import usePager from "@/utils/usePager";
 import useLogger from "@/utils/useLogger";
+import { FailedPrecondition } from "./errors";
 
 export const DEFAULT_ORDERING = "!model-default-ordering";
 export const DEFAULT_ORDERING_DESCENDING = "!model-default-descending";
@@ -94,7 +95,7 @@ class LocalCache {
     }
   }
   /**
-   * @returns {Array<import("./model").Item>}
+   * @returns {Array<import("./lib/model").Item>}
    */
   get() {
     return this.data
@@ -196,7 +197,7 @@ export class QueryCursor {
   _isLoaded = false;
   /**
    *
-   * @param {import("./model").Model} model
+   * @param {import("./lib/model").Model} model
    */
   constructor(model) {
     //Used for filtering
@@ -310,7 +311,9 @@ export class QueryCursor {
     this._query = null;
     if (this.isRunning()) this.start();
   }
-
+  async advance() {
+    return await this.seek(this.cache.end);
+  }
   async seek(index) {
     // Ensure index is valid
     if (typeof index !== "number" || index < 0 || Number.isNaN(index))
@@ -459,8 +462,21 @@ export class QueryCursor {
   }
 
   // Constructor methods
-  filter(key, op, val) {
+  /**
+   *
+   * @param {string} key
+   * @param {import("firebase/firestore").WhereFilterOp} op
+   * @param {any} val
+   * @returns
+   */
+  setFilter(key, op, val, ...params) {
+    this._filters = [];
     this._filters.push(where(key, op, val));
+    if (params.length % 3 !== 0)
+      throw new FailedPrecondition("Invalid filters supplied");
+    while (params.length > 0) {
+      this._filters.push(where(...params.splice(0, 3)));
+    }
     this.cache.reset().then(() => this.restart());
     return this;
   }

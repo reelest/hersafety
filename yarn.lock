@@ -635,13 +635,6 @@
     protobufjs "^7.0.0"
     yargs "^17.7.2"
 
-"@headlessui/react@^1.7.14":
-  version "1.7.15"
-  resolved "https://registry.npmjs.org/@headlessui/react/-/react-1.7.15.tgz"
-  integrity sha512-OTO0XtoRQ6JPB1cKNFYBZv2Q0JMqMGNhYP1CjPvcJvjz8YGokz8oAj89HIYZGN0gZzn/4kk9iUpmMF4Q21Gsqw==
-  dependencies:
-    client-only "^0.0.1"
-
 "@heroicons/react@^2.0.17":
   version "2.0.18"
   resolved "https://registry.npmjs.org/@heroicons/react/-/react-2.0.18.tgz"
@@ -1346,7 +1339,7 @@ chokidar@^3.5.3:
   optionalDependencies:
     fsevents "~2.3.2"
 
-client-only@0.0.1, client-only@^0.0.1:
+client-only@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/client-only/-/client-only-0.0.1.tgz"
   integrity sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==
@@ -3510,11 +3503,6 @@ react-is@^18.2.0:
   resolved "https://registry.npmjs.org/react-is/-/react-is-18.2.0.tgz"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
 
-react-simple-form-validator@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/react-simple-form-validator/-/react-simple-form-validator-0.3.1.tgz#47f7083741aba2b5feb3258989bbda2c0d816047"
-  integrity sha512-jQGxWXPIhIIGYEkYYo8NIn1NIEHHKBdT5pbzxF3yb+DqwHbmiJKrgVFIvhvNhscne5p3QEwlCFWvvg41JKvGlw==
-
 react-transition-group@^4.4.5:
   version "4.4.5"
   resolved "https://registry.npmjs.org/react-transition-group/-/react-transition-group-4.4.5.tgz"
@@ -4127,6 +4115,11 @@ util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.0.tgz#592f550650024a38ceb0c562f2f6aa435761efb5"
+  integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
 
 watchpack@2.4.0:
   version "2.4.0"

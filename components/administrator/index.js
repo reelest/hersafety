@@ -15,6 +15,7 @@ import Academics from "./AcademicsPage";
 import UserRedirect from "../UserRedirect";
 import RegistrationsPage from "./RegistrationsPage";
 import Head from "next/head";
+import SettingsPage from "./SettingsPage";
 const TABS = [
   {
     name: "Overview",
@@ -45,6 +46,10 @@ const TABS = [
     name: "News & Events",
     icon: Calendar,
     component: Events,
+  },
+  {
+    name: "Settings",
+    component: SettingsPage,
   },
 ];
 export default function Administrators() {
