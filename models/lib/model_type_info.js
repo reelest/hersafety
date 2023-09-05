@@ -17,7 +17,7 @@ import sentenceCase from "@/utils/sentenceCase";
  *    stringType?: StringType,
  *    objectType?: ModelTypeInfo,
  *    arrayType?: ModelPropInfo,
- *    itemQuery?: import("./query").QueryCursor,
+ *    itemQuery?: String,
  *    label: string,
  *  }} ModelPropInfo
 
@@ -76,7 +76,7 @@ function _getModelPropInfo(key, template, Meta, path) {
       type === "array"
         ? _getModelPropInfo("$i", template?.[0], Meta.arrayType, path + "[]")
         : undefined,
-    itemQuery: Meta.itemQuery,
+    itemQuery: Meta.itemQuery ?? "",
     label: Meta.label ?? sentenceCase(key.replace(/([a-z])([A-Z])/g, "$1 $2")),
   };
 }
