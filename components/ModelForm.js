@@ -18,6 +18,7 @@ import { useState } from "react";
 import Spacer from "./Spacer";
 import { uploadFile } from "@/logic/storage";
 import { timeFormat } from "d3";
+import ModelFormSelect from "./ModelFormSelect";
 const FORM_SECTION = "!modelform-section";
 
 /* Make this component simple enough for most use cases, advanced cases should just use ModelFormField */
@@ -215,6 +216,10 @@ function createFormField(name, meta, { disabled } = {}) {
           {...commonProps}
           sx={{ minWidth: "15em", mx: 1, maxWidth: "30em" }}
         />
+      );
+    case "ref":
+      return (
+        <ModelFormSelect {...commonProps} />
       );
     default:
       throw new Error("Unhandled Input type " + meta.type);

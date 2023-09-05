@@ -79,7 +79,7 @@ export class UserModelItem extends CountedItem {
 }
 trackFiles(UserModelItem, ["photoURL"]);
 UserModelItem.markTriggersUpdateTxn(["profileCompleted"]);
-indexForSearch(UserModelItem, ["profileCompleted"]);
+indexForSearch(UserModelItem, ["firstName", "lastName", "otherNames", "email", "phoneNumber"]);
 export const UserMeta = {
   dateCreated: Hidden,
   lastUpdated: Hidden,
