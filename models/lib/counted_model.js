@@ -32,9 +32,16 @@ export const ensureCounter = async (model) => {
 const NO_TRANSACTION_NEEDED = 0;
 const TRANSACTION_NEEDED_NO_PREV_STATE = 1;
 const TRANSACTION_NEEDED = 2;
+const updateMask = Symbol();
 export class CountedItem extends Item {
   #needsTransaction = NO_TRANSACTION_NEEDED;
-  scheduleUpdateTransaction(needsPrevState) {
+  #updatedKeys = [];
+  scheduleUpdateTransaction(needsPrevState, prop) {
+    if (prop) {
+      this.#updatedKeys.push(prop);
+    } else {
+      this.#updatedKeys.push(...(this[updateMask] ?? []));
+    }
     console.log("Scheduling transaction.....");
     this.#needsTransaction = Math.max(
       this.#needsTransaction,
@@ -66,7 +73,7 @@ export class CountedItem extends Item {
         txn
       );
   }
-  async onUpdateItem(txn, newState, lastState) {
+  async onUpdateItem(txn, newState, prevState) {
     // Do nothing
   }
 
@@ -76,7 +83,10 @@ export class CountedItem extends Item {
    */
   async atomicUpdate(cb, needsPrevState = true, txn, prevState) {
     if (txn) {
-      if (needsPrevState && !prevState)
+      if (
+        (needsPrevState || this.#needsTransaction === TRANSACTION_NEEDED) &&
+        !prevState
+      )
         throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
       return await cb(txn, prevState);
     } else if (needsPrevState) {
@@ -96,6 +106,14 @@ export class CountedItem extends Item {
   }
   async _update(txn, newState, prevState = null) {
     console.log("Updating....");
+    if (this[updateMask]) {
+      newState = { ...newState };
+      for (let key of this[updateMask]) {
+        if (!this.#updatedKeys.includes(key)) {
+          delete newState[key];
+        }
+      }
+    }
     return this.atomicUpdate(
       async (txn, prevState) => {
         await this._update(txn, newState, prevState);
@@ -123,6 +141,7 @@ export class CountedItem extends Item {
       );
       this._isLocalOnly = false;
     } else await super.save(txn);
+    this.#updatedKeys.length = 0;
     this.#needsTransaction = NO_TRANSACTION_NEEDED;
   }
   async delete(txn, prevState) {
@@ -156,6 +175,12 @@ export class CountedItem extends Item {
           x = v;
         },
       };
+      if (!Object.prototype.hasOwnProperty.call(this.prototype, updateMask))
+        Object.defineProperty(this.prototype, updateMask, {
+          value: [],
+        });
+      this.prototype[updateMask].push(e);
+
       Object.defineProperty(this.prototype, e, {
         ...descriptor,
         set(v) {
