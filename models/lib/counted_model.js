@@ -2,15 +2,17 @@ import { increment, runTransaction, writeBatch } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { Model, Item, noFirestore } from "./model";
 import { FailedPrecondition, InvalidState } from "./errors";
+import deepEqual from "deep-equal";
 
 const createdCounters = new Set();
 
 export const ensureCounter = async (model) => {
   const counter = model.counter;
+  if (!counter) return;
   if (process.env.NODE_ENV !== "production") {
     if (createdCounters.has(counter.uniqueName())) return true;
     else {
-      await counter._model.getOrCreate(counter.id(), async (item, txn) => {
+      await counter.model().getOrCreate(counter.id(), async (item, txn) => {
         if (item.isLocalOnly()) {
           console.log("Creating counter " + item.uniqueName());
           await model.initCounter(item);
@@ -39,60 +41,66 @@ export class CountedItem extends Item {
       needsPrevState ? TRANSACTION_NEEDED : TRANSACTION_NEEDED_NO_PREV_STATE
     );
   }
+  didUpdate(prop, newState, prevState) {
+    return true;
+  }
   getCounter() {
-    return this._model.counter;
+    return this.model().counter;
   }
   async onAddItem(txn) {
-    this.getCounter().set(
-      {
-        itemCount: increment(1),
-      },
-      txn
-    );
+    if (this.getCounter())
+      this.getCounter().set(
+        {
+          itemCount: increment(1),
+        },
+        txn
+      );
   }
 
   async onDeleteItem(txn) {
-    this.getCounter().set(
-      {
-        itemCount: increment(-1),
-      },
-      txn
-    );
+    if (this.getCounter())
+      this.getCounter().set(
+        {
+          itemCount: increment(-1),
+        },
+        txn
+      );
   }
-  async onUpdateItem(txn, currentState, lastState) {
+  async onUpdateItem(txn, newState, lastState) {
     // Do nothing
   }
 
   /**
-   * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} onUpdate
+   * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} cb
    * @returns
    */
-  async atomicUpdate(onUpdate, needsPrevState = true, txn, prevState) {
+  async atomicUpdate(cb, needsPrevState = true, txn, prevState) {
     if (txn) {
-      if (
-        needsPrevState &&
-        !prevState &&
-        this.#needsTransaction !== TRANSACTION_NEEDED_NO_PREV_STATE
-      )
+      if (needsPrevState && !prevState)
         throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
-      return await onUpdate(txn, prevState);
+      return await cb(txn, prevState);
     } else if (needsPrevState) {
       return runTransaction(firestore, async (txn) => {
         const doc = await txn.get(this._ref);
         if (doc.exists()) {
-          return await onUpdate(txn, doc.data());
+          return await cb(txn, doc.data());
         }
         return false;
       });
     } else {
       const batch = writeBatch(firestore);
-      return await onUpdate(batch);
+      const ret = await cb(batch);
+      await batch.commit();
+      return ret;
     }
   }
   async _update(txn, newState, prevState = null) {
     console.log("Updating....");
     return this.atomicUpdate(
-      async (txn, prevState) => this._update(txn, newState, prevState),
+      async (txn, prevState) => {
+        await this._update(txn, newState, prevState);
+        await this.onUpdateItem(txn, newState, prevState);
+      },
       this.#needsTransaction === TRANSACTION_NEEDED,
       txn,
       prevState
@@ -102,11 +110,11 @@ export class CountedItem extends Item {
     console.log("Saving.....");
     if (noFirestore) throw InvalidState("No Firestore!!");
     if (this._isLocalOnly) {
-      //TODO: do this in a transaction
-      await ensureCounter(this._model);
+      //TODO: Needs testing to assert that _isLocalOnly assertion is actually true
+      await ensureCounter(this.model());
       this.atomicUpdate(
         async (txn) => {
-          txn.set(this._ref, this.data());
+          txn.set(this._ref, this.data(), { merge: true });
           await this.onAddItem(txn, this.data());
         },
         false,
@@ -115,20 +123,18 @@ export class CountedItem extends Item {
       );
       this._isLocalOnly = false;
     } else await super.save(txn);
-    this.#needsTransaction = false;
+    this.#needsTransaction = NO_TRANSACTION_NEEDED;
   }
   async delete(txn, prevState) {
     if (noFirestore) throw InvalidState("No Firestore!!");
     if (txn) {
       await this.onDeleteItem(txn, prevState);
-      txn.delete(this._ref);
+      await super.delete(txn);
     } else {
       if (!prevState)
         throw new FailedPrecondition(FailedPrecondition.NO_PREV_STATE);
       await this.atomicUpdate(
-        async (txn, prevState) => {
-          this.delete(txn, prevState);
-        },
+        async (txn, prevState) => this.delete(txn, prevState),
         true,
         txn,
         prevState
@@ -144,7 +150,7 @@ export class CountedItem extends Item {
           return x;
         },
         set(v) {
-          if (this._isLoaded && v !== x) {
+          if (this._isLoaded && !deepEqual(v, x)) {
             this.scheduleUpdateTransaction(needsPrevState);
           }
           x = v;
@@ -187,8 +193,8 @@ export class CountedModel extends Model {
     /** Item._isLocalOnly should never be set to true manually especially for CountedItems as it breaks safety checks/speedups in Item.save. */
     if (isCreate)
       throw new Error(
-        "Synthetic ids are not allowed for counted models. To create one anyway, use `new Table.Item(Table.ref(id), true, Table)`"
+        "Use getOrCreate for synthetic ids when using counted models. To create one anyway, use `new Model.Item(Model.ref(id), true, Model)`"
       );
-    return new this.Item(this.ref(id), false, this);
+    return super.item(id, isCreate);
   }
 }

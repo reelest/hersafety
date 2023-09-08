@@ -1,17 +1,13 @@
-import { Sessions } from "@/models/session";
-import { createSharedQuery, useQuery } from "@/models/lib/query";
 import createSubscription from "@/utils/createSubscription";
-import useArrayState from "@/utils/useArrayState";
 import { MenuItem, Select, Typography } from "@mui/material";
+import { useSessions } from "@/logic/session";
 
-const [useCurrentSession, , setCurrentSession] = createSubscription();
-const [useSessions] = createSharedQuery(Sessions.counter.asQuery());
-
+const [useSelectedSession, , setSelectedSession] = createSubscription();
 export default function SessionSelect() {
   const { data: sessionData } = useSessions();
   console.log({ sessionData });
   const sessions = sessionData?.sessions;
-  const currentSession = useCurrentSession();
+  const currentSession = useSelectedSession();
 
   return sessions ? (
     sessions.length === 0 ? (
@@ -19,7 +15,7 @@ export default function SessionSelect() {
     ) : (
       <Select
         value={currentSession}
-        onChange={(e) => setCurrentSession(e.target.value)}
+        onChange={(e) => setSelectedSession(e.target.value)}
         size="small"
       >
         {sessions.map((e) => (

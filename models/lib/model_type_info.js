@@ -2,7 +2,9 @@ import { None } from "@/utils/none";
 import sentenceCase from "@/utils/sentenceCase";
 
 /**
- * @typedef {("string"|"number"|"date"|"datetime"|"time"|"file"|"image"|"hidden"|"boolean"|"array"|"object")} ModelPropType
+ * @typedef {String | import("./query").QueryCursor} Query
+ * @typedef {String | import("./model").Item} Item
+ * @typedef {("string"|"number"|"date"|"datetime"|"time"|"file"|"image"|"hidden"|"boolean"|"array"|"map"|"object")} ModelPropType
  * @typedef {("email"|"tel"|"password"|"address"|"text"|"url"|"longtext")} StringType
  *
  * @typedef {{
@@ -12,12 +14,15 @@ import sentenceCase from "@/utils/sentenceCase";
  *    maxLength: number,
  *    minValue: number,
  *    maxValue: number,
+ *    disabled: boolean,
  *    options?: Array<{value: string, label: string}>,
  *    pattern?: RegexExp,
  *    stringType?: StringType,
  *    objectType?: ModelTypeInfo,
  *    arrayType?: ModelPropInfo,
- *    itemQuery?: String,
+ *    mapType?: ModelPropInfo,
+ *    refSearchQuery?: Query | (item: Item) => Query,
+ *    createRef?: (index_entry) => Item,
  *    label: string,
  *  }} ModelPropInfo
 
@@ -59,6 +64,7 @@ function _getModelPropInfo(key, template, Meta, path) {
     maxLength: Meta.maxLength ?? Number.MAX_SAFE_INTEGER,
     minValue: Meta.minValue ?? 0,
     maxValue: Meta.maxLength ?? Number.MAX_SAFE_INTEGER,
+    disabled: !!Meta.disabled,
     options: Meta.options
       ? Meta.options.length === 0 || isObject(Meta.options[0])
         ? Meta.options
@@ -76,7 +82,12 @@ function _getModelPropInfo(key, template, Meta, path) {
       type === "array"
         ? _getModelPropInfo("$i", template?.[0], Meta.arrayType, path + "[]")
         : undefined,
-    itemQuery: Meta.itemQuery ?? "",
+    mapType:
+      type === "map"
+        ? _getModelTypeInfo(template, Meta.mapType, path + "{}")
+        : undefined,
+    refSearchQuery: Meta.refSearchQuery ?? "",
+    createRef: Meta.createRef,
     label: Meta.label ?? sentenceCase(key.replace(/([a-z])([A-Z])/g, "$1 $2")),
   };
 }

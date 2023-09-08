@@ -18,7 +18,7 @@
     "@mui/material": "^5.13.7",
     "d3": "^7.8.4",
     "dayjs": "^1.11.9",
-    "deep-equal": "^2.2.1",
+    "deep-equal": "^2.2.2",
     "eslint": "^8.39.0",
     "eslint-config-next": "^13.3.1",
     "firebase": "^10.0.0",
@@ -27,7 +27,9 @@
     "next": "^13.4.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-infinite-scroll-component": "^6.1.0",
     "react-use": "^17.4.0",
+    "react-window": "^1.8.9",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

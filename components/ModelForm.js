@@ -14,7 +14,7 @@ import Form, {
   FormSelect,
   FormSubmit,
 } from "./Form";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Spacer from "./Spacer";
 import { uploadFile } from "@/logic/storage";
 import { timeFormat } from "d3";
@@ -161,7 +161,7 @@ function createFormField(name, meta, { disabled } = {}) {
     name: name,
     key: name,
     label: meta.label,
-    disabled,
+    disabled: disabled || meta.disabled,
     fullWidth: false,
     required: meta.required,
     sx: { minWidth: "15em", flexGrow: 1, mx: 1 },
@@ -219,7 +219,11 @@ function createFormField(name, meta, { disabled } = {}) {
       );
     case "ref":
       return (
-        <ModelFormSelect {...commonProps} />
+        <ModelFormSelect
+          {...commonProps}
+          {...collectInputProps(meta)}
+          meta={meta}
+        />
       );
     default:
       throw new Error("Unhandled Input type " + meta.type);

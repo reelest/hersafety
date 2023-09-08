@@ -28,15 +28,16 @@ async function markFileForAutoCleanup(path) {
   });
 }
 async function deleteInTxn(txn, path) {
-  return txn.set(FileTracker.ref(_id(ref(storage, path).fullPath)), {
-    path: path,
-    time: 0,
-  });
+  return FileTracker.item(_id(ref(storage, path).fullPath)).set(
+    {
+      path: path,
+      time: 0,
+    },
+    txn
+  );
 }
 async function keepInTxn(txn, path) {
-  return txn.delete(FileTracker.ref(_id(ref(storage, path).fullPath)), {
-    exists: true,
-  });
+  return FileTracker.item(_id(ref(storage, path).fullPath)).delete(txn);
 }
 
 const fileProps = Symbol();
@@ -53,9 +54,8 @@ export const trackFiles = (ItemClass, props) => {
     .filter(Boolean);
 };
 export async function onFilesUpdateItem(item, txn, newState, prevState) {
-  if (!prevState) return;
   item[fileProps].forEach((e) => {
-    if (prevState[e] !== newState[e]) {
+    if (item.didUpdate(e, newState, prevState)) {
       console.log(
         "Updating " + e + " from " + prevState[e] + " to " + newState[e]
       );

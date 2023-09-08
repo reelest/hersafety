@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
 import { noop } from "@/utils/none";
-import { noFirestore } from "./model";
+import { Item, noFirestore } from "./model";
 import { range } from "d3";
 import usePager from "@/utils/usePager";
 import useLogger from "@/utils/useLogger";
@@ -202,11 +202,11 @@ export class QueryCursor {
   constructor(model) {
     //Used for filtering
     this.model = model;
-    this.cache = new LocalCache();
+    this._cache = new LocalCache();
     console.debug("Creating query cursor " + model._ref.path);
     // A subscription that notifies listeners when this query completes
     [, this._subscribe, this._dispatch] = createSubscription(() => {
-      this.start();
+      this._start();
       return () => {
         const x = this._unsubscribe;
         this._unsubscribe = null;
@@ -228,33 +228,33 @@ export class QueryCursor {
     console.warn("Recreating " + this.model._ref.path + " query....");
     this._anchorValue =
       this._scrollDirection === PAGE_DIRECTION_FORWARDS
-        ? this.cache.hasNextAnchor(this.cache.start)
-        : this.cache.hasPrevAnchor(this.cache.end);
+        ? this._cache.hasNextAnchor(this._cache.start)
+        : this._cache.hasPrevAnchor(this._cache.end);
     return query(
       this.model._ref,
       ...this._filters,
       ...this._ordering,
       ...(this._scrollDirection === PAGE_DIRECTION_FORWARDS
-        ? this.cache.nextAnchor(this._pageSize)
-        : this.cache.prevAnchor(this._pageSize))
+        ? this._cache.nextAnchor(this._pageSize)
+        : this._cache.prevAnchor(this._pageSize))
     ).withConverter(this.model.converter);
   }
 
   // A Query can be in one of 4 states: stopped, stopped-busy, running, running-busy
   // A query starts running once it has at least one listener
-  isRunning() {
+  _isRunning() {
     return this._unsubscribe !== null;
   }
   // A query gets busy when it is trying to jump to a new page
-  isBusy() {
-    return this.cache._busy !== null;
+  _isBusy() {
+    return this._cache._busy !== null;
   }
 
   // Data retrieval methods
   async get() {
     if (noFirestore) return [];
 
-    if (this.isRunning()) {
+    if (this._isRunning()) {
       return await new Promise((r) => {
         // Get from cache
         const l = this._subscribe((e) => {
@@ -263,9 +263,9 @@ export class QueryCursor {
         });
       });
     } else {
-      const x = await this.cache.run(async () => {
+      const x = await this._cache.run(async () => {
         this._isLoaded = true;
-        return this.cache.onNewData(await getDocs(this.query));
+        return this._cache.onNewData(await getDocs(this.query));
       });
       // Restart subscription just in case a listener subscribed while this was running.
       // This could unintentionally resume a paused subscription ie
@@ -280,20 +280,20 @@ export class QueryCursor {
     return this._subscribe(cb);
   }
 
-  start() {
-    if (this.isRunning()) this._unsubscribe();
-    console.debug("Restarting snapshot busy:" + this.isBusy());
+  _start() {
+    if (this._isRunning()) this._unsubscribe();
+    console.debug("Restarting snapshot busy:" + this._isBusy());
     let query;
     this._isLoaded = false;
 
-    this._unsubscribe = this.isBusy()
+    this._unsubscribe = this._isBusy()
       ? noop
       : onSnapshot((query = this.query), {
           next: (snapshot) => {
-            this.cache.run(() => {
+            this._cache.run(() => {
               if (query === this.query) {
                 this._isLoaded = true;
-                this._dispatch(this.cache.onNewData(snapshot));
+                this._dispatch(this._cache.onNewData(snapshot));
               }
             });
           },
@@ -302,35 +302,55 @@ export class QueryCursor {
           },
         });
     // Must come after to prevent messing with this.isBusy
-    if (this.cache.hasData())
-      this.cache.run(() => {
-        if (!this._isLoaded) this._dispatch(this.cache.get());
+    if (this._cache.hasData())
+      this._cache.run(() => {
+        if (!this._isLoaded) this._dispatch(this._cache.get());
       });
   }
   restart() {
     this._query = null;
-    if (this.isRunning()) this.start();
+    if (this._isRunning()) this._start();
+  }
+  /**
+   *
+   * @param {number} start
+   * @returns {AsyncGenerator<Item[], Item[], void>}
+   */
+  async *iterator(start = this._cache.start) {
+    await this.seek(start);
+    let results = await this.get();
+    while (results.length >= this._pageSize) {
+      yield results;
+      try {
+        results = await this.get();
+        await this.advance();
+      } catch (e) {
+        this._onError?.(e);
+      }
+    }
+    return results;
   }
   async advance() {
-    return await this.seek(this.cache.end);
+    return await this.seek(this._cache.end);
   }
+
   async seek(index) {
     // Ensure index is valid
     if (typeof index !== "number" || index < 0 || Number.isNaN(index))
       throw new Error("Invalid index: " + index + " supplied");
     try {
       if (
-        await this.cache.run(async () => {
+        await this._cache.run(async () => {
           const scrollDirection =
-            index < this.cache.start &&
-            index > this.cache.start - this._pageSize &&
+            index < this._cache.start &&
+            index > this._cache.start - this._pageSize &&
             index !== 0
               ? PAGE_DIRECTION_BACKWARDS
               : PAGE_DIRECTION_FORWARDS;
           const anchor =
             scrollDirection === PAGE_DIRECTION_BACKWARDS
-              ? this.cache.hasPrevAnchor(index + this._pageSize)
-              : this.cache.hasNextAnchor(index);
+              ? this._cache.hasPrevAnchor(index + this._pageSize)
+              : this._cache.hasNextAnchor(index);
           if (anchor) {
             if (
               anchor === this._anchorValue &&
@@ -342,7 +362,7 @@ export class QueryCursor {
               return false;
             }
             this._scrollDirection = scrollDirection;
-            this.cache.setPage(index, this._pageSize);
+            this._cache.setPage(index, this._pageSize);
           } else {
             await this._bulkLoadUpTo(index);
           }
@@ -360,7 +380,7 @@ export class QueryCursor {
 
   async _bulkLoadUpTo(targetIndex) {
     this._scrollDirection = PAGE_DIRECTION_FORWARDS;
-    let closestIndex = this.cache.closestAnchor(targetIndex);
+    let closestIndex = this._cache.closestAnchor(targetIndex);
     console.debug("Bulk loading...");
     while (closestIndex < targetIndex) {
       this.restart(); //stops any subscriptions
@@ -370,26 +390,29 @@ export class QueryCursor {
         this._pageSize * 10
       );
       console.debug("seek from " + closestIndex + " -> +" + this._pageSize);
-      this.cache.setPage(closestIndex);
+      this._cache.setPage(closestIndex);
       let query = this.query;
       this._pageSize = prevPageSize;
-      this.cache.onNewData(await getDocs(query));
+      this._cache.onNewData(await getDocs(query));
       // TODO allow cancellation or something
-      const m = this.cache.closestAnchor(targetIndex);
+      const m = this._cache.closestAnchor(targetIndex);
       if (closestIndex > m) {
         return console.debug("failed " + m + " vs " + closestIndex);
       }
       closestIndex = m;
     }
-    this.cache.setPage(targetIndex);
+    this._cache.setPage(targetIndex);
   }
 
   // Pager methods
   get page() {
-    return Math.floor(this.cache.start / this._pageSize);
+    return Math.floor(this._cache.start / this._pageSize);
+  }
+  get index() {
+    return this._cache.start;
   }
   async getCount(max) {
-    return await this.cache.run(async () => {
+    return await this._cache.run(async () => {
       return (
         await getCountFromServer(
           query(
@@ -403,7 +426,7 @@ export class QueryCursor {
     });
   }
   get sentinelValue() {
-    return this.cache.data[this.cache.end - 1];
+    return this._cache.data[this._cache.end - 1];
   }
   /**
    * Returns the first document after the last item if any
@@ -431,15 +454,15 @@ export class QueryCursor {
    * usePagedQuery does this automatically.
    */
   async syncIndex() {
-    if (this.cache.size() === 0) return 0;
+    if (this._cache.size() === 0) return 0;
     if (
       this._scrollDirection === PAGE_DIRECTION_FORWARDS &&
-      this.cache.start === 0
+      this._cache.start === 0
     )
       return 0;
 
-    this.cache.run(async () => {
-      if (!this.cache.data[this.cache.start])
+    this._cache.run(async () => {
+      if (!this._cache.data[this._cache.start])
         return console.warn(
           "Cannot get index until documents have been loaded"
         );
@@ -450,14 +473,14 @@ export class QueryCursor {
             ...this._filters,
             ...this._ordering,
             ...[
-              this.cache.data[this.cache.start]
-                ? endBefore(this.cache.data[this.cache.start])
+              this._cache.data[this._cache.start]
+                ? endBefore(this._cache.data[this._cache.start])
                 : null,
             ].filter(Boolean)
           )
         )
       ).data().count;
-      this.cache.syncStart(index);
+      this._cache.syncStart(index);
     });
   }
 
@@ -477,7 +500,7 @@ export class QueryCursor {
     while (params.length > 0) {
       this._filters.push(where(...params.splice(0, 3)));
     }
-    this.cache.reset().then(() => this.restart());
+    this._cache.reset().then(() => this.restart());
     return this;
   }
   orderBy(key, descending, secondKey, secondDescending) {
@@ -500,7 +523,7 @@ export class QueryCursor {
     if (this._ordering.length === 0) {
       this._ordering.push(orderBy(documentId()));
     }
-    this.cache.reset().then(() => this.restart());
+    this._cache.reset().then(() => this.restart());
     return this;
   }
   pageSize(size) {
@@ -564,7 +587,7 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
     const frequency =
       2000 * 3 ** Math.min(7.5, Math.max(0, pager.numPages - 1 - page));
     const maxPage = Math.floor((count - 1) / query._pageSize);
-    const y = query.cache.start;
+    const y = query.index;
     if (lastCheckCountT.current + frequency < now) {
       console.debug(
         "Synchronizing query state " +
@@ -585,7 +608,7 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
           " of " +
           pager.numPages
       );
-    const x = query.cache.start;
+    const x = query.index;
     if (x === y) {
       const index = Math.max(0, Math.min(page, maxPage)) * query._pageSize;
       if (await query.seek(index)) _reload();

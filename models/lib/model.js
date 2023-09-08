@@ -22,7 +22,7 @@ export const noFirestore = firestore === null;
 export class Model {
   /**
    * @param {string} _collectionID
-   * @param {T} [ItemClass=Item]
+   * @param {{new(): T}} [ItemClass=Item]
    * @param {Partial<import("./model_type_info").ModelTypeInfo>} meta
    */
   constructor(_collectionID, ItemClass = Item, meta) {
@@ -129,6 +129,9 @@ export class Item {
       value: !!isNew,
     });
   }
+  static empty() {
+    return new this();
+  }
   /**
    * Related method is Model.getOrCreate which automatically loads and optionally creates the item if it does not exist.
    */
@@ -166,6 +169,11 @@ export class Item {
   /*
     Used for partial updates which do not require a rereading a document. Usually used with Model.item(id).
   */
+  /**
+   *
+   * @param {Record<keyof ThisParameterType, any>} data
+   * @param {*} txn
+   */
   async set(data, txn) {
     if (noFirestore) throw InvalidState("No Firestore!!");
 
@@ -208,12 +216,18 @@ export class Item {
   id() {
     return this._ref.id;
   }
+  /**
+   * @returns {Model<typeof this>}
+   */
+  model() {
+    return this._model;
+  }
   uniqueName() {
     return this._ref.path;
   }
 
   getPropertyLabel(name) {
-    return this._model.Meta[name].options.find((e) => e.value === this[name])
+    return this.model().Meta[name].options.find((e) => e.value === this[name])
       .label;
   }
 }

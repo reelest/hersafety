@@ -10,7 +10,12 @@ import {
   trackFiles,
 } from "@/logic/storage";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
-import { indexForSearch } from "@/logic/search";
+import {
+  indexForSearch,
+  onSearchAddItem,
+  onSearchDeleteItem,
+  onSearchUpdateItem,
+} from "@/logic/search";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
@@ -44,17 +49,19 @@ export class UserModelItem extends CountedItem {
    * @param {import("firebase/auth").User} user
    */
   static of(user) {
-    const m = new UserModelItem(null, null, null);
-    return Object.assign(m, pick(user, Object.keys(m)));
+    const m = UserModelItem.empty();
+    return m.setData(user);
   }
 
-  async onUpdateItem(txn, currentState, lastState) {
-    await super.onUpdateItem(txn, currentState, lastState);
-    await onFilesUpdateItem(this, txn, currentState, lastState);
+  async onUpdateItem(txn, newState, lastState) {
+    await super.onUpdateItem(txn, newState, lastState); //TODO remove this
+    await onSearchUpdateItem(this, txn, newState);
+    await onFilesUpdateItem(this, txn, newState, lastState);
   }
 
   async onDeleteItem(txn, lastState) {
-    await super.onDeleteItem(txn, lastState);
+    await super.onDeleteItem(txn, lastState); //TODO remove this
+    await onSearchDeleteItem(this, txn);
     await onFilesDeleteItem(this, txn, lastState);
     if (lastState.profileCompleted)
       this.getCounter().set(
@@ -65,10 +72,11 @@ export class UserModelItem extends CountedItem {
       );
     await UserRoles.item(this.id()).delete(txn);
   }
-  async onAddItem(txn, currentState) {
-    await super.onAddItem(txn, currentState);
-    await onFilesAddItem(this, txn, currentState);
-    if (currentState.profileCompleted)
+  async onAddItem(txn, newState) {
+    await super.onAddItem(txn, newState); //TODO remove this
+    await onSearchAddItem(this, txn, newState);
+    await onFilesAddItem(this, txn, newState);
+    if (newState.profileCompleted)
       this.getCounter().set(
         {
           completedProfiles: increment(1),
@@ -79,7 +87,13 @@ export class UserModelItem extends CountedItem {
 }
 trackFiles(UserModelItem, ["photoURL"]);
 UserModelItem.markTriggersUpdateTxn(["profileCompleted"]);
-indexForSearch(UserModelItem, ["firstName", "lastName", "otherNames", "email", "phoneNumber"]);
+indexForSearch(UserModelItem, [
+  "firstName",
+  "lastName",
+  "otherNames",
+  "email",
+  "phoneNumber",
+]);
 export const UserMeta = {
   dateCreated: Hidden,
   lastUpdated: Hidden,

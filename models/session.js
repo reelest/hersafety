@@ -6,7 +6,7 @@ import { CountedItem, CountedModel } from "./lib/counted_model";
 
 export class Session extends CountedItem {
   name = "";
-
+  dateCreated = Date.now();
   async onDeleteItem(txn) {
     return this.getCounter().set(
       {

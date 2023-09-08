@@ -22,7 +22,7 @@ export default function ModelItemPreview({ item }) {
     usePromise(
       () =>
         (
-          item._model.Meta[MODEL_ITEM_PREVIEW] ||
+          item.model().Meta[MODEL_ITEM_PREVIEW] ||
           ((item) => ({ title: item.uniqueName() }))
         )(item),
       [item]
