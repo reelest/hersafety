@@ -33,6 +33,9 @@ const months = [
 ];
 const days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
 function EventsView({ date = new Date() }) {
+  /**
+   * @type {{data: import("@/models/event").Event[]}}
+   */
   const { data: events } = useQuery(() => Events.all());
   const startOfDay = new Date(date.getTime());
   startOfDay.setHours(0, 0, 0, 0);
@@ -65,7 +68,7 @@ function EventsView({ date = new Date() }) {
             events
               .filter((e) => e.date >= startOfDay)
               .filter((e) => e.date <= startOfDay.getTime() + daysToMs(100))
-              .sort((a, b) => a.date - b.date)
+              .sort((a, b) => a.date.getTime() - b.date.getTime())
               .map(({ date, title, scope }, i) => (
                 <EventView
                   key={i}
@@ -174,7 +177,7 @@ const EventView = ({ date, title, scope, isSelected }) => {
         <p className="font-32b leading-none">{monthDate}</p>
       </Box>
       <div className="w-0 flex-grow">
-        <h4 className="font-20t text-white leading-normal w-auto overflow-hidden whitespace-nowrap text-ellipsis">
+        <h4 className="text-white leading-normal w-auto overflow-hidden whitespace-nowrap text-ellipsis">
           {title}
         </h4>
         <Typography

@@ -1,9 +1,9 @@
-import { Hidden } from "./lib/model_types";
+import { HiddenField } from "./lib/model_types";
 import { CountedModel } from "./lib/counted_model";
 import { Fee } from "./fees";
 
 export class Payment extends Fee {
-  timestamp = Date.now();
+  timeCreated = new Date();
   initiator = "";
   beneficiary = "";
   reversed = false;
@@ -11,13 +11,13 @@ export class Payment extends Fee {
   source = "manual";
 }
 const Payments = new CountedModel("payments", Payment, {
-  timestamp: {
+  timeCreated: {
     type: "datetime",
   },
-  initiator: Hidden,
-  beneficiary: Hidden,
-  reversed: Hidden,
-  reversalComments: Hidden,
-  source: Hidden,
+  initiator: HiddenField,
+  beneficiary: HiddenField,
+  reversed: HiddenField,
+  reversalComments: HiddenField,
+  source: HiddenField,
 });
 export default Payments;

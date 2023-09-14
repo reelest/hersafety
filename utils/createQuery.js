@@ -1,3 +1,4 @@
+import notIn from "./notIn";
 import range from "./range";
 import uniq from "./uniq";
 
@@ -8,7 +9,7 @@ import uniq from "./uniq";
 export default function createQuery(text) {
   const [exact, oneLetterOff, twoLettersOff, letterSegments] = parseQuery(text);
   return function (label) {
-    label = String(label).toLowerCase();
+    label = Array.isArray(label) ? label : String(label).toLowerCase();
     return (
       baseScore(exact, label) * 49 +
       baseScore(oneLetterOff, label) * 7 +
@@ -22,7 +23,7 @@ const baseScore = (query, text) =>
     return score + (text.includes(part) ? part.length : 0);
   }, 0);
 const byLength = (a, b) => b.length - a.length || a.localeCompare(b);
-const notIn = (arr) => (e) => !arr.includes(e);
+
 const maxLength = (e) => e.length < 15;
 /**
  *

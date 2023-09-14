@@ -52,7 +52,7 @@ const TABS = [
     component: SettingsPage,
   },
 ];
-export default function Administrators() {
+export default function AdministratorsRoute() {
   return (
     <>
       <Head>

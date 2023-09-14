@@ -1,7 +1,7 @@
 import { Model, Item } from "./lib/model";
 
 export class Event extends Item {
-  date = Date.now();
+  date = new Date();
   title = "Untitled";
   scope = {
     teachers: true,

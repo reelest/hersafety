@@ -6,8 +6,8 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import isServerSide from "@/utils/is_server_side";
-import { UserRoles } from "@/models/user";
-import { mapRoleToModel } from "./user_data";
+import { UserRoles } from "@/models/user_data";
+import { mapRoleToUserModel } from "./user_data";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -53,8 +53,8 @@ export const activateUser = async (item) => {
     userRole.role = item.role;
     await userRole.save(txn);
   });
-  const model = mapRoleToModel(item.role);
-  await model.getOrCreate(item.uid, async (user, txn) => {
+  const userModel = mapRoleToUserModel(item.role);
+  await userModel.getOrCreate(item.uid, async (user, txn) => {
     user.setData({ email: item.email, ...parseName(item.name) });
     await user.save(txn);
     await item.delete(txn);

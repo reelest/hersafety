@@ -1,6 +1,7 @@
 import Courses from "./course";
-import { CountedItem } from "./lib/counted_model";
+import { CountedItem } from "./lib/counted_item";
 import { Model, Item } from "./lib/model";
+import { DeleteItemAction, SetIDAction, trackRefs } from "./lib/trackRefs";
 
 export class CourseDescription extends CountedItem {
   name = "";
@@ -23,6 +24,15 @@ export class CourseDescription extends CountedItem {
         )
       );
   }
+  static {
+    trackRefs(
+      this,
+      ["assignments"],
+      [new SetIDAction("descriptionId")],
+      [new DeleteItemAction()]
+    );
+    this.markTriggersUpdateTxn(["name", "description"], false);
+  }
   //TODO: add a firestore rule to ensure that no description is deleted without all courses deleted
 }
 const CourseDescriptions = new Model("course_descriptions", CourseDescription, {
@@ -31,12 +41,9 @@ const CourseDescriptions = new Model("course_descriptions", CourseDescription, {
   },
   assignments: {
     arrayType: {
-      type: "ref",
-      createRef(entry) {
-        const course = Courses.create();
-        course.descriptionId = entry.descriptionId;
-        return course;
-      },
+      // No circular references allowed
+      type: "string",
+      hidden: true,
     },
   },
 });

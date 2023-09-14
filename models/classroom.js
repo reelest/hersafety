@@ -1,3 +1,4 @@
+import Admins, { Admin } from "./admin";
 import Courses from "./course";
 import { Model, Item } from "./lib/model";
 import Students from "./student";
@@ -18,5 +19,11 @@ export class ClassRoom extends Item {
     return Students.withFilter("classId", "array-contains", this.id());
   }
 }
-const ClassRooms = new Model("classes", Event);
+const ClassRooms = new Model("classes", ClassRoom, {
+  formTeacher: {
+    type: "ref",
+    refModel: Admins,
+    pickRefQuery: Admins.all(),
+  },
+});
 export default ClassRooms;

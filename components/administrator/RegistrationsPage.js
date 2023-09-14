@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import RegistrationsForm from "./RegistrationsForm";
 import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
+import ModelDataView from "../ModelDataView";
 
 export default function RegistrationsPage() {
   const { data: registrations, pager } = usePagedQuery(
@@ -91,7 +92,7 @@ export default function RegistrationsPage() {
                 case 3:
                   return item.gender;
                 case 4:
-                  return item.dateOfBirth;
+                  return <ModelDataView item={item} name="dateOfBirth" />;
                 case 5:
                   return item.stateOfOrigin;
               }

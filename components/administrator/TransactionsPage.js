@@ -1,30 +1,11 @@
-import {
-  Box,
-  Typography,
-  Button,
-  Modal,
-  Paper,
-  IconButton,
-} from "@mui/material";
+import { Box, Typography, Button, Modal } from "@mui/material";
 import PageHeader from "../PageHeader";
-import { Add, CloseCircle } from "iconsax-react";
-import SessionSelect from "../SessionSelect";
-import { usePagedQuery, useQuery } from "@/models/lib/query";
-import Registrations from "@/models/registration";
+import { Add } from "iconsax-react";
+import { useQuery } from "@/models/lib/query";
 import ThemedTable from "../ThemedTable";
-import Table, {
-  TableButton,
-  addClassToColumns,
-  addHeaderClass,
-  supplyValue,
-} from "../Table";
+import Table, { addClassToColumns, supplyValue } from "../Table";
 import { useEffect, useState } from "react";
-import RegistrationsForm from "./RegistrationsForm";
-import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
 import Payments from "@/models/payment";
-import { noop } from "@/utils/none";
-import SuccessDialog from "../SuccessDialog";
-import ModelForm from "../ModelForm";
 import ModelFormDialog from "../ModelFormDialog";
 import { formatDate, formatNumber, formatTime } from "@/utils/formatNumber";
 import Card1 from "../Card1";
@@ -39,9 +20,9 @@ const select = (item, i) => {
     case 2:
       return "\u20A6" + formatNumber(item.amount);
     case 3:
-      return formatDate(item.timestamp);
+      return formatDate(item.timeCreated);
     case 4:
-      return formatTime(item.timestamp);
+      return formatTime(item.timeCreated);
   }
 };
 export default function TransactionsPage() {

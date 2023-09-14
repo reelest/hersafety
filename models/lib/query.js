@@ -20,7 +20,7 @@ import { Item, noFirestore } from "./model";
 import { range } from "d3";
 import usePager from "@/utils/usePager";
 import useLogger from "@/utils/useLogger";
-import { FailedPrecondition } from "./errors";
+import { InvalidParameters, InvalidState } from "./errors";
 
 export const DEFAULT_ORDERING = "!model-default-ordering";
 export const DEFAULT_ORDERING_DESCENDING = "!model-default-descending";
@@ -55,7 +55,7 @@ class LocalCache {
 
   _ensureLocked() {
     if (!this._busy)
-      throw new Error("Cannot modify cache without acquiring lock");
+      throw new InvalidState("Cannot modify cache without acquiring lock");
   }
 
   /**
@@ -66,7 +66,9 @@ class LocalCache {
    */
   onNewData(snapshot, policy = LocalCache.ASSUME_DELETED_POLICY) {
     if (policy !== LocalCache.ASSUME_DELETED_POLICY)
-      throw new Error("Unknown policy passed to LocalCache.onNewData");
+      throw new InvalidParameters(
+        "Unknown policy passed to LocalCache.onNewData"
+      );
     this._ensureLocked();
     const data = snapshot.docs;
     this.data.splice(
@@ -194,7 +196,7 @@ export class QueryCursor {
   _unsubscribe = null;
   _anchorValue = null;
   _query = null;
-  _isLoaded = false;
+  _hasLoaded = false;
   /**
    *
    * @param {import("./lib/model").Model} model
@@ -203,7 +205,7 @@ export class QueryCursor {
     //Used for filtering
     this.model = model;
     this._cache = new LocalCache();
-    console.debug("Creating query cursor " + model._ref.path);
+    console.debug("Creating query cursor " + model.uniqueName());
     // A subscription that notifies listeners when this query completes
     [, this._subscribe, this._dispatch] = createSubscription(() => {
       this._start();
@@ -225,7 +227,7 @@ export class QueryCursor {
   }
 
   _createQuery() {
-    console.warn("Recreating " + this.model._ref.path + " query....");
+    console.warn("Recreating " + this.model.uniqueName() + " query....");
     this._anchorValue =
       this._scrollDirection === PAGE_DIRECTION_FORWARDS
         ? this._cache.hasNextAnchor(this._cache.start)
@@ -264,7 +266,7 @@ export class QueryCursor {
       });
     } else {
       const x = await this._cache.run(async () => {
-        this._isLoaded = true;
+        this._hasLoaded = true;
         return this._cache.onNewData(await getDocs(this.query));
       });
       // Restart subscription just in case a listener subscribed while this was running.
@@ -284,7 +286,7 @@ export class QueryCursor {
     if (this._isRunning()) this._unsubscribe();
     console.debug("Restarting snapshot busy:" + this._isBusy());
     let query;
-    this._isLoaded = false;
+    this._hasLoaded = false;
 
     this._unsubscribe = this._isBusy()
       ? noop
@@ -292,7 +294,7 @@ export class QueryCursor {
           next: (snapshot) => {
             this._cache.run(() => {
               if (query === this.query) {
-                this._isLoaded = true;
+                this._hasLoaded = true;
                 this._dispatch(this._cache.onNewData(snapshot));
               }
             });
@@ -304,7 +306,7 @@ export class QueryCursor {
     // Must come after to prevent messing with this.isBusy
     if (this._cache.hasData())
       this._cache.run(() => {
-        if (!this._isLoaded) this._dispatch(this._cache.get());
+        if (!this._hasLoaded) this._dispatch(this._cache.get());
       });
   }
   restart() {
@@ -326,6 +328,7 @@ export class QueryCursor {
         await this.advance();
       } catch (e) {
         this._onError?.(e);
+        console.error(e);
       }
     }
     return results;
@@ -337,7 +340,7 @@ export class QueryCursor {
   async seek(index) {
     // Ensure index is valid
     if (typeof index !== "number" || index < 0 || Number.isNaN(index))
-      throw new Error("Invalid index: " + index + " supplied");
+      throw new InvalidParameters("Invalid index: " + index + " supplied");
     try {
       if (
         await this._cache.run(async () => {
@@ -496,7 +499,7 @@ export class QueryCursor {
     this._filters = [];
     this._filters.push(where(key, op, val));
     if (params.length % 3 !== 0)
-      throw new FailedPrecondition("Invalid filters supplied");
+      throw new InvalidParameters("Invalid filters supplied");
     while (params.length > 0) {
       this._filters.push(where(...params.splice(0, 3)));
     }
@@ -562,7 +565,6 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
     loading,
     ...rest
   } = useQuery(createQuery, deps, opts);
-
   //Get count of items
   const [count, setCount] = useState(Number.MAX_SAFE_INTEGER);
 
@@ -621,23 +623,23 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
     sync();
   }, [query, page, sync]);
 
-  useLogger({
-    count,
-  });
-  useLogger({
-    page,
-  });
-  useLogger({
-    pageSize: query?._pageSize ?? 1,
-    loading,
-  });
+  // useLogger({
+  //   count,
+  // });
+  // useLogger({
+  //   page,
+  // });
+  // useLogger({
+  //   pageSize: query?._pageSize ?? 1,
+  //   loading,
+  // });
 
   // Update count when on the last page if a new item is added after the last page
   const isOnLastPage =
     query &&
     query.page === Math.floor((count - 1) / query._pageSize) &&
     !loading &&
-    query._isLoaded;
+    query._hasLoaded;
   const sentinelValue = query?.sentinelValue;
   useEffect(() => {
     if (query && isOnLastPage && data?.length === query._pageSize) {
@@ -732,13 +734,12 @@ const startQuery = (dedupeIndex, getState, setState, watch, createQuery) => {
   });
   if (!query) return;
   const onSuccess = (e) => {
-    console.debug({ e, success: true, query });
     if (p === dedupeIndex.current)
       setState({ ...getState(), loading: false, data: e, error: null });
     else console.debug("Ignored result because query cahnged");
   };
   const onError = (e) => {
-    console.debug({ e, success: false, query });
+    console.warn({ e, success: false, query });
     if (p === dedupeIndex.current)
       setState({ ...getState(), loading: false, error: e });
     else console.debug("Ignored result because query cahnged");

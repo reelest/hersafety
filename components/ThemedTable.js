@@ -12,6 +12,7 @@ import Spacer from "./Spacer";
 import Pager from "./Pager";
 import usePager from "@/utils/usePager";
 import { Typography } from "@mui/material";
+import Await from "./Await";
 
 function ThemedTable({
   container: TableWrapper = ThemedBox,
@@ -45,6 +46,9 @@ function ThemedTable({
           sx: {
             backgroundColor: selected === row ? "primary.light" : "white",
             color: selected === row ? "white" : null,
+            "& .MuiLink-root": {
+              color: selected === row ? "white" : undefined,
+            },
           },
           className: row >= data.length ? "invisible" : "shadow-3",
         })}
@@ -52,7 +56,7 @@ function ThemedTable({
           ...[_pager ? null : pageData(controller.page, pageSize)].filter(
             Boolean
           ),
-          addHeaderClass("first:pl-4 pr-2 last:pr-0 font-20t"),
+          addHeaderClass("first:pl-4 pr-2 last:pr-0 "),
           addClassToColumns(
             "first:pl-4 pr-4 pt-1 pb-1 first:rounded-l last:rounded-r"
           ),
@@ -65,9 +69,13 @@ function ThemedTable({
         <Typography variant="body2" sx={{ mr: 4 }}>
           Total
         </Typography>
-        <span className="font-20t text-disabled">{controller.count}</span>
+        <span className="text-disabled">
+          <Await value={controller.count} />
+        </span>
         <Spacer />
-        <Pager controller={controller} />
+        <div className="print:hidden">
+          <Pager controller={controller} />
+        </div>
       </div>
     </TableWrapper>
   );

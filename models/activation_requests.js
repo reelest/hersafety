@@ -1,14 +1,14 @@
 import { getUser } from "@/logic/auth";
 import { CountedModel } from "./lib/counted_model";
 import { Item } from "./lib/model";
-import { Hidden } from "./lib/model_types";
+import { HiddenField } from "./lib/model_types";
 
 export class ActivationRequest extends Item {
   name = getUser()?.displayName ?? "";
-  uid = getUser()?.uid;
-  email = getUser()?.email;
+  uid = getUser()?.uid ?? "";
+  email = getUser()?.email ?? "";
   role = "";
-  dateCreated = Date.now();
+  dateCreated = new Date();
 }
 const ActivationRequests = new CountedModel(
   "activation_requests",
@@ -21,9 +21,9 @@ const ActivationRequests = new CountedModel(
         { value: "teacher", label: "Teacher" },
       ],
     },
-    uid: Hidden,
-    email: Hidden,
-    dateCreated: Hidden,
+    uid: HiddenField,
+    email: HiddenField,
+    dateCreated: HiddenField,
   }
 );
 export default ActivationRequests;

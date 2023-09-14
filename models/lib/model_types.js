@@ -11,8 +11,12 @@ export const Class = {
   })),
 };
 
-export const Hidden = {
-  type: "hidden",
+export const HiddenField = {
+  hidden: true,
+};
+export const HiddenTime = {
+  hidden: true,
+  type: "datetime",
 };
 
 export const Country = {

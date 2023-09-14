@@ -1,4 +1,4 @@
-import { Item, Model } from "./lib/model";
+import { Item, Model, USES_EXACT_IDS } from "./lib/model";
 
 export class WebsiteData extends Item {
   currentSession = "2022/2023";
@@ -15,4 +15,9 @@ export class WebsiteData extends Item {
   twitterURL = "";
 }
 
-export const WebsiteDataModel = new Model("website_data", WebsiteData);
+export const WebsiteDataModel = new Model("website_data", WebsiteData, {
+  [USES_EXACT_IDS]: true,
+  description: {
+    stringType: "longtext",
+  },
+});

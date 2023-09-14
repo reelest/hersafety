@@ -1,8 +1,8 @@
 import { CountedModel } from "./lib/counted_model";
-import { Hidden } from "./lib/model_types";
-import { UserMeta, UserModelItem } from "./user";
+import { HiddenField } from "./lib/model_types";
+import { UserMeta, UserData } from "./user_data";
 
-export class Student extends UserModelItem {
+export class Student extends UserData {
   bloodGroup = "";
   genotype = "";
   disability = "";
@@ -16,9 +16,9 @@ export class Student extends UserModelItem {
 
 const Students = new CountedModel("students", Student, {
   ...UserMeta,
-  registrationId: Hidden,
-  parentId1: Hidden,
-  parentId2: Hidden,
+  registrationId: HiddenField,
+  parentId1: HiddenField,
+  parentId2: HiddenField,
   bloodGroup: {
     "!modelform-section": "Bio Data",
     required: false,

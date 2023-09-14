@@ -1,13 +1,16 @@
-import { arrayRemove, arrayUnion, increment } from "firebase/firestore";
-import { CountedItem, CountedModel } from "./lib/counted_model";
+import { arrayRemove, arrayUnion } from "firebase/firestore";
+import { CountedModel } from "./lib/counted_model";
+import { CountedItem } from "./lib/counted_item";
+import { USES_EXACT_IDS } from "./lib/model";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
 //Deleting users makes use of the firebase admin sdk
 
 export class Session extends CountedItem {
   name = "";
-  dateCreated = Date.now();
-  async onDeleteItem(txn) {
+  dateCreated = new Date();
+  async onDeleteItem(txn, prevState) {
+    await super.onDeleteItem(txn, prevState);
     return this.getCounter().set(
       {
         sessions: arrayRemove(this.name),
@@ -15,7 +18,8 @@ export class Session extends CountedItem {
       txn
     );
   }
-  async onAddItem(txn) {
+  async onAddItem(txn, newState) {
+    await super.onAddItem(txn, newState);
     this.getCounter().set(
       {
         sessions: arrayUnion(this.name),
@@ -30,4 +34,6 @@ class SessionModel extends CountedModel {
     item.sessions = arrayUnion();
   }
 }
-export const Sessions = new SessionModel("sessions", Session);
+export const Sessions = new SessionModel("sessions", Session, {
+  [USES_EXACT_IDS]: true,
+});

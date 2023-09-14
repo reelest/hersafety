@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import range from "./range";
+import hasProp from "./hasProp";
+import delay from "./delay";
+import { unsortedUniq } from "./uniq";
 /**
  *
  * @param {import("react").Ref<HTMLFormElement> & {current: HTMLFormElement}} ref
@@ -15,8 +18,12 @@ export default function useBrowserFormValidation(ref, data, validationRules) {
   const getField = (name) => {
     if (ref?.current) {
       if (!ref.current.elements[name])
-        console.error(new Error("Unknown field " + name));
-      return ref.current.elements[name];
+        (async () => {
+          await delay(1);
+          if (!ref.current.elements[name])
+            console.warn("Unknown field " + name);
+        })();
+      return ref.current.elements[name].validity && ref.current.elements[name];
     }
   };
   return {
@@ -26,6 +33,7 @@ export default function useBrowserFormValidation(ref, data, validationRules) {
       ref?.current
         ? range(ref.current.elements.length)
             .map((e) => ref.current.elements.item(e).validationMessage)
+            .filter(unsortedUniq)
             .join("\n")
         : "No form reference provided",
     getErrorsInField: (name) => getField(name)?.validationMessage ?? "",
@@ -37,10 +45,7 @@ export function formValidator(field, validate) {
   return {
     validate: (form, data) => {
       let e;
-      if (
-        Object.hasOwnProperty.call(form.elements, field) &&
-        (e = validate(data, field))
-      ) {
+      if (hasProp(form.elements, field) && (e = validate(data, field))) {
         form.elements[field].setCustomValidity(e);
       }
     },

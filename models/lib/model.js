@@ -1,25 +1,34 @@
 import {
+  FieldValue,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   setDoc,
   updateDoc,
-  runTransaction,
 } from "firebase/firestore";
 import { firestore } from "@/logic/firebase_init";
 import { InvalidState, ItemDoesNotExist, checkError } from "./errors";
 import getModelTypeInfo from "./model_type_info";
 import pick from "@/utils/pick";
 import { DocumentQueryCursor, QueryCursor } from "./query";
-import { noop } from "@/utils/none";
+import Txn from "./transaction";
+import isPureObject from "@/utils/isPureObject";
+import typeOf from "@/utils/typeof";
+import hasProp from "@/utils/hasProp";
+/**
+ * (new|(?<!Model )extends) \w*Model\b
+ */
 /**
  * @typedef {import("firebase/firestore").WhereFilterOp} WhereFilterOp
  */
 export const noFirestore = firestore === null;
+export const USES_EXACT_IDS = "!uses-exact-ids";
 /**
  * @template {Item} T
  */
 export class Model {
+  #Item;
   /**
    * @param {string} _collectionID
    * @param {{new(): T}} [ItemClass=Item]
@@ -29,7 +38,7 @@ export class Model {
     this._ref = noFirestore
       ? { path: _collectionID }
       : collection(firestore, _collectionID);
-    this.Item = ItemClass ?? Item;
+    this.#Item = ItemClass ?? Item;
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
     global[_collectionID + "Model"] = this;
@@ -42,10 +51,10 @@ export class Model {
       /** @param {import("firebase/firestore").QueryDocumentSnapshot} snapshot */
       fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
-        const x = new model.Item(snapshot.ref, false, model);
+        const x = new model.#Item(snapshot.ref, false, model);
         x.setData(data);
         x._isLoaded = true;
-
+        x.onCreate();
         return x;
       },
     };
@@ -67,16 +76,20 @@ export class Model {
     return this.all().setFilter(key, op, val, ...params);
   }
   /**
+   * Use `useFastUpdate` for updating a element using set merge:true instead of update. This allows an element to be created on first update. But such an item can only be updated in transactions to avoid storage leaks e.g item deleted then updated.
    * @param {string} id
-   * @param {boolean} isCreate
+   * @param {boolean} useFastUpdate
    * @returns {T}
    */
-  item(id, isCreate) {
-    return new this.Item(this.ref(id), isCreate, this);
+  item(id, useFastUpdate) {
+    const x = new this.#Item(this.ref(id), false, this);
+    if (useFastUpdate) x._useFastUpdate = useFastUpdate;
+    x.onCreate();
+    return x;
   }
   /**
    * @param {string} id
-   * @param {boolean} isCreate
+   * @param {(item: T, txn: Txn)=> Promise<void>} init
    * @returns {Promise<T>}
    */
 
@@ -86,16 +99,23 @@ export class Model {
       if (item.isLocalOnly()) await item.save(txn);
     }
   ) {
-    return await runTransaction(firestore, async (txn) => {
-      const m = this.item(id);
-      const doc = await txn.get(m._ref);
-      if (!doc.exists()) {
-        m._isLocalOnly = true;
-      } else {
-        m.setData(doc.data());
+    if (!this.Meta[USES_EXACT_IDS]) {
+      throw new InvalidState(
+        this.uniqueName() + " is not configured to use exact ids."
+      );
+    }
+    return Txn.run(async (txn) => {
+      //TODO - this can lead to unnecessary transaction retries
+      const m = new this.#Item(this.ref(id), true, this);
+      try {
+        await m.load(txn);
+      } catch (e) {
+        checkError(e, ItemDoesNotExist);
       }
-      m._isLoaded = true;
+      if (!m.isLocalOnly()) txn.ignorePreviousReads();
+      m.onCreate();
       await init(m, txn);
+      if (m.isLocalOnly()) m._isCreated = false; //Prevent saving outside of this transaction
       return m;
     });
   }
@@ -103,12 +123,21 @@ export class Model {
    * @returns {T}
    */
   create() {
-    return new this.Item(this.ref(), true, this);
+    if (this.Meta[USES_EXACT_IDS])
+      throw new InvalidState(
+        this.uniqueName() + " is configured to use exact ids."
+      );
+    const x = new this.#Item(this.ref(), true, this);
+    x.onCreate();
+    return x;
   }
   ref(...id) {
     return noFirestore
       ? { path: "server-side", id: "server-side" }
       : doc(this._ref, ...id);
+  }
+  uniqueName() {
+    return this._ref.path;
   }
 }
 
@@ -117,16 +146,29 @@ export class Model {
  * @property {import("firebase/firestore").DocumentReference} _ref
  */
 export class Item {
+  /*
+    An item can only be created on the server if one of two conditions are met.
+    1. #isLocalOnly is established either by create of by getOrCreate
+    2. _useFastUpdate is enabled
+  */
+  #isLocalOnly;
   constructor(ref, isNew, model) {
-    Object.defineProperty(this, "_ref", { value: ref });
-    Object.defineProperty(this, "_model", { value: model });
-    Object.defineProperty(this, "_isLocalOnly", {
-      writable: true,
-      value: !!isNew,
-    });
-    Object.defineProperty(this, "_isLoaded", {
-      writable: true,
-      value: !!isNew,
+    this.#isLocalOnly = !!isNew;
+    Object.defineProperties(this, {
+      _ref: { value: ref },
+      _model: { value: model },
+      _isLoaded: {
+        writable: true,
+        value: !!isNew,
+      },
+      _useFastUpdate: {
+        writable: true,
+        value: false,
+      },
+      _isCreated: {
+        writable: true,
+        value: false,
+      },
     });
   }
   static empty() {
@@ -135,19 +177,14 @@ export class Item {
   /**
    * Related method is Model.getOrCreate which automatically loads and optionally creates the item if it does not exist.
    */
-  async load() {
-    let data;
-    try {
-      data = await this.asQuery().get();
-    } catch (e) {
-      throw new Error(`Client is offline ${e}`);
-    }
+  async load(txn) {
+    const data = await this.read(txn);
     if (data === undefined) {
       throw new ItemDoesNotExist(this);
     }
     this.setData(data);
-    if (this._isLocalOnly) this._isLocalOnly = false;
     this._isLoaded = true;
+    if (this.#isLocalOnly) this.#isLocalOnly = false;
     return this;
   }
   /*
@@ -155,16 +192,22 @@ export class Item {
   */
   async save(txn) {
     if (noFirestore) throw InvalidState("No Firestore!!");
-    if (this._isLocalOnly) {
+    if (!this._isCreated)
+      throw InvalidState("Cannot save item that is not initialized.");
+    if (this.#isLocalOnly) {
       // We add merge:true here to handle Metadata and SchoolData's unique case (non-unique uids).
       // Might refactor out later
       if (txn) {
         await txn.set(this._ref, this.data(), { merge: true });
+        txn.onCommit(() => {
+          this.#isLocalOnly = false;
+        });
       } else {
+        console.trace("Setting...");
         await setDoc(this._ref, this.data(), { merge: true });
+        this.#isLocalOnly = false;
       }
-      this._isLocalOnly = false;
-    } else await this._update(txn);
+    } else await this._update(txn, this.data());
   }
   /*
     Used for partial updates which do not require a rereading a document. Usually used with Model.item(id).
@@ -179,15 +222,24 @@ export class Item {
 
     //needed especially to trigger update transactions
     this.setData(data);
-    if (this._isLocalOnly) {
+    if (this.#isLocalOnly) {
       await this.save(txn);
     } else await this._update(txn, data);
   }
 
-  async _update(txn, data = this.data()) {
+  async _update(txn, data) {
     if (noFirestore) throw InvalidState("No Firestore!!");
-    if (txn) txn.update(this._ref, data);
-    else await updateDoc(this._ref, data);
+    if (!this._isCreated)
+      throw InvalidState("Cannot save item that is not initialized.");
+    if (this._useFastUpdate) {
+      if (!txn)
+        throw new InvalidState("Fast updates can only be done in transactions");
+      await txn.set(this._ref, data, { merge: true });
+    } else {
+      data = flattenUpdate(data);
+      if (txn) txn.update(this._ref, data);
+      else await updateDoc(this._ref, data);
+    }
   }
   // Deleting a document does not make it local only. Other clients might have copies of it.
   // While they currently, none should be able to update it,
@@ -200,18 +252,65 @@ export class Item {
   }
 
   data() {
-    if (!this._isLoaded)
+    if (!this._isLoaded || !this._isCreated)
       throw new InvalidState("Cannot read document that is not loaded");
     return Object.assign({}, this);
   }
   setData(d) {
-    Object.assign(this, pick(d, Object.keys(this)));
+    let copy;
+    const isCompatible = (key) => {
+      const val = d[key],
+        type1 = typeOf(val),
+        type2 = typeOf(this[key]);
+      if (type1 === type2) return true;
+      if (!copy) copy = Object.assign({}, d);
+      if (type1 === "timestamp" && type2 === "date") {
+        copy[key] = val.toDate();
+      } else if (
+        val instanceof FieldValue &&
+        (type2 === "array" || type2 === "number" || type2 === "date")
+      ) {
+        return true; //Allow this for now.
+      } else if (type1 === "string" && type2 === "number" && !isNaN(val)) {
+        copy[key] = Number(val);
+        return true;
+      } else if (type1 === "number" && type2 === "date") {
+        copy[key] = new Date(val);
+      } else if (
+        type1 === "string" &&
+        type2 === "date" &&
+        !Number.isNaN(Date.parse(val))
+      ) {
+        copy[key] = new Date(val);
+      } else {
+        console.warn(
+          "Ignored attempt to supply invalid data for " +
+            this.model()?.uniqueName?.() +
+            "." +
+            key +
+            " " +
+            type2 +
+            " is not compatible with " +
+            type1 +
+            " value =",
+          val,
+          "."
+        );
+        return false;
+      }
+      return true;
+    };
+    // Run this first to obtain copy if necessary
+    const validKeys = Object.keys(this).filter(
+      (e) => hasProp(d, e) && isCompatible(e)
+    );
+    Object.assign(this, pick(copy ?? d, validKeys));
   }
   asQuery() {
     return new DocumentQueryCursor(this._ref);
   }
   isLocalOnly() {
-    return this._isLocalOnly;
+    return this.#isLocalOnly;
   }
   id() {
     return this._ref.id;
@@ -230,4 +329,27 @@ export class Item {
     return this.model().Meta[name].options.find((e) => e.value === this[name])
       .label;
   }
+  /**
+   * @private
+   */
+  onCreate() {
+    this._isCreated = true;
+  }
+  async read(txn) {
+    if (txn) return (await txn.get(this._ref)).data();
+    else return await this.asQuery().get();
+  }
+}
+
+function flattenUpdate(e, prefix = "", ctx = {}) {
+  if (Object.keys(e).length === 0) {
+    if (prefix) ctx[prefix.slice(0, -1)] = e;
+  } else {
+    Object.keys(e).forEach((k) =>
+      isPureObject(e[k]) && !(e[k] instanceof FieldValue)
+        ? flattenUpdate(e[k], prefix + k + ".", ctx)
+        : (ctx[prefix + k] = e[k] === undefined ? deleteField() : e[k])
+    );
+  }
+  return ctx;
 }

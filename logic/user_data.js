@@ -2,14 +2,18 @@ import Students from "@/models/student";
 import Teachers from "@/models/teacher";
 import Parents from "@/models/parent";
 import Admins from "@/models/admin";
-import { useUser } from "./auth";
+import { onUser, useUser } from "./auth";
 import usePromise from "@/utils/usePromise";
 import { useRef } from "react";
 import { useUpdate } from "react-use";
-import { UserModelItem, UserRoles } from "@/models/user";
+import { UserData, UserRoles } from "@/models/user_data";
 import useListener from "@/utils/useListener";
 import useWindowRef from "@/utils/useWindowRef";
 import { noop } from "@/utils/none";
+import { minutesToMs } from "@/utils/time_utils";
+import { checkError } from "@/models/lib/errors";
+import { FirebaseError } from "firebase/app";
+import createSubscription from "@/utils/createSubscription";
 
 const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid, noop)).role;
 
@@ -19,9 +23,9 @@ export const updateUserRole = async (uid, role) => {
 /**
  *
  * @param {string} role
- * @returns {import("../models/lib/model").Model<import("../models/user").UserModelItem>} model
+ * @returns {import("../models/lib/model").Model<import("../models/user_data").UserData>} model
  */
-export const mapRoleToModel = (role) => {
+export const mapRoleToUserModel = (role) => {
   switch (role) {
     case "student":
       return Students;
@@ -36,47 +40,57 @@ export const mapRoleToModel = (role) => {
 /**
  *
  * @param {import("firebase/auth").User} user
- * @returns {import("../models/user").UserModelItem}
+ * @returns {import("../models/user_data").UserData}
  */
 const loadUserData = async (user) => {
   const role = await lookupRole(user.uid);
   if (role !== "guest") {
-    return await mapRoleToModel(role).getOrCreate(
-      user.uid,
-      async (item, txn) => {
-        if (item.isLocalOnly()) {
-          item.email = user.email;
-          item.emailVerified = user.emailVerified;
-          item.phoneNumber = user.phoneNumber;
+    return (
+      (await mapRoleToUserModel(role).getOrCreate(
+        user.uid,
+        async (item, txn) => {
+          if (item.isLocalOnly()) {
+            item.email = user.email;
+            item.emailVerified = user.emailVerified;
+            item.phoneNumber = user.phoneNumber;
+          } else {
+            const lastLogin = new Date();
+            if (
+              Math.abs(lastLogin.getTime() - item.lastLogin.getTime()) >
+              minutesToMs(1)
+            )
+              await item.set({ lastLogin }, txn);
+          }
         }
-        item.lastLogin = Date.now();
-        await item.save(txn);
-      }
+      )) ?? UserData.of(user)
     );
   }
-  return UserModelItem.of(user);
+  return UserData.of(user);
 };
+
 /**
- *
- * @returns {import("../models/user").UserModelItem}
+ * @type {import("@/utils/createSubscription").Subscription<import("../models/user_data").UserData>}
  */
-export default function useUserData() {
-  const user = useUser();
-  const retryDelay = useRef(1000);
-  const retry = useUpdate();
-  useListener(useWindowRef(), "online", retry);
-  return usePromise(async () => {
+const [useUserData] = createSubscription((setUserData) => {
+  let retryDelay = 1000;
+  let m;
+  return onUser(async function retry(user) {
     try {
+      window.removeEventListener("online", retry);
+      clearTimeout(m);
       if (user) {
         const userData = await loadUserData(user);
-        retryDelay.current = 1000;
-        return userData;
-      } else return user;
+        retryDelay = 1000;
+        console.log({ user, userData });
+        setUserData(userData);
+      } else setUserData(user);
     } catch (e) {
-      retryDelay.current =
-        retryDelay.current + Math.min(retryDelay.current, 60000);
-      console.error(e, `Retrying in ${retryDelay.current / 1000} seconds`);
-      setTimeout(retry, Math.min(retryDelay.current, 60000));
+      checkError(e, FirebaseError);
+      retryDelay = retryDelay + Math.min(retryDelay, 60000);
+      console.error(e, `Retrying in ${retryDelay / 1000} seconds`);
+      m = setTimeout(retry, Math.min(retryDelay, 60000));
+      window.addEventListener("online", retry);
     }
-  }, [user, retryDelay.current]);
-}
+  });
+});
+export default useUserData;

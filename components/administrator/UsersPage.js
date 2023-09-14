@@ -14,14 +14,8 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import {
-  CloseCircle,
-  Edit as EditIcon,
-  Trash as TrashIcon,
-  UserAdd,
-} from "iconsax-react";
-import { useContext, useEffect, useState } from "react";
-import ModelForm from "../ModelForm";
+import { Edit as EditIcon, Trash as TrashIcon, UserAdd } from "iconsax-react";
+import { useEffect, useState } from "react";
 import PageHeader from "../PageHeader";
 import {
   TableButton,
@@ -31,12 +25,11 @@ import {
 } from "../Table";
 import ThemedTable from "../ThemedTable";
 
-import SuccessDialog from "@/components/SuccessDialog";
 import ActivationRequests from "@/models/activation_requests";
-import { mapRoleToModel } from "@/logic/user_data";
-import { UserRoles } from "@/models/user";
 import { activateUser, createUser } from "@/logic/admin";
 import ModelFormDialog from "../ModelFormDialog";
+import ModelDataView, { supplyModelValues } from "../ModelDataView";
+import { DatabaseError } from "@/models/lib/errors";
 
 function a11yProps(index) {
   return {
@@ -61,24 +54,13 @@ const TABS /*variable*/ = [
     renderHooks: [
       addHeaderClass("whitespace-nowrap"),
       addClassToColumns("min-w-[14rem]", [0]),
-      addClassToColumns("whitespace-nowrap", [4]),
-      supplyValue((row, col, admins) => {
-        const item = /** @type {import("../../models/admin").Admin} */ (
-          admins[row]
-        );
-        switch (col) {
-          case 0:
-            return item.getName();
-          case 1:
-            return item.email;
-          case 2:
-            return item.phoneNumber;
-          case 3:
-            return item.lastLogin;
-          case 4:
-            return item.profileCompleted;
-        }
-      }),
+      supplyModelValues([
+        "name",
+        "email",
+        "phoneNumber",
+        "lastLogin",
+        "profileCompleted",
+      ]),
     ],
   },
   {
@@ -95,24 +77,14 @@ const TABS /*variable*/ = [
     renderHooks: [
       addHeaderClass("whitespace-nowrap"),
       addClassToColumns("min-w-[14rem]", [0]),
-      addClassToColumns("whitespace-nowrap", [4]),
-      supplyValue((row, col, admins) => {
-        const item = /** @type {import("../../models/admin").Admin} */ (
-          admins[row]
-        );
-        switch (col) {
-          case 0:
-            return item.getName();
-          case 1:
-            return item.email;
-          case 2:
-            return item.phoneNumber;
-          case 3:
-            return item.lastLogin;
-          case 4:
-            return item.profileCompleted;
-        }
-      }),
+      addClassToColumns("whitespace-nowrap", [3]),
+      supplyModelValues([
+        "name",
+        "email",
+        "phoneNumber",
+        "lastLogin",
+        "profileCompleted",
+      ]),
     ],
   },
   {
@@ -129,24 +101,14 @@ const TABS /*variable*/ = [
     renderHooks: [
       addHeaderClass("whitespace-nowrap"),
       addClassToColumns("min-w-[14rem]", [0]),
-      addClassToColumns("whitespace-nowrap", [4]),
-      supplyValue((row, col, admins) => {
-        const item = /** @type {import("../../models/admin").Admin} */ (
-          admins[row]
-        );
-        switch (col) {
-          case 0:
-            return item.getName();
-          case 1:
-            return item.email;
-          case 2:
-            return item.phoneNumber;
-          case 3:
-            return item.lastLogin;
-          case 4:
-            return item.profileCompleted;
-        }
-      }),
+      addClassToColumns("whitespace-nowrap", [3]),
+      supplyModelValues([
+        "name",
+        "email",
+        "phoneNumber",
+        "lastLogin",
+        "profileCompleted",
+      ]),
     ],
   },
 ];
@@ -259,31 +221,36 @@ function UsersTable({ edit, activeTab }) {
   );
 }
 
-function UsersForm({ edit, model: Model, ...props }) {
+function UsersForm({ edit, model: UserModel, ...props }) {
   return (
     <ModelFormDialog
       edit={edit}
       title={
         edit ? <>Update Student Registration Info</> : <>Register New Student</>
       }
-      model={Model}
+      model={UserModel}
       noSave={!edit}
       onSubmit={async (data) => {
         if (!edit) {
           const DEFAULT_PASSWORD = "student987";
           const uid = await createUser(data.email, DEFAULT_PASSWORD);
-          const success = await Model.getOrCreate(uid, async (user, txn) => {
-            if (!user.isLocalOnly()) {
-              return false;
-            } else {
-              console.log(user);
-              user.setData(data);
-              await user.save(txn);
-              return true;
+          const success = await UserModel.getOrCreate(
+            uid,
+            async (user, txn) => {
+              if (!user.isLocalOnly()) {
+                return false;
+              } else {
+                console.log(user);
+                user.setData(data);
+                await user.save(txn);
+                return true;
+              }
             }
-          });
+          );
           if (!success)
-            throw new Error("User already exists with provided email address");
+            throw new DatabaseError(
+              "User already exists with provided email address"
+            );
         }
       }}
       {...props}

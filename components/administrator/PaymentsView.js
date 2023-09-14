@@ -8,6 +8,7 @@ export default function PaymentsView() {
   const { data: payments, pager } = usePagedQuery(() =>
     Payments.all().pageSize(10)
   );
+  console.log({ payments, pager });
   return (
     <ThemedTable
       title="Payments"
@@ -26,9 +27,9 @@ export default function PaymentsView() {
             case 2:
               return item.amount;
             case 3:
-              return formatDate(item.timestamp);
+              return formatDate(item.timeCreated);
             case 4:
-              return formatTime(item.timestamp);
+              return formatTime(item.timeCreated);
           }
         }),
       ]}

@@ -7,11 +7,13 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase_init";
 import createSubscription from "@/utils/createSubscription";
-export const [useUser, , , getUser] = createSubscription(
+import { noop } from "@/utils/none";
+export const [useUser, onUser, , getUser] = createSubscription(
   /** @type {import("@/utils/createSubscription").SubscribeInit<import("firebase/auth").User>} */ (
     (setUser) => onAuthStateChanged(auth, setUser)
   )
 );
+if (auth) onUser(noop); //Start the subscription always on client side
 export const signIn = async ({ email, password }) => {
   await signInWithEmailAndPassword(auth, email, password);
 };

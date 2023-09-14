@@ -1,6 +1,9 @@
 import usePromise from "@/utils/usePromise";
 import { Avatar, Box, Typography } from "@mui/material";
 import Image from "next/image";
+import { Item } from "../models/lib/model";
+import Template from "./Template";
+import { ItemDoesNotExist } from "@/models/lib/errors";
 
 /**
  * @typedef {{
@@ -16,19 +19,19 @@ export const MODEL_ITEM_PREVIEW = "!model-item-preview";
  * @param {Object} props
  * @param {import("../models/lib/model").Item} props.item
  */
-export default function ModelItemPreview({ item }) {
+export default function ModelItemPreview({ item, ...props }) {
   /**@type {import("../models/lib/model").Model}*/
   const { title, description, image, avatar } =
-    usePromise(
-      () =>
-        (
-          item.model().Meta[MODEL_ITEM_PREVIEW] ||
-          ((item) => ({ title: item.uniqueName() }))
-        )(item),
-      [item]
-    ) ?? {};
+    usePromise(async () => {
+      if (item instanceof Item) {
+        if (item.model().Meta[MODEL_ITEM_PREVIEW]) {
+          if (!item._isLoaded) await item.load();
+          return item.model().Meta[MODEL_ITEM_PREVIEW](item);
+        } else return { title: item.uniqueName() };
+      } else return { title: String(item) };
+    }, [item]) ?? {};
   return (
-    <Box sx={{ width: "20rem", maxWidth: "100%" }}>
+    <Template as={Box} props={props}>
       {image ? (
         <Box
           as={Image}
@@ -55,6 +58,6 @@ export default function ModelItemPreview({ item }) {
           <Typography variant="body2">{description}</Typography>
         </Box>
       </Box>
-    </Box>
+    </Template>
   );
 }

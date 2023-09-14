@@ -20,7 +20,7 @@ export default function usePager(data, pageSize = 10) {
     hasPrev: clamp(page - 1) < page,
     goto: setPage,
     page,
-    count: data.length,
+    count: data.length === Number.MAX_SAFE_INTEGER ? undefined : data.length,
     pageSize,
   };
 }

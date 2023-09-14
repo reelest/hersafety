@@ -1,5 +1,5 @@
 import Template from "@/components/Template";
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import { useClickAway } from "react-use";
 import { AnimatePresence, motion } from "framer-motion";
 import createSubscription from "@/utils/createSubscription";
@@ -8,7 +8,7 @@ import { Box, Dialog, Paper } from "@mui/material";
 
 const [, onShow, show] = createSubscription(noop);
 /** @type {typeof Card1Wrapper} */
-export default function Card1({ children, expand, ...props }) {
+const Card1 = forwardRef(function Card1({ children, expand, ...props }, ref) {
   return (
     <>
       <AnimatePresence>
@@ -20,11 +20,13 @@ export default function Card1({ children, expand, ...props }) {
           </Dialog>
         ) : null}
       </AnimatePresence>
-      <Card1Wrapper {...props}>{expand ? null : children}</Card1Wrapper>
+      <Card1Wrapper templateRef={ref} {...props}>
+        {expand ? null : children}
+      </Card1Wrapper>
     </>
   );
-}
-
+});
+export default Card1;
 function Card1Wrapper({ expand, boxClass, onClose, children, ...props }) {
   const ref = useRef();
   useEffect(() => {

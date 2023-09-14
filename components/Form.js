@@ -1,5 +1,12 @@
 import Template from "./Template";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import useFormHandler from "@/utils/useFormHandler";
 // import ImagePicker from "./ImagePicker";
 import useValidation, { formValidator } from "@/utils/useBrowserFormValidation";
@@ -25,6 +32,7 @@ import {
 import pick from "@/utils/pick";
 import Image from "next/image";
 import { Trash } from "iconsax-react";
+import useStable from "@/utils/useStable";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -42,8 +50,15 @@ export default function Form({
   validationRules = [],
   initialValue = {},
   onSubmit = null,
+  onChange = null,
+  id,
+  // formId, use disablePortal instead for form elements in a modal
   ...props
 }) {
+  // const _id = useId();
+  // id = id ?? _id;
+  // const ctx = useContext(FormContext);
+  // formId = formId ?? ctx?.formId ?? id;
   const handler = useFormHandler(initialValue, async function handle(fd, e) {
     if (!showErrors) setShowErrors(true);
     if (isFormValid) {
@@ -64,12 +79,22 @@ export default function Form({
   const [showErrors, setShowErrors] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const ref = useRef();
+  const [nestedRules, setNestedRules] = useState([]);
+  const _ctx = useValidation(
+    ref,
+    handler.data,
+    validationRules.concat(nestedRules)
+  );
   const { isFieldInError, getErrorMessages, isFormValid, getErrorsInField } =
-    useValidation(ref, handler.data, validationRules);
+    /*ctx && formId === ctx.formId ? ctx :*/ _ctx;
+  onChange = useStable(onChange);
+  useEffect(() => {
+    onChange?.(handler.data);
+  }, [handler.data, onChange]);
   return (
     <Template
       as="form"
-      {...handler.form()}
+      {...handler.form(id)}
       props={props}
       onInvalid={() => {
         setShowErrors(true);
@@ -79,9 +104,11 @@ export default function Form({
       <FormContext.Provider
         value={{
           handler,
+          // formId,
           data: handler.data,
           isFieldInError,
           showErrors,
+          setNestedRules,
           getErrorMessages,
           getErrorsInField,
           isLoading,
@@ -109,8 +136,12 @@ export function FormField({
   max,
   ...props
 }) {
-  const { isFieldInError, handler, showErrors, getErrorsInField } =
-    useContext(FormContext);
+  const {
+    isFieldInError,
+    handler,
+    /* formId, */ showErrors,
+    getErrorsInField,
+  } = useContext(FormContext);
   const control =
     type === "checkbox" ? Checkbox : type === "switch" ? Switch : null;
   return (
@@ -137,7 +168,7 @@ export function FormField({
         : type === "radio"
         ? {}
         : handler.textInput(name, type))}
-      inputProps={{ maxLength, minLength, pattern, min, max }}
+      inputProps={{ maxLength, minLength, pattern, min, max /*form: formId */ }}
     />
   );
 }
@@ -350,3 +381,15 @@ export const CONFIRM_PASSWORD = formValidator(
     return data[field] === data[match] && "Passwords do not match";
   }
 );
+
+export const useValidationRule = (name, cb) => {
+  cb = useStable(cb);
+  const validator = useMemo(() => formValidator(name, cb), [name, cb]);
+  const { setNestedRules } = useContext(FormContext);
+  useEffect(() => {
+    setNestedRules((rules) => rules.concat(validator));
+    return () => {
+      setNestedRules((rules) => rules.filter((e) => e !== validator));
+    };
+  });
+};

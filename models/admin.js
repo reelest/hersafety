@@ -1,7 +1,7 @@
 import { CountedModel } from "./lib/counted_model";
-import { UserMeta, UserModelItem } from "./user";
+import { UserMeta, UserData } from "./user_data";
 
-export class Admin extends UserModelItem {
+export class Admin extends UserData {
   getRole() {
     return "admin";
   }

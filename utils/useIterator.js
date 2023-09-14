@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import useStable from "./useStable";
 import { useMutex } from "./mutex";
 
-const NEW_TOKEN = (prevToken) => ({
-  token: prevToken.token + 1,
-});
-const OLD_TOKEN = (prevToken) => ({ token: prevToken.token });
+const OLD_TOKEN = (prevToken) => ({ iterator: prevToken.iterator });
 
 /**
  * @template T
@@ -23,6 +20,9 @@ const OLD_TOKEN = (prevToken) => ({ token: prevToken.token });
  * @returns {UseIterator<T>}
  */
 export default function useIterator(iterator) {
+  const [refreshToken, refresh] = useState({ token: 0, iterator });
+
+  const loadMore = useStable(() => refresh(OLD_TOKEN));
   // The results accumulated from the iterator
   const [results, setResults] = useState({
     done: false,
@@ -31,9 +31,6 @@ export default function useIterator(iterator) {
     loadMore,
     value: [],
   });
-  const [refreshToken, refresh] = useState({ token: 0 });
-
-  const loadMore = useStable(() => refresh(OLD_TOKEN));
   useEffect(() => {
     setResults({
       done: false,
@@ -42,19 +39,21 @@ export default function useIterator(iterator) {
       loadMore,
       value: [],
     });
-    refresh(NEW_TOKEN);
+    refresh({ iterator });
   }, [iterator, loadMore]);
 
   const isRefreshStillValid = useStable(
-    (e) => refreshToken.token === e.token || (refresh(OLD_TOKEN) && false)
+    (e) => refreshToken.iterator === e.iterator || (refresh(OLD_TOKEN) && false)
   );
 
   const doUpdate = useMutex(async () => {
     if (results.done) return;
+    console.log("Loading data....");
     const x = refreshToken;
     setResults({ ...results, loading: true });
     try {
       const { done, value } = await iterator.next();
+      console.log({ done, value, e: results.value });
       if (isRefreshStillValid(x))
         setResults({
           done,

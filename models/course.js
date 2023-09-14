@@ -1,27 +1,42 @@
-import { Hidden } from "@mui/material";
 import { Model, Item } from "./lib/model";
 import ClassRooms from "./classroom";
 import { getSessions } from "@/logic/session";
+import { HiddenField } from "./lib/model_types";
+import { CountedItem } from "./lib/counted_item";
+import Teachers from "./teacher";
+import { Sessions } from "./session";
+import CourseDescriptions from "./course_description";
 
-export class Course extends Item {
+export class Course extends CountedItem {
   descriptionId = "";
   name = "";
-  description = "";
   classId = "";
   teacherId = "";
-  session = getSessions().data.slice(-1)[0];
+  session = getSessions()?.data?.slice?.(-1)?.[0] ?? "";
 }
 const Courses = new Model("courses", Course, {
-  name: Hidden,
-  description: Hidden,
-  descriptionId: Hidden,
+  name: HiddenField,
+  descriptionId: {
+    type: "ref",
+    refModel: CourseDescriptions,
+    pickRefQuery: CourseDescriptions.all(),
+  },
   classId: {
     type: "ref",
-    refSearchQuery: (item) => ClassRooms.withFilter("classId", "==", item.id()),
+    refModel: ClassRooms,
+    pickRefQuery: (item) => ClassRooms.withFilter("classId", "==", item.id()),
   },
   teacherId: {
     type: "ref",
-    refSearchQuery: "teacher",
+    refModel: Teachers,
+    pickRefQuery: "teacher",
+  },
+  session: {
+    type: "ref",
+    refModel: Sessions,
+    pickRefQuery: async function* () {
+      yield* getSessions().data;
+    },
   },
 });
 export default Courses;

@@ -8,6 +8,7 @@ import { noop } from "@/utils/none";
 export default function ModelFormDialog({
   isOpen = false,
   edit,
+  closeOnSubmit = !edit,
   model: Model,
   title,
   noSave,
@@ -18,8 +19,8 @@ export default function ModelFormDialog({
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    setItem(isOpen ? edit || Model.create() : null);
-  }, [edit, isOpen, Model]);
+    setItem(isOpen ? edit || (noSave ? null : Model.create()) : null);
+  }, [edit, isOpen, Model, noSave]);
   return (
     <Modal
       onClose={(e, reason) => {
@@ -27,7 +28,6 @@ export default function ModelFormDialog({
         onClose(e);
       }}
       open={isOpen}
-      ba
       className="p-4"
     >
       {/* Modal must have only one child */}
@@ -36,7 +36,7 @@ export default function ModelFormDialog({
           open={submitted}
           onClose={() => {
             setSubmitted(false);
-            if (!edit) onClose();
+            if (closeOnSubmit) onClose();
           }}
         />
         <div className="text-right -mx-3.5 max-sm:-mx-0.5">
@@ -53,6 +53,7 @@ export default function ModelFormDialog({
           className="flex-grow flex flex-col"
           noSave={noSave}
           onSubmit={async (data) => {
+            console.log(data);
             await onSubmit?.(data);
             setSubmitted(true);
           }}

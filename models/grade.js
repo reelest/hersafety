@@ -1,7 +1,7 @@
 import uniq from "@/utils/uniq";
 import CourseDescriptions from "./course_description";
-import { CountedItem } from "./lib/counted_model";
-import { FailedPrecondition, ItemDoesNotExist, checkError } from "./lib/errors";
+import { CountedItem } from "./lib/counted_item";
+import { ItemDoesNotExist, checkError } from "./lib/errors";
 import { Item, Model } from "./lib/model";
 import { increment } from "firebase/firestore";
 import { range } from "d3";
@@ -111,18 +111,12 @@ class GradeSummary extends Item {
   static of(grade) {
     return GradeSummaries.item(grade.classId + ":sum", true);
   }
-  static _update() {
-    throw new FailedPrecondition("GradeSummary must always use firestore.set");
-  }
   load() {
     try {
       super.load();
     } catch (e) {
       checkError(e, ItemDoesNotExist);
     }
-  }
-  save(txn) {
-    if (!txn) throw new FailedPrecondition("Needs transaction to update total");
   }
 }
 const GradeSummaries = new Model("grade_summaries", GradeSummary);
@@ -133,7 +127,8 @@ const Grades = new Model("grades", Grade, {
       key: {
         label: "Subject",
         type: "ref",
-        refSearchQuery: CourseDescriptions.all(),
+        refModel: CourseDescriptions,
+        pickRefQuery: CourseDescriptions.all(),
       },
       value: {
         label: "Score",

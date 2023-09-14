@@ -9,7 +9,7 @@ import ActivationRequests from "@/models/activation_requests";
 import { useRef, useState } from "react";
 import { useUser } from "@/logic/auth";
 import { useQuery } from "@/models/lib/query";
-import { UserRoles } from "@/models/user";
+import { UserRoles } from "@/models/user_data";
 const TABS = [
   {
     name: "Request Verification",

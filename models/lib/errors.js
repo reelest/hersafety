@@ -1,9 +1,7 @@
 export class DatabaseError extends Error {}
-export class FailedPrecondition extends Error {
-  static NO_PREV_STATE =
-    "Attempted to reuse transaction but previous state was not provided";
-}
-export class InvalidState extends DatabaseError {}
+export class UnimplementedError extends Error {}
+export class InvalidParameters extends Error {}
+export class InvalidState extends Error {}
 export class ItemDoesNotExist extends DatabaseError {
   constructor(item) {
     super(`Document ${item.uniqueName()} does not exist`);
