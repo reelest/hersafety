@@ -17,13 +17,18 @@ export default function useBrowserFormValidation(ref, data, validationRules) {
   }, [data, ref, ...validationRules]);
   const getField = (name) => {
     if (ref?.current) {
-      if (!ref.current.elements[name])
+      if (!ref.current.elements[name]){
         (async () => {
           await delay(1);
           if (!ref.current.elements[name])
             console.warn("Unknown field " + name);
         })();
-      return ref.current.elements[name].validity && ref.current.elements[name];
+        return;
+      } else if(! ref.current.elements[name].validity){
+      console.warn("Field "+name+" has no validity");
+      }else
+
+      return ref.current.elements[name];
     }
   };
   return {
