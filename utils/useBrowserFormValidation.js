@@ -9,6 +9,7 @@ import { unsortedUniq } from "./uniq";
  */
 export default function useBrowserFormValidation(ref, data, validationRules) {
   useEffect(() => {
+      if(!ref.current || !ref.current.elements) return console.warn("Unknown element type "+ref.current?.tagName);
     range(ref.current.elements.length).forEach((e) =>
       ref.current.elements.item(e).setCustomValidity("")
     );
