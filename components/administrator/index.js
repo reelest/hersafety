@@ -42,11 +42,11 @@ const TABS = [
     icon: UserAdd,
     component: RegistrationsPage,
   },
-  {
-    name: "News & Events",
-    icon: Calendar,
-    component: Events,
-  },
+  // {
+  //   name: "News & Events",
+  //   icon: Calendar,
+  //   component: Events,
+  // },
   {
     name: "Settings",
     component: SettingsPage,
