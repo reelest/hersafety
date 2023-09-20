@@ -1,5 +1,5 @@
-import SignUp from "./signup";
+import SignupRoute from "@/components/signup";
 
-export default function SignIn(props) {
-  return SignUp({ isSignIn: true, ...props });
+export default function LoginRoute(props) {
+  return SignupRoute({ isSignIn: true, ...props });
 }

@@ -85,6 +85,7 @@ const [useUserData] = createSubscription((setUserData) => {
         setUserData(userData);
       } else setUserData(user);
     } catch (e) {
+      console.log({ e });
       checkError(e, FirebaseError);
       retryDelay = retryDelay + Math.min(retryDelay, 60000);
       console.error(e, `Retrying in ${retryDelay / 1000} seconds`);

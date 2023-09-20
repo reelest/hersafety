@@ -5,7 +5,7 @@ import { UserMeta, UserData } from "./user_data";
 export class Student extends UserData {
   bloodGroup = "";
   genotype = "";
-  disability = "";
+  medicalInfo = "";
   registrationId = "";
   parentId1 = "";
   parentId2 = "";
@@ -27,7 +27,7 @@ const Students = new CountedModel("students", Student, {
     "!modelform-section": "Bio Data",
     required: false,
   },
-  disability: {
+  medicalInfo: {
     "!modelform-section": "Bio Data",
     required: false,
   },

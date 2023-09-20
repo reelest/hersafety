@@ -33,6 +33,7 @@ export default function Table({
   scrollable,
   headerClass = "border-b text-left",
   bodyClass = "leading-relaxed",
+  minRows = 5,
   rowProps,
   rowSpacing = 0,
   onClickRow,
@@ -46,6 +47,9 @@ export default function Table({
       className={`${className} ${
         rowSpacing > 0 ? "border-separate" : "border-collapse"
       } ${borderSpacings[rowSpacing]}`}
+      style={{
+        minHeight: minRows + "em",
+      }}
     >
       <thead className={headerClass}>
         <tr>

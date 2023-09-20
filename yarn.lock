@@ -1058,6 +1058,10 @@
     "@typescript-eslint/types" "5.62.0"
     eslint-visitor-keys "^3.3.0"
 
+"@utils@rowend36/reelest-utils":
+  version "1.0.0"
+  resolved "https://codeload.github.com/rowend36/reelest-utils/tar.gz/b3c9ec109a52a83687244b21c7f85af18346089f"
+
 "@xobotyi/scrollbar-width@^1.9.5":
   version "1.9.5"
   resolved "https://registry.npmjs.org/@xobotyi/scrollbar-width/-/scrollbar-width-1.9.5.tgz"
