@@ -1,6 +1,6 @@
 import { HiddenField } from "./lib/model_types";
 import { CountedModel } from "./lib/counted_model";
-import { Fee } from "./fees";
+import { Fee, Fees } from "./fees";
 
 export class Payment extends Fee {
   fee = "";
@@ -18,6 +18,7 @@ const Payments = new CountedModel("payments", Payment, {
   fee: {
     type: "ref",
     required: false,
+    refModel: Fees,
   },
   initiator: HiddenField,
   beneficiary: HiddenField,

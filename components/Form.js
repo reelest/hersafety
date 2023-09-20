@@ -370,7 +370,12 @@ export function FormErrors({ lines = 2 }) {
   return showErrors ? (
     <Typography paragraph className="text-error">
       {handler.error ? handler.error.message : null}
-      {getErrorMessages().split("\n").slice(0, lines).join("\n")}
+      {getErrorMessages()
+        .split("\n")
+        .slice(0, lines)
+        .map((e, i) => (
+          <div key={i}>{e}</div>
+        ))}
     </Typography>
   ) : null;
 }
@@ -378,7 +383,7 @@ export function FormErrors({ lines = 2 }) {
 export const CONFIRM_PASSWORD = formValidator(
   "confirmpassword",
   (data, field, match = "password") => {
-    return data[field] === data[match] && "Passwords do not match";
+    return data[field] !== data[match] && "Passwords do not match";
   }
 );
 

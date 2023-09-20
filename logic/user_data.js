@@ -44,6 +44,7 @@ export const mapRoleToUserModel = (role) => {
  */
 const loadUserData = async (user) => {
   const role = await lookupRole(user.uid);
+  console.log({ role });
   if (role !== "guest") {
     return (
       (await mapRoleToUserModel(role).getOrCreate(
@@ -89,8 +90,8 @@ const [useUserData] = createSubscription((setUserData) => {
       checkError(e, FirebaseError);
       retryDelay = retryDelay + Math.min(retryDelay, 60000);
       console.error(e, `Retrying in ${retryDelay / 1000} seconds`);
-      m = setTimeout(retry, Math.min(retryDelay, 60000));
-      window.addEventListener("online", retry);
+      m = setTimeout(() => retry(user), Math.min(retryDelay, 60000));
+      window.addEventListener("online", () => retry(user));
     }
   });
 });

@@ -41,7 +41,8 @@ export class UserData extends CountedItem {
    */
   static of(user) {
     const m = UserData.empty();
-    return m.setData(user);
+    m.setData(user);
+    return m;
   }
 
   async onDeleteItem(txn, prevState) {
