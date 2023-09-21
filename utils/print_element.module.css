@@ -1,0 +1,15 @@
+@media print {
+  .printing * {
+    overflow: hidden !important;
+  }
+  .printing :not(.print-parent, .print-target *, .print-preserve *) {
+    display: none !important;
+  }
+  .printing .print-target {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+  }
+}
