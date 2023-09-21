@@ -1,0 +1,19 @@
+/* @tailwind base; Messes up material ui. Use CssBaseline*/
+@tailwind components;
+@tailwind utilities;
+ul {
+  padding-left: 0;
+}
+
+body {
+  @apply bg-bg;
+}
+
+/*Used in form.js*/
+.empty-date-input .MuiInput-input {
+  opacity: 0;
+}
+
+.Mui-focused > .MuiInput-input {
+  opacity: 1;
+}
