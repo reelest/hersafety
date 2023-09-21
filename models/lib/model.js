@@ -28,7 +28,7 @@ export const USES_EXACT_IDS = "!uses-exact-ids";
  * @template {Item} T
  */
 export class Model {
-  #Item;
+  _Item;
   /**
    * @param {string} _collectionID
    * @param {{new(): T}} [ItemClass=Item]
@@ -38,7 +38,7 @@ export class Model {
     this._ref = noFirestore
       ? { path: _collectionID }
       : collection(firestore, _collectionID);
-    this.#Item = ItemClass ?? Item;
+    this._Item = ItemClass ?? Item;
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
     global[_collectionID + "Model"] = this;
@@ -51,7 +51,7 @@ export class Model {
       /** @param {import("firebase/firestore").QueryDocumentSnapshot} snapshot */
       fromFirestore: (snapshot, options) => {
         const data = snapshot.data(options);
-        const x = new model.#Item(snapshot.ref, false, model);
+        const x = new model._Item(snapshot.ref, false, model);
         x.setData(data);
         x._isLoaded = true;
         x.onCreate();
@@ -82,7 +82,7 @@ export class Model {
    * @returns {T}
    */
   item(id, useFastUpdate) {
-    const x = new this.#Item(this.ref(id), false, this);
+    const x = new this._Item(this.ref(id), false, this);
     if (useFastUpdate) x._useFastUpdate = useFastUpdate;
     x.onCreate();
     return x;
@@ -106,7 +106,7 @@ export class Model {
     }
     return Txn.run(async (txn) => {
       //TODO - this can lead to unnecessary transaction retries
-      const m = new this.#Item(this.ref(id), true, this);
+      const m = new this._Item(this.ref(id), true, this);
       try {
         await m.load(txn);
       } catch (e) {
@@ -127,7 +127,7 @@ export class Model {
       throw new InvalidState(
         this.uniqueName() + " is configured to use exact ids."
       );
-    const x = new this.#Item(this.ref(), true, this);
+    const x = new this._Item(this.ref(), true, this);
     x.onCreate();
     return x;
   }

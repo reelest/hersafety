@@ -68,9 +68,10 @@ function _getModelPropInfo(key, template, Meta, path) {
   const type = Meta.type || inferType(template, path);
   if (Meta.type === "ref") {
     if (!Meta.refModel || !(Meta.refModel instanceof Model)) {
-      throw new InvalidParameters(
-        "Invalid or no refModel supplied for " + path
-      );
+      if (Meta.refModel !== null)
+        throw new InvalidParameters(
+          "Invalid or no refModel supplied for " + path
+        );
     }
   }
   return {

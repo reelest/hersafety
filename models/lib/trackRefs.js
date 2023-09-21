@@ -1,8 +1,9 @@
-import { UnimplementedError } from "@/models/lib/errors";
+import { InvalidParameters, UnimplementedError } from "@/models/lib/errors";
 import { None } from "@/utils/none";
 import notIn from "@/utils/notIn";
 import { arrayRemove, arrayUnion } from "firebase/firestore";
 import { getItemFromStore } from "./item_store";
+import sentenceCase from "@/utils/sentenceCase";
 
 const refProps = Symbol("refProps");
 
@@ -162,4 +163,90 @@ export function trackRefs(ItemClass, props, addActions, removeActions) {
   };
   ItemClass.markTriggersUpdateTxn(props, true);
   ItemClass.prototype[refProps] = newRefProps;
+}
+
+/**
+ * Actions are used to implement associations
+ * Following the method used by sequelize, associations are of four types
+ * i. A HasOne B - 1-to-1 with foreign key defined in B
+ * ii. A BelongsTo B - 1-to-1 with foreign key defined in A
+ * iii. A hasMany B - 1-to-many with foreign key defined in B
+ * iv. A belongsToMany B - there is a mapping table between A and B
+ */
+
+/**
+ * @template {import("./model").Item} K
+ * @template {import("./model").Item} L
+ * @param {import("./model").Model<K>} model1
+ * @param {keyof K} prop1
+ * @param {import("./model").Model<L>} model2
+ * @param {keyof L} prop2
+ * @param {boolean} deleteOnRemove
+ */
+export function connect(
+  model1,
+  prop1,
+  model2,
+  prop2,
+  deleteOnRemove,
+  noRecurse
+) {
+  const isTwoWay = !!prop2;
+  const isArray1 = model1.Meta[prop1].type === "array";
+  const isArray2 = isTwoWay && model2.Meta[prop2].type === "array";
+  if (isArray2 && deleteOnRemove)
+    throw new InvalidParameters("Cannot use deleteOnRemove with array target");
+  trackRefs(
+    model1._Item,
+    [prop1],
+    [
+      isArray2
+        ? new AppendIDAction(prop2)
+        : isTwoWay
+        ? new SetIDAction(prop2)
+        : null,
+    ].filter(Boolean),
+    [
+      deleteOnRemove
+        ? new DeleteItemAction()
+        : isTwoWay
+        ? new UnsetIDAction(prop2)
+        : null,
+    ].filter(Boolean)
+  );
+
+  if (isArray1) model1.Meta[prop1].arrayType.refModel = model2;
+  else model1.Meta[prop1].refModel = model2;
+  if (!noRecurse && isTwoWay) {
+    connect(model2, prop2, model1, prop1, false, true);
+  }
+}
+/**
+ * @template {Item} K
+ * @template {Item} L
+ * @param {import("./model").Model<K>} model1
+ * @param {keyof K} prop1
+ * @param {import("./model").Model<L>} model2
+ * @param {keyof L} prop2
+ * @param {boolean} deleteOnRemove
+ */
+export function belongsTo(model1, prop1, model2, prop2, deleteOnRemove) {}
+
+/**
+ * @template {Item} K
+ * @template {Item} L
+ * @param {import("./model").Model<K>} model1
+ * @param {keyof K} prop1
+ * @param {import("./model").Model<L>} model2
+ * @param {keyof L} prop2
+ * @param {boolean} deleteOnRemove
+ */
+export function belongsToMany(model1, prop1, model2, prop2, deleteOnRemove) {
+  trackRefs(
+    model1,
+    [prop1],
+    [new SetIDAction(prop2)],
+    [deleteOnRemove ? new DeleteItemAction() : new RemoveIDAction(prop2)]
+  );
+  model2.Meta[prop2].refModel = model1;
 }

@@ -8,7 +8,7 @@ import isServerSide from "@/utils/is_server_side";
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDQQeIYOjPxPyVsLx888hPVpCFXzbn0HJ4",
   authDomain: "csmsuniben.firebaseapp.com",
   projectId: "csmsuniben",

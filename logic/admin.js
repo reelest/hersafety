@@ -8,18 +8,7 @@ import {
 import isServerSide from "@/utils/is_server_side";
 import { UserRoles } from "@/models/user_data";
 import { mapRoleToUserModel } from "./user_data";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDQQeIYOjPxPyVsLx888hPVpCFXzbn0HJ4",
-  authDomain: "csmsuniben.firebaseapp.com",
-  projectId: "csmsuniben",
-  storageBucket: "csmsuniben.appspot.com",
-  messagingSenderId: "200030486685",
-  appId: "1:200030486685:web:20a12082ace747391ad474",
-};
+import { firebaseConfig } from "./firebase_init";
 
 // Initialize Firebase but only on client
 const app = isServerSide ? null : initializeApp(firebaseConfig, "admin");

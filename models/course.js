@@ -6,6 +6,7 @@ import { CountedItem } from "./lib/counted_item";
 import Teachers from "./teacher";
 import { Sessions } from "./session";
 import CourseDescriptions from "./course_description";
+import { connect } from "./lib/trackRefs";
 
 export class Course extends CountedItem {
   descriptionId = "";
@@ -39,4 +40,5 @@ const Courses = new Model("courses", Course, {
     },
   },
 });
+connect(CourseDescriptions, "assignments", Courses, "descriptionId", true);
 export default Courses;
