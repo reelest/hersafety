@@ -2,39 +2,20 @@ import { useState, useEffect, useRef } from "react";
 import { noop } from "./none";
 
 /**
- * @template T
- * @typedef {(data: T) => void} Dispatcher<V>
- */
-/**
- * @template T
- * @typedef {(cb: Dispatcher<T>) => void} SubscribeInit<U>
- */
-/**
- * @template T
- * @typedef {[
- *    () => T,
- *    SubscribeInit<T>,
- *    Dispatcher<T>
- *    () => T
- * ]} Subscription<T>
- */
-/**
- * @template T
  * Allows multiple components to share a data source. The data source is setup when the first component is created and closed when the last component is destroyed.
- * @param {null|(setData: Dispatcher<T>) => void} onSubscribe - called when the first subscriber is registered
- * @param {T?} initial - called when the first subscriber is registered
- * @returns {Subscription<T>} [useSubscription, subscribe, dispatch, read]
+ * @param {function} onSubscribe - called when the first subscriber is registered
+ * @returns [useSubscription, subscribe, dispatch]
  */
-export default function createSubscription(onSubscribe = noop, initial) {
+export default function createSubscription(onSubscribe = noop) {
   const subscribers = [];
   let onUnsubscribe;
-  let currentData = initial;
+  let currentData;
   const subscribe = function (onNewData) {
-    if (subscribers.length === 0) {
+    subscribers.push(onNewData);
+    if (subscribers.length === 1) {
       const result = onSubscribe(dispatch);
       if (typeof result === "function") onUnsubscribe = result;
     }
-    subscribers.push(onNewData);
     if (currentData !== undefined) onNewData(currentData);
     return () => unsubscribe(onNewData);
   };
@@ -63,7 +44,6 @@ export default function createSubscription(onSubscribe = noop, initial) {
     },
     subscribe,
     dispatch,
-    () => currentData,
   ];
 }
 export function useSubscription() {

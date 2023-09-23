@@ -1,8 +1,7 @@
 import TrashIcon from "@heroicons/react/20/solid/TrashIcon";
-import Card1 from "./Card1";
+import Box from "./Box";
 import Table, {
   TableButton,
-  TableContext,
   TableHeader,
   addClassToColumns,
   addHeaderClass,
@@ -11,94 +10,51 @@ import Table, {
 import Spacer from "./Spacer";
 import Pager from "./Pager";
 import usePager from "@/utils/usePager";
-import { Typography } from "@mui/material";
-import Await from "./Await";
+import { useState } from "react";
 
-function ThemedTable({
-  container: TableWrapper = ThemedBox,
-  results,
-  headers,
-  renderHooks = [],
-  selected,
-  pager: _pager,
-  tableRef,
-  onClickRow,
-  ...props
-}) {
-  const defaultPager = usePager(results || [], 10);
-  /** @type {typeof defaultPager} */
-  const pager = _pager ?? defaultPager;
-  const { data, pageSize, ...controller } = pager;
+function ThemedTable({ results, headers, title, renderHooks = [] }) {
+  const { data, ...controller } = usePager(results || [], 10);
+  const [selected, setSelected] = useState(-1);
   return (
-    <TableWrapper selected={selected} {...props}>
+    <Box boxClass="px-8 py-6" className="my-6">
+      <TableHeader>
+        <h3 className="font-32b">{title}</h3>
+        <TableButton>
+          Delete
+          <TrashIcon className="ml-0.5 relative top-1" width={20} />
+        </TableButton>
+      </TableHeader>
       <Table
         loading={!results}
-        data={results}
         scrollable
-        tableRef={tableRef}
-        onClickRow={onClickRow}
         cols={headers.length}
-        rows={Math.min(pageSize, results?.length)}
+        rows={Math.min(10, results?.length)}
         headers={headers}
         rowSpacing={1}
         headerClass="text-disabled text-left"
-        rowProps={(row) => ({
-          sx: {
-            backgroundColor: selected === row ? "primary.light" : "white",
-            color: selected === row ? "white" : null,
-            "& .MuiLink-root": {
-              color: selected === row ? "white" : undefined,
-            },
-          },
-          className: row >= data.length ? "invisible" : "shadow-3",
-        })}
+        rowClass={(row) =>
+          `${selected === row ? "bg-primaryLight text-white" : "bg-white"} ${
+            row >= data.length ? "invisible" : "shadow-3"
+          }`
+        }
+        onClickRow={(e, row) => setSelected(selected === row ? -1 : row)}
         renderHooks={[
-          ...[_pager ? null : pageData(controller.page, pageSize)].filter(
-            Boolean
-          ),
-          addHeaderClass("first:pl-4 pr-2 last:pr-0 "),
+          pageData(controller.page, 10),
+          addHeaderClass("first:pl-4 pr-2 last:pr-0 font-20t"),
           addClassToColumns(
-            "first:pl-4 pr-4 pt-1 pb-1 first:rounded-l last:rounded-r"
+            "first:pl-4 pr-2 pt-1 pb-1 first:rounded-l last:rounded-r"
           ),
           ...renderHooks,
         ]}
       />
-
-      <div className="flex items-center mt-12">
+      <div className="flex items-center mt-28">
         <Spacer />
-        <Typography variant="body2" sx={{ mr: 4 }}>
-          Total
-        </Typography>
-        <span className="text-disabled">
-          <Await value={controller.count} />
-        </span>
+        <span className="font-32b mr-4">Total</span>
+        <span className="font-20t text-disabled">{results?.length}</span>
         <Spacer />
-        <div className="print:hidden">
-          <Pager controller={controller} />
-        </div>
+        <Pager controller={controller} />
       </div>
-    </TableWrapper>
+    </Box>
   );
 }
-
-const ThemedBox = function ({
-  title,
-  headerButtons,
-  children,
-  selected,
-  setSelected,
-  ...props
-}) {
-  return (
-    <TableContext.Provider value={[selected, setSelected]}>
-      <Card1 boxClass="px-6 py-5" className="my-2 mx-2" {...props}>
-        <TableHeader>
-          <Typography variant="h5">{title}</Typography>
-          {headerButtons}
-        </TableHeader>
-        {children}
-      </Card1>
-    </TableContext.Provider>
-  );
-};
 export default ThemedTable;

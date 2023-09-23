@@ -17,10 +17,8 @@ export default function usePromise(createPromise, deps) {
       const promise = cb();
       promise.then(function (data) {
         if (!stale) {
-          if (data !== ref.current) {
-            ref.current = data;
-            setData({});
-          }
+          ref.current = data;
+          setData(data);
         }
       });
       return function () {

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import ThemedButton from "@mui/material/Button";
+import ThemedButton from "@/components/ThemedButton";
 import Table, {
-  TableContext,
   TableHeader,
   addClassToColumns,
   addHeaderClass,
@@ -12,7 +11,6 @@ import Pager from "@/components/Pager";
 import printElement from "@/utils/printElement";
 import Printed from "@/components/Printed";
 import TabbedBox from "./TabbedBox";
-import ThemedTable from "./ThemedTable";
 
 export default function TabbedTable({
   results,
@@ -25,14 +23,14 @@ export default function TabbedTable({
   footerContent,
   renderHooks,
   onClickRow,
-  pager,
   showPager = true,
   actions,
 }) {
   const PAGE_SIZE = showPager ? 10 : 1000;
+  const { data, ...controller } = usePager(results || [], PAGE_SIZE);
   const tableRef = useRef();
   const [selected, setSelected] = useState(-1);
-  useEffect(() => setSelected(-1), [pager.page, results]);
+  useEffect(() => setSelected(-1), [controller.page, results]);
   return (
     <TabbedBox
       tabHeaders={tabHeaders}
@@ -43,22 +41,43 @@ export default function TabbedTable({
       <TableHeader>{headerContent}</TableHeader>
       <div ref={tableRef}>
         <Printed className="hidden print:block py-10">{printHeader}</Printed>
-        <ThemedTable
-          container={TableContext.Provider}
-          value={[selected, setSelected]}
-          results={results}
+        <Table
+          loading={!results}
+          scrollable
+          cols={headers.length}
+          rows={Math.min(10, results?.length)}
           headers={headers}
-          selected={selected}
-          pager={pager}
-          renderHooks={renderHooks}
-          tableRef={tableRef}
-          onClickRow={onClickRow}
+          rowSpacing={1}
+          headerClass="text-disabled text-left"
+          rowClass={(row) =>
+            `${selected === row ? "bg-primaryLight text-white" : "bg-white"} ${
+              row >= data.length ? "invisible" : "shadow-3"
+            }`
+          }
+          onClickRow={(e, row) =>
+            onClickRow
+              ? onClickRow((controller.page - 1) * PAGE_SIZE + row)
+              : setSelected(selected === row ? -1 : row)
+          }
+          renderHooks={[
+            pageData(controller.page, PAGE_SIZE),
+            addHeaderClass("first:pl-4 pr-8 last:pr-0 font-20t"),
+            addClassToColumns(
+              "first:pl-4 pr-8 last:pr-2 pt-1 pb-1 first:rounded-l last:rounded-r"
+            ),
+            ...renderHooks,
+          ]}
         />
+        {showPager ? (
+          <div className="print:hidden flex justify-end mt-28">
+            <Pager controller={controller} />
+          </div>
+        ) : null}
+        {footerContent}
       </div>
-      {footerContent}
       <TabActions
         actions={actions}
-        selected={(pager.page - 1) * PAGE_SIZE + selected}
+        selected={(controller.page - 1) * PAGE_SIZE + selected}
         tableRef={tableRef}
       />
     </TabbedBox>
@@ -72,7 +91,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           disabled={selected === -1}
           onClick={() => actions.onEdit(selected)}
-          bg="primary"
+          bg="bg-primary"
           variant="classic"
           className="mx-2"
         >
@@ -83,7 +102,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           disabled={selected === -1}
           onClick={() => actions.onDelete(selected)}
-          bg="secondary"
+          bg="bg-secondary"
           variant="classic"
           className="mx-2"
         >
@@ -103,7 +122,7 @@ export function TabActions({ actions, selected, tableRef }) {
         <ThemedButton
           onClick={actions.onClose}
           variant="classic"
-          bg="primary"
+          bg="bg-primary"
           className="mx-2"
         >
           Close

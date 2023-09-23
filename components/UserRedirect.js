@@ -1,15 +1,13 @@
-import { useUser } from "@/logic/auth";
+import { useUser } from "@/logic/api";
 import { useRouter } from "next/router";
 import isServerSide from "@/utils/is_server_side";
 import FullscreenLoader from "./FullscreenLoader";
-import useUserData from "@/logic/user_data";
 
 const DASHBOARD_URL = {
-  admin: "/admin",
+  administrator: "/admin",
   student: "/student",
   parent: "/parent",
   teacher: "/teacher",
-  guest: "/guest",
 };
 
 export default function UserRedirect({
@@ -17,18 +15,18 @@ export default function UserRedirect({
   redirectOnNoUser,
   children,
 }) {
-  const userData = useUserData();
+  const user = useUser();
   const router = useRouter();
-  if (userData === undefined) {
+  if (user === undefined) {
     return <FullscreenLoader />;
-  } else if (userData === null) {
+  } else if (user === null) {
     if (redirectOnNoUser) {
       if (!isServerSide) router.replace("/login");
-      return <FullscreenLoader />;
+      return null;
     }
   } else if (redirectOnUser) {
-    if (!isServerSide) router.replace(DASHBOARD_URL[userData.getRole()]);
-    return <FullscreenLoader />;
+    if (!isServerSide) router.replace(DASHBOARD_URL[user.role]);
+    return null;
   }
   return children;
 }

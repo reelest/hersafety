@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import isServerSide from "./is_server_side";
-
+const WINDOW_REF = {
+  current: typeof window !== "undefined" && window,
+};
 export default function useWindowRef() {
-  return useRef(isServerSide ? null : window);
+  return WINDOW_REF;
 }

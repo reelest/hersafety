@@ -1,31 +1,21 @@
 import useBreakpoints from "@/utils/useBreakpoints";
-import Sidebar, { useActiveTab } from "./Sidebar";
-import NoSsr from "@mui/material/NoSsr";
+import Sidebar from "./Sidebar";
+import { useState } from "react";
 
-const DashboardLayout = ({ renderChild = _renderChild, tabs }) => {
+const DashboardLayout = ({ children, tabs }) => {
   const isWideScreen = useBreakpoints().lg;
+  const [isOpen, setOpen] = useState(false);
   return (
     <div className="flex h-screen w-screen">
-      <NoSsr>
-        <Sidebar isStatic={isWideScreen} tabs={tabs} />
-      </NoSsr>
-
-      <main className="flex-grow  overflow-y-scroll">
-        <ChooseLayout renderChild={renderChild} tabs={tabs} />
-      </main>
+      <Sidebar
+        isOpen={isOpen}
+        onClose={() => setOpen(false)}
+        isStatic={isWideScreen}
+        tabs={tabs}
+      />
+      <main className="flex-grow  overflow-y-scroll">{children}</main>
     </div>
   );
 };
 
-const _renderChild = function (tab, tabs) {
-  const Component = (
-    tabs.find((e) => tab === (e.id ?? e.name.toLowerCase())) ?? tabs[0]
-  ).component;
-  return <Component />;
-};
-
-function ChooseLayout({ renderChild, tabs }) {
-  const tab = useActiveTab(tabs);
-  return renderChild(tab, tabs);
-}
 export default DashboardLayout;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export default function usePager(data, pageSize = 10) {
+export default function usePager(data, pageSize) {
   const [page, setPage] = useState(0);
   const clamp = useCallback(
     (page) => Math.min(Math.ceil(data.length / pageSize), Math.max(1, page)),
@@ -20,7 +20,5 @@ export default function usePager(data, pageSize = 10) {
     hasPrev: clamp(page - 1) < page,
     goto: setPage,
     page,
-    count: data.length === Number.MAX_SAFE_INTEGER ? undefined : data.length,
-    pageSize,
   };
 }

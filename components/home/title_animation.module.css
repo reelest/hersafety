@@ -1,0 +1,54 @@
+.circle {
+  cx: 124px;
+  cy: 300px;
+  r: 72px;
+  transform-origin: 124px 300px;
+  animation: move 14s ease-in-out 3s infinite;
+}
+.root {
+  width: 80vw;
+  height: 25vw;
+}
+@media (min-width: 1366px) {
+  .root {
+    width: 1093px;
+    height: 342px;
+  }
+}
+.smallCircle {
+  cy: 150px;
+  animation: move-up 25s linear 3s both;
+}
+.mainText {
+  animation: change-color 0s step-end 16s both;
+}
+@keyframes change-color {
+  from {
+    fill: #ffffff;
+  }
+  to {
+    fill: url(#grad2);
+  }
+}
+
+@keyframes move {
+  from {
+    transform: scale(1, 1);
+  }
+  100% {
+    transform: translateY(-210px) scale(4.986, 4.986);
+  }
+}
+
+@keyframes move-up {
+  0% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(calc(-50px - calc(500px / var(--z))));
+    cy: calc(100px);
+  }
+  100% {
+    transform: translateY(calc(-350px - calc(200px / var(--z))));
+  }
+}

@@ -1,5 +1,4 @@
-import Card1 from "@/components/Card1";
-import { Box } from "@mui/material";
+import Box from "@/components/Box";
 
 function TabHeaders({ tabHeaders, currentTab, onSelectTab, _noPadding }) {
   return tabHeaders ? (
@@ -7,27 +6,18 @@ function TabHeaders({ tabHeaders, currentTab, onSelectTab, _noPadding }) {
       role="tablist"
       className={`${
         _noPadding ? "" : "-mx-8"
-      } flex font-24 shadow-2 rounded-t overflow-auto`}
+      } flex font-24 shadow-2 rounded-t-2xl overflow-auto`}
     >
       {tabHeaders.map((e) => (
-        <Box
-          as="li"
+        <li
           role="tab"
-          className="py-4 px-6 cursor-pointer"
+          className="py-4 px-6 aria-selected:bg-primaryLight aria-selected:text-white cursor-pointer"
           aria-selected={currentTab === e}
-          sx={
-            currentTab === e
-              ? {
-                  backgroundColor: "primary.light",
-                  color: "white",
-                }
-              : undefined
-          }
           key={e}
           onClick={() => onSelectTab(e)}
         >
           {e}
-        </Box>
+        </li>
       ))}
     </ul>
   ) : null;
@@ -41,7 +31,7 @@ export default function TabbedBox({
   noPadding,
 }) {
   return (
-    <Card1 boxClass={noPadding ? "" : "px-8 pb-6"} className="my-6">
+    <Box boxClass={noPadding ? "" : "px-8 pb-6"} className="my-6">
       <TabHeaders
         _noPadding={noPadding}
         tabHeaders={tabHeaders}
@@ -49,6 +39,6 @@ export default function TabbedBox({
         currentTab={currentTab}
       />
       {children}
-    </Card1>
+    </Box>
   );
 }

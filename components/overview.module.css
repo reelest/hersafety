@@ -1,0 +1,64 @@
+.overview {
+  position: fixed;
+  /* background: rgb(37, 110, 255, 0.05); */
+  background: rgb(227, 230.65, 241.7);
+  overflow: hidden;
+  height: 5rem;
+  display: flex;
+  /* background-filter: blur(3px); */
+  box-shadow: rgba(0, 0, 0, 0, 0.04);
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  z-index: 10;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 280px;
+  width: 100%;
+  max-width: 540px;
+}
+
+@media (min-width: 1024px) {
+  .overview {
+    min-width: auto;
+    max-width: 5rem;
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    height: auto;
+    flex-direction: column;
+    transform: translateY(-50%);
+    min-width: none;
+    right: 0;
+    border-bottom-left-radius: 0.5rem;
+    border-top-right-radius: 0;
+  }
+}
+.navItem {
+  background: transparent;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: var(--font-xs);
+  flex-grow: 1;
+  transition: background-color 1.4s;
+}
+.navItem:hover {
+  color: var(--primary-light);
+}
+@media (max-width: 480px) {
+  .navItem > div:last-child {
+    display: none;
+  }
+  .navItemActive > div:last-child {
+    display: block;
+  }
+  .overview {
+    width: 100%;
+  }
+}
+.navItemActive:hover,
+.navItemActive {
+  color: white;
+  background: var(--primary-dark);
+  /* activePoint?.name === name ? "" : "", */
+}
