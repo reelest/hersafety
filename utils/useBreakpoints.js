@@ -1,4 +1,4 @@
-import { useWindowSize } from "react-use";
+import useWindowSize from "./useWindowSize";
 
 export default function useBreakpoints() {
   const windowWidth = useWindowSize().width;
