@@ -42,6 +42,7 @@ export default function ModelForm({
 
   const itemStore = useRef();
   if (!itemStore.current) itemStore.current = mountStore();
+  const outerStore = useContext(ItemStoreContext);
   const update = useUpdate();
   useEffect(() => {
     if (!itemStore.current) {
@@ -53,8 +54,11 @@ export default function ModelForm({
       itemStore.current = null;
     };
   }, [update]);
+
   return (
-    <ItemStoreContext.Provider value={itemStore.current.keep}>
+    <ItemStoreContext.Provider
+      value={noSave && outerStore ? outerStore.keep : itemStore.current.keep}
+    >
       <Form
         key={item?.id?.() ?? ""}
         onSubmit={async (data) => {
