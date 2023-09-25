@@ -1,11 +1,5 @@
 import { firestore } from "@/logic/firebase_init";
-import {
-  deleteField,
-  refEqual,
-  runTransaction,
-  setDoc,
-  writeBatch,
-} from "firebase/firestore";
+import { refEqual, runTransaction, writeBatch } from "firebase/firestore";
 import { InvalidState } from "./errors";
 
 const promise = () => {

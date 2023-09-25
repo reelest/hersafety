@@ -26,7 +26,7 @@ import { InvalidParameters } from "./errors";
  *    objectType?: ModelTypeInfo,
  *    arrayType?: ModelPropInfo,
  *    mapType?: ModelPropInfo,
- *    pickRefQuery?: QueryCursor | String | ()=>AsyncGenerator<Item[], Item[], never>, 
+ *    pickRefQuery?: true|QueryCursor | String | ()=>AsyncGenerator<Item[], Item[], never>, 
  *    refModel: Model,
  *    label: string,
  *  }} ModelPropInfo
@@ -111,7 +111,9 @@ function _getModelPropInfo(key, template, Meta, path) {
         ? _getModelTypeInfo(template, Meta.mapType, path + "{}")
         : undefined,
     pickRefQuery: Meta.pickRefQuery ?? "",
-    label: Meta.label ?? sentenceCase(key.replace(/([a-z])([A-Z])/g, "$1 $2")),
+    label:
+      Meta.label ??
+      sentenceCase(key.replace(/Id$/, "").replace(/([a-z])([A-Z])/g, "$1 $2")),
     refModel: Meta.refModel,
   };
 }

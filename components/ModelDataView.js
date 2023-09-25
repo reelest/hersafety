@@ -9,6 +9,7 @@ import { supplyValue } from "./Table";
 import Await from "./Await";
 import sentenceCase from "@/utils/sentenceCase";
 import { Link } from "@mui/material";
+import ModelItemPreview from "./ModelItemPreview";
 
 /**
  * @param {Object} param0
@@ -68,8 +69,11 @@ export default function ModelDataView({ name, item }) {
           Download
         </Link>
       ) : null;
-    case "object":
     case "ref":
+      return value ? (
+        <ModelItemPreview item={meta.refModel.item(value)} />
+      ) : undefined;
+    case "object":
     case "image":
     case "array":
     case "map":
@@ -87,6 +91,6 @@ export function supplyModelValues(props) {
       return <ModelDataView item={items[row]} name={props[col]} />;
     } else if (items?.[row] && _get(props[col]) in items[row]) {
       return <Await value={items[row][_get(props[col])]()} />;
-    }
+    } else return items;
   });
 }

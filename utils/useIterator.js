@@ -48,12 +48,10 @@ export default function useIterator(iterator) {
 
   const doUpdate = useMutex(async () => {
     if (results.done) return;
-    console.log("Loading data....");
     const x = refreshToken;
     setResults({ ...results, loading: true });
     try {
       const { done, value } = await iterator.next();
-      console.log({ done, value, e: results.value });
       if (isRefreshStillValid(x))
         setResults({
           done,

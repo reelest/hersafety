@@ -65,6 +65,7 @@ export default function Form({
       if (onSubmit) {
         try {
           e.preventDefault();
+          e.stopPropagation();
           setLoading(true);
           await onSubmit(fd);
           setLoading(false);

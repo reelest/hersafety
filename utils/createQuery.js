@@ -24,7 +24,7 @@ const baseScore = (query, text) =>
   }, 0);
 const byLength = (a, b) => b.length - a.length || a.localeCompare(b);
 
-const maxLength = (e) => e.length < 15;
+const maxLength = (size) => (e) => e.length < size;
 /**
  *
  * @param {String} text
@@ -38,11 +38,11 @@ export function parseQuery(text) {
     .sort(byLength)
     .filter(uniq);
   const prev = exactMatch.slice();
-  if (!exactMatch.every(maxLength)) {
+  if (!exactMatch.every(maxLength(10))) {
     exactMatch = exactMatch
       .map(slice(14, Infinity))
       .flat()
-      .concat(exactMatch.filter(maxLength))
+      .concat(exactMatch.filter(maxLength(15)))
       .sort(byLength)
       .filter(uniq);
   }
@@ -51,7 +51,7 @@ export function parseQuery(text) {
     .flat()
     .sort(byLength)
     .filter(uniq)
-    .filter(maxLength)
+    .filter(maxLength(10))
     .filter(notIn(prev));
   Array.prototype.push.apply(prev, oneLetterOff);
 
@@ -60,7 +60,7 @@ export function parseQuery(text) {
     .flat()
     .sort(byLength)
     .filter(uniq)
-    .filter(maxLength)
+    .filter(maxLength(10))
     .filter(notIn(prev));
   Array.prototype.push.apply(prev, twoLettersOff);
 

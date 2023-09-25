@@ -1,9 +1,10 @@
 import { IconButton, Modal, Paper, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import SuccessDialog from "./SuccessDialog";
 import { CloseCircle } from "iconsax-react";
 import ModelForm from "./ModelForm";
 import { noop } from "@/utils/none";
+import useLogger from "@/utils/useLogger";
 
 export default function ModelFormDialog({
   isOpen = false,
@@ -21,21 +22,25 @@ export default function ModelFormDialog({
   useEffect(() => {
     setItem(isOpen ? edit || (noSave ? null : Model.create()) : null);
   }, [edit, isOpen, Model, noSave]);
+  const id = useId();
+  useLogger({ item, submitted, id, dialog: isOpen });
   return (
     <Modal
       onClose={(e, reason) => {
         if (reason && reason == "backdropClick") return;
+        console.log({ id, e, reason });
         onClose(e);
       }}
       open={isOpen}
       className="p-4"
     >
       {/* Modal must have only one child */}
-      <Paper className="h-full w-full mx-auto max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
+      <Paper className="mx-auto max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
         <SuccessDialog
           open={submitted}
           onClose={() => {
             setSubmitted(false);
+            console.log(id + " closing");
             if (closeOnSubmit) onClose();
           }}
         />
@@ -53,7 +58,6 @@ export default function ModelFormDialog({
           className="flex-grow flex flex-col"
           noSave={noSave}
           onSubmit={async (data) => {
-            console.log(data);
             await onSubmit?.(data);
             setSubmitted(true);
           }}

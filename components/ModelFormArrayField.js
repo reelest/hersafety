@@ -1,5 +1,5 @@
 import { Button, IconButton, Modal, Paper, Typography } from "@mui/material";
-import { ModelFormField } from "./ModelForm";
+import ModelFormField from "./ModelFormField";
 import Form, { FormField, FormSubmit } from "./Form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Add, ArrowUp, CloseCircle } from "iconsax-react";
@@ -17,6 +17,8 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
   const _id = useCallback((e) => name + "[" + e + "]", [name]);
   const _new = useMemo(() => _id(""), [_id]);
   const [edit, setEdit] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
   const setValue = (_value) =>
     !deepEqual(_value, value) &&
     onChange({
@@ -24,14 +26,17 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
         value: _value,
       },
     });
+
   useEffect(() => {
     if (edit && value[edit.index] !== edit.value) {
       setEdit(null);
     }
   }, [value, edit]);
+
   useEffect(() => {
     if (edit) setShowForm(true);
   }, [edit]);
+
   useEffect(() => {
     if (!showForm) setEdit(null);
   }, [showForm]);
@@ -42,8 +47,9 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
+
   const _newValue = useRef(initialValue[_new]);
-  const [showForm, setShowForm] = useState(false);
+
   const move = (e, from, to) => {
     if (value[from] === e && value[to] !== undefined) {
       value = value.slice();
@@ -53,11 +59,13 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       setValue(value);
     }
   };
+
   const remove = (e, from) => {
     if (value[from] === e) {
       setValue([...value.slice(0, from), ...value.slice(from + 1)]);
     }
   };
+
   return (
     <>
       {/* For stop browser form validation errors*/}
@@ -65,33 +73,35 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
 
       <div className="flex items-center justify-between w-full">
         <Typography variant="h6">{meta.label}</Typography>
-        <Button onClick={() => setShowForm(true)}>
+        {/* <Button onClick={() => setShowForm(true)}>
           Add New <Add />
-        </Button>
+        </Button> */}
       </div>
-      {value.map((e, i) => (
-        <div className="flex flex-wrap" key={e}>
-          <Typography sx={{ mr: 4 }}>{i + 1}</Typography>
-          <ModelFormField name={_id(i)} meta={meta.arrayType} disabled />
-          <div className="flex">
-            <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
-              <ArrowUp />
-            </IconButton>
-            <IconButton
-              onClick={() => move(e, i, i + 1)}
-              disabled={i === value.length - 1}
-            >
-              <ArrowUp />
-            </IconButton>
-            <IconButton onClick={() => setEdit({ value: e, index: i })}>
-              <CloseCircle />
-            </IconButton>
-            <IconButton onClick={() => remove(e, i)}>
-              <CloseCircle />
-            </IconButton>
+      <Form>
+        {value.map((e, i) => (
+          <div className="flex flex-wrap" key={e}>
+            <Typography sx={{ mr: 4 }}>{i + 1}</Typography>
+            <ModelFormField name={_id(i)} meta={meta.arrayType} disabled />
+            <div className="flex">
+              <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
+                <ArrowUp />
+              </IconButton>
+              <IconButton
+                onClick={() => move(e, i, i + 1)}
+                disabled={i === value.length - 1}
+              >
+                <ArrowUp />
+              </IconButton>
+              <IconButton onClick={() => setEdit({ value: e, index: i })}>
+                <CloseCircle />
+              </IconButton>
+              <IconButton onClick={() => remove(e, i)}>
+                <CloseCircle />
+              </IconButton>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </Form>
       <Modal
         open={showForm}
         onClose={(_, reason) =>

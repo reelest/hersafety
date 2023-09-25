@@ -1,4 +1,4 @@
-import tailwindConfig from "@/tailwind.config";
+import tailwindConfig from "@/tailwind.config.js";
 import { createTheme } from "@mui/material/styles";
 import Link from "next/link";
 import React from "react";

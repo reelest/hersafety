@@ -1,4 +1,3 @@
-import { useUser } from "@/logic/auth";
 import { useRouter } from "next/router";
 import isServerSide from "@/utils/is_server_side";
 import FullscreenLoader from "./FullscreenLoader";
@@ -6,9 +5,9 @@ import useUserData from "@/logic/user_data";
 
 const DASHBOARD_URL = {
   admin: "/admin",
-  student: "/student",
+  student: "/admin",
   parent: "/parent",
-  teacher: "/teacher",
+  teacher: "/admin",
   guest: "/guest",
 };
 

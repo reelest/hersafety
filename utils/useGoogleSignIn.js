@@ -45,8 +45,7 @@ export default function useGoogleSignIn() {
   let onClick = null;
   if (request) {
     onClick = () => promptAsync({});
-    // eslint-disable-next-line no-undef
-    if (typeof __DEV__ !== "undefined" && __DEV__) {
+    if (__DEV__) {
       onClick = () => promptAsync({ useProxy: true });
     }
   }

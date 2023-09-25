@@ -1,4 +1,4 @@
-import { increment } from "firebase/firestore";
+import UpdateValue from "./update_value";
 import { Model, Item, noFirestore, USES_EXACT_IDS } from "./model";
 import { CountedItem } from "./counted_item";
 
@@ -29,10 +29,14 @@ class MetadataItem extends Item {
 const Metadata = new Model("metadata", MetadataItem, {
   [USES_EXACT_IDS]: true,
 });
+/**
+ * @template {CountedItem} T
+ * @extends {Model<T>}
+ */
 export class CountedModel extends Model {
   /**
-   * @param {ConstructorParameters<typeof Model>[0]} _collectionID
-   * @param {ConstructorParameters<typeof Model>[1]} ItemClass
+   * @param {string} _collectionID
+   * @param {Class<T>} ItemClass
    * @param {[ConstructorParameters<typeof Model>[2]]} props
    */
   constructor(_collectionID, ItemClass = CountedItem, ...props) {
@@ -49,6 +53,6 @@ export class CountedModel extends Model {
     return (await this.counter.load()).itemCount;
   }
   async initCounter(item) {
-    item.itemCount = increment(0);
+    item.itemCount = UpdateValue.add(0);
   }
 }

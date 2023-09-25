@@ -2,7 +2,7 @@ import useStable from "./useStable";
 export default function mutex(func) {
   let mutex = false;
   return async (...args) => {
-    if (mutex) return console.log("Ignoring function call due to mutex");
+    if (mutex) return console.debug("Ignoring function call due to mutex");
     try {
       mutex = true;
       return await func(...args);

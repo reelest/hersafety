@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useUser } from "@/logic/api";
+import { useUser } from "@/logic/auth";
 
 export function ProfilePic() {
   const user = useUser();

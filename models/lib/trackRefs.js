@@ -1,61 +1,84 @@
 import { InvalidParameters, UnimplementedError } from "@/models/lib/errors";
 import { None } from "@/utils/none";
 import notIn from "@/utils/notIn";
-import { arrayRemove, arrayUnion } from "firebase/firestore";
+import UpdateValue, { isUpdateValue } from "./update_value";
 import { getItemFromStore } from "./item_store";
-import sentenceCase from "@/utils/sentenceCase";
+import { getDefaultValue } from "./model_type_info";
 
 const refProps = Symbol("refProps");
 
 function toArray(e) {
   return Array.isArray(e) ? e : e ? [e] : [];
 }
+
+//Tracks updates to prevent nested updates
+const updateSink = [];
+const withUpdate = async (item, prop, cb) => {
+  const x = { m: item.model(), id: item.id(), prop };
+  if (updateSink.some((e) => e.m === x.m && e.id === x.id && e.prop === x.prop))
+    return;
+  try {
+    console.log("Updating ", x);
+    updateSink.push(x);
+    return await cb();
+  } finally {
+    console.log("Updated", x);
+    updateSink.splice(updateSink.indexOf(x), 1);
+  }
+};
 /**
  *
- * @param {import("@/models/lib/model").Item} item
- * @param {import("firebase/firestore").Transaction} txn
+ * @typedef {import("@/models/lib/model").Item} Item
+ * @param {Item} item
+ * @param {import("./lib/transaction").default} txn
  * @param {*} newState
  */
 export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
   if (!item[refProps]) return;
   const { props, AddActions, RemoveActions } = item[refProps];
   await Promise.all(
-    props.map(async (e) => {
+    props.map((e) => {
       if (isUpdate && !item.didUpdate(e)) return;
-      const newValue = toArray(newState[e]);
-      const oldValue = toArray((await item.read(txn))[e]);
-      const added = newValue.filter(notIn(oldValue));
-      const removed = oldValue.filter(notIn(newValue));
-      await Promise.all(
-        removed.map(async (id) => {
-          const meta = item.model().Meta[e];
-          const refModel =
-            meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
-          const refItem = refModel.item(id);
-          await Promise.all(
-            RemoveActions[e]?.map?.(async (action) => {
-              await action.run(txn, item, refItem);
-            })
-          );
-        })
-      );
-      await Promise.all(
-        added.map(async (id) => {
-          const meta = item.model().Meta[e];
-          const refModel =
-            meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
-          const created = getItemFromStore(refModel.ref(id));
-          if (created !== null && created.isLocalOnly()) {
-            await created.save(txn);
-          }
-          const refItem = created ?? refModel.item(id);
-          await Promise.all(
-            AddActions[e]?.map?.(async (action) => {
-              await action.run(txn, item, refItem);
-            })
-          );
-        })
-      );
+      return withUpdate(item, e, async () => {
+        // Currently, UpdateValues are only used when there are no side effects
+        if (isUpdateValue(newState[e])) return;
+        const newValue = toArray(newState[e]);
+        const oldValue = item.isLocalOnly()
+          ? []
+          : toArray((await item.read(txn))?.[e]);
+        const added = newValue.filter(notIn(oldValue));
+        const removed = oldValue.filter(notIn(newValue));
+        await Promise.all(
+          removed.map(async (id) => {
+            const meta = item.model().Meta[e];
+            const refModel =
+              meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
+            const refItem = refModel.item(id);
+            await Promise.all(
+              RemoveActions[e]?.map?.(async (action) => {
+                await action.run(txn, item, refItem);
+              })
+            );
+          })
+        );
+        await Promise.all(
+          added.map(async (id) => {
+            const meta = item.model().Meta[e];
+            const refModel =
+              meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
+            const created = getItemFromStore(refModel.ref(id));
+            if (created !== null && created.isLocalOnly()) {
+              await created.save(txn);
+            }
+            const refItem = created ?? refModel.item(id);
+            await Promise.all(
+              AddActions[e]?.map?.(async (action) => {
+                await action.run(txn, item, refItem);
+              })
+            );
+          })
+        );
+      });
     })
   );
 }
@@ -66,6 +89,11 @@ export async function onRefsAddItem(item, txn, newState) {
 export async function onRefsDeleteItem(item, txn) {
   return onRefsUpdateItem(item, txn, None, false);
 }
+
+/**
+ * One requirement of actions is that they must be idempotent.
+ * Otherwise, using them with UpdateValues would fail
+ */
 class Action {
   constructor(prop) {
     this.prop = prop;
@@ -79,23 +107,34 @@ class Action {
 export class AppendIDAction extends Action {
   /**
    *
-   * @param {import("firebase/firestore").Transaction} txn
+   * @param {import("./lib/transaction").default} txn
    * @param {Item} item
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    await refItem.set({ [this.prop]: arrayUnion(item.id()) }, txn);
+    console.log(
+      "appending " + item.id() + " to " + refItem.uniqueName() + "." + this.prop
+    );
+    await refItem.set({ [this.prop]: UpdateValue.arrayUnion(item.id()) }, txn);
   }
 }
 
 export class SetIDAction extends Action {
   /**
    *
-   * @param {import("firebase/firestore").Transaction} txn
+   * @param {import("./lib/transaction").default} txn
    * @param {Item} item
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
+    console.log(
+      "setting value " +
+        item.id() +
+        " for " +
+        refItem.uniqueName() +
+        "." +
+        this.prop
+    );
     await refItem.set({ [this.prop]: item.id() }, txn);
   }
 }
@@ -103,35 +142,55 @@ export class SetIDAction extends Action {
 export class RemoveIDAction extends Action {
   /**
    *
-   * @param {import("firebase/firestore").Transaction} txn
+   * @param {import("./lib/transaction").default} txn
    * @param {Item} item
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    await refItem.set({ [this.prop]: arrayRemove(item.id()) }, txn);
+    console.log(
+      "removing value " +
+        item.id() +
+        " from items in " +
+        refItem.uniqueName() +
+        "." +
+        this.prop
+    );
+    await refItem.set({ [this.prop]: UpdateValue.arrayRemove(item.id()) }, txn);
   }
 }
 
 export class UnsetIDAction extends Action {
   /**
    *
-   * @param {import("firebase/firestore").Transaction} txn
+   * @param {import("./lib/transaction").default} txn
    * @param {Item} item
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    await refItem.set({ [this.prop]: null }, txn);
+    console.log(
+      "clearing value " +
+        item.id() +
+        " for " +
+        refItem.uniqueName() +
+        "." +
+        this.prop
+    );
+    await refItem.set(
+      { [this.prop]: getDefaultValue(refItem.model().Meta[this.prop]) },
+      txn
+    );
   }
 }
 
 export class DeleteItemAction extends Action {
   /**
    *
-   * @param {import("firebase/firestore").Transaction} txn
+   * @param {import("./lib/transaction").default} txn
    * @param {Item} item
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
+    console.log("deleting " + refItem.id());
     await refItem.delete(txn);
   }
 }
@@ -183,7 +242,7 @@ export function trackRefs(ItemClass, props, addActions, removeActions) {
  * @param {keyof L} prop2
  * @param {boolean} deleteOnRemove
  */
-export function connect(
+export function associateModels(
   model1,
   prop1,
   model2,
@@ -218,7 +277,7 @@ export function connect(
   if (isArray1) model1.Meta[prop1].arrayType.refModel = model2;
   else model1.Meta[prop1].refModel = model2;
   if (!noRecurse && isTwoWay) {
-    connect(model2, prop2, model1, prop1, false, true);
+    associateModels(model2, prop2, model1, prop1, false, true);
   }
 }
 /**

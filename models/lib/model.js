@@ -1,5 +1,4 @@
 import {
-  FieldValue,
   collection,
   deleteDoc,
   deleteField,
@@ -16,6 +15,7 @@ import Txn from "./transaction";
 import isPureObject from "@/utils/isPureObject";
 import typeOf from "@/utils/typeof";
 import hasProp from "@/utils/hasProp";
+import { isUpdateValue } from "./update_value";
 /**
  * (new|(?<!Model )extends) \w*Model\b
  */
@@ -25,13 +25,17 @@ import hasProp from "@/utils/hasProp";
 export const noFirestore = firestore === null;
 export const USES_EXACT_IDS = "!uses-exact-ids";
 /**
+ * @template T
+ * @typedef {{new(): T}} Class
+ */
+/**
  * @template {Item} T
  */
 export class Model {
   _Item;
   /**
    * @param {string} _collectionID
-   * @param {{new(): T}} [ItemClass=Item]
+   * @param {Class<T>} [ItemClass=Item]
    * @param {Partial<import("./model_type_info").ModelTypeInfo>} meta
    */
   constructor(_collectionID, ItemClass = Item, meta) {
@@ -115,7 +119,9 @@ export class Model {
       if (!m.isLocalOnly()) txn.ignorePreviousReads();
       m.onCreate();
       await init(m, txn);
-      if (m.isLocalOnly()) m._isCreated = false; //Prevent saving outside of this transaction
+      txn.onCommit(() => {
+        if (m.isLocalOnly()) m._isCreated = false; //Prevent saving outside of this transaction
+      });
       return m;
     });
   }
@@ -260,25 +266,31 @@ export class Item {
     let copy;
     const isCompatible = (key) => {
       const val = d[key],
-        type1 = typeOf(val),
-        type2 = typeOf(this[key]);
-      if (type1 === type2) return true;
+        valueType = typeOf(val),
+        expectedType = typeOf(this[key]);
+      if (valueType === expectedType) return true;
       if (!copy) copy = Object.assign({}, d);
-      if (type1 === "timestamp" && type2 === "date") {
+      if (valueType === "timestamp" && expectedType === "date") {
         copy[key] = val.toDate();
       } else if (
-        val instanceof FieldValue &&
-        (type2 === "array" || type2 === "number" || type2 === "date")
+        isUpdateValue(val) &&
+        (expectedType === "array" ||
+          expectedType === "number" ||
+          expectedType === "date")
       ) {
         return true; //Allow this for now.
-      } else if (type1 === "string" && type2 === "number" && !isNaN(val)) {
+      } else if (
+        valueType === "string" &&
+        expectedType === "number" &&
+        !isNaN(val)
+      ) {
         copy[key] = Number(val);
         return true;
-      } else if (type1 === "number" && type2 === "date") {
+      } else if (valueType === "number" && expectedType === "date") {
         copy[key] = new Date(val);
       } else if (
-        type1 === "string" &&
-        type2 === "date" &&
+        valueType === "string" &&
+        expectedType === "date" &&
         !Number.isNaN(Date.parse(val))
       ) {
         copy[key] = new Date(val);
@@ -289,9 +301,9 @@ export class Item {
             "." +
             key +
             " " +
-            type2 +
+            expectedType +
             " is not compatible with " +
-            type1 +
+            valueType +
             " value =",
           val,
           "."
@@ -346,7 +358,7 @@ function flattenUpdate(e, prefix = "", ctx = {}) {
     if (prefix) ctx[prefix.slice(0, -1)] = e;
   } else {
     Object.keys(e).forEach((k) =>
-      isPureObject(e[k]) && !(e[k] instanceof FieldValue)
+      isPureObject(e[k]) && !isUpdateValue(e[k])
         ? flattenUpdate(e[k], prefix + k + ".", ctx)
         : (ctx[prefix + k] = e[k] === undefined ? deleteField() : e[k])
     );
