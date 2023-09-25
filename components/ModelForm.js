@@ -162,10 +162,12 @@ const prepareForUpload = async (data, meta) => {
           data[key] = await Promise.all(
             data[key]?.map?.(
               async (e) =>
-                await prepareForUpload(
-                  { value: e },
-                  { value: meta[key].arrayType }
-                )
+                (
+                  await prepareForUpload(
+                    { value: e },
+                    { value: meta[key].arrayType }
+                  )
+                ).value
             )
           );
           break;
