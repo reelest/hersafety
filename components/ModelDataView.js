@@ -16,75 +16,93 @@ import ModelItemPreview from "./ModelItemPreview";
  * @param {String} param0.name
  * @param {import("@/models/lib/model_type_info").Item} param0.item
  */
-export default function ModelDataView({ name, item }) {
-  const meta = item.model().Meta[name];
-  let value = item[name];
-  switch (meta.type) {
-    case "string":
-      switch (meta.stringType) {
-        case "email":
-          return value && <Link href={"email:" + value}>{value}</Link>;
-        case "tel":
-          return (
-            value && (
-              <Link href={"tel:" + value} className="whitespace-nowrap">
-                {formatPhoneNumber(value)}
-              </Link>
-            )
-          );
-        case "url":
-          return (
-            value && (
-              <Link href={value} rel="noopener">
-                {value}
-              </Link>
-            )
-          );
-        case "longtext":
-          value = value.length > 33 ? value.substring(0, 30) + "..." : value;
-          break;
-      }
-      return value;
-    case "number":
-      return value;
-    case "boolean":
-      return (
-        <div className="text-center">
-          {value ? <TickCircle color="green" /> : <CloseCircle color="red" />}
-        </div>
-      );
-    case "date":
-      return formatDate(value);
-    case "datetime":
-      return (
-        <span className="whitespace-nowrap">
-          {formatDate(value) + " " + formatTime(value)}
-        </span>
-      );
-    case "time":
-      return formatTime(value);
-    case "file":
-      return value ? (
-        <Link href={value} rel="noopener">
-          Download
-        </Link>
-      ) : null;
-    case "ref":
-      return value ? (
-        <ModelItemPreview item={meta.refModel.item(value)} />
-      ) : undefined;
-    case "image":
-      return value ? (
-        <Link href={value} rel="noopener">
-          View
-        </Link>
-      ) : null;
-    case "object":
-    case "array":
-    case "map":
-      throw new UnimplementedError(
-        "Unimplemented type = " + meta.type + " for ModelDataView"
-      );
+export default function ModelDataView({
+  name,
+  item,
+  meta = item && item.model().Meta[name],
+  value = item?.[name],
+}) {
+  try {
+    switch (meta.type) {
+      case "string":
+        switch (meta.stringType) {
+          case "email":
+            return value && <Link href={"email:" + value}>{value}</Link>;
+          case "tel":
+            return (
+              value && (
+                <Link href={"tel:" + value} className="whitespace-nowrap">
+                  {formatPhoneNumber(value)}
+                </Link>
+              )
+            );
+          case "url":
+            return (
+              value && (
+                <Link href={value} rel="noopener">
+                  {value}
+                </Link>
+              )
+            );
+          case "longtext":
+            value = value.length > 33 ? value.substring(0, 30) + "..." : value;
+            break;
+        }
+        return value;
+      case "number":
+        return value;
+      case "boolean":
+        return (
+          <div className="text-center">
+            {value ? <TickCircle color="green" /> : <CloseCircle color="red" />}
+          </div>
+        );
+      case "date":
+        return formatDate(value);
+      case "datetime":
+        return (
+          <span className="whitespace-nowrap">
+            {formatDate(value) + " " + formatTime(value)}
+          </span>
+        );
+      case "time":
+        return formatTime(value);
+      case "file":
+        return value ? (
+          <Link href={value} rel="noopener">
+            Download
+          </Link>
+        ) : null;
+      case "ref":
+        return value ? (
+          <ModelItemPreview item={meta.refModel.item(value)} />
+        ) : undefined;
+      case "image":
+        return value ? (
+          <Link href={value} rel="noopener">
+            View
+          </Link>
+        ) : null;
+      case "array":
+        return (
+          <div className="flex" style={{ maxWidth: "20rem" }}>
+            {value.map((e, i, a) => (
+              <>
+                <ModelDataView value={e} meta={meta.arrayType} key={"" + i} />
+                {a[i + 1] ? ", " : ""}
+              </>
+            ))}
+          </div>
+        );
+      case "object":
+      case "map":
+        throw new UnimplementedError(
+          "Unimplemented type = " + meta.type + " for ModelDataView"
+        );
+    }
+  } catch (e) {
+    console.error(e);
+    return null;
   }
 }
 const _get = (x) => {

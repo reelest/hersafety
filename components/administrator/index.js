@@ -5,6 +5,8 @@ import DashboardLayout from "../DashboardLayout";
 import { UserEdit, Airdrop } from "iconsax-react";
 import UsersPage from "./UsersPage";
 import InventoryPage from "./InventoryPage";
+import PrescriptionsPage from "./PrescriptionsPage";
+import PageHeader from "../PageHeader";
 
 const TABS = [
   {
@@ -17,7 +19,24 @@ const TABS = [
     icon: Airdrop,
     component: InventoryPage,
   },
+  {
+    name: "Prescriptions",
+    icon: Airdrop,
+    component: PrescriptionsPage,
+  },
 ];
 export default function Admin() {
-  return <DashboardLayout tabs={TABS} />;
+  return (
+    <DashboardLayout
+      tabs={TABS}
+      renderChild={(tab) => {
+        return (
+          <>
+            <PageHeader />
+            <tab.component />
+          </>
+        );
+      }}
+    />
+  );
 }

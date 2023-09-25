@@ -46,6 +46,7 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
         const oldValue = item.isLocalOnly()
           ? []
           : toArray((await item.read(txn))?.[e]);
+        console.log({ newValue, oldValue });
         const added = newValue.filter(notIn(oldValue));
         const removed = oldValue.filter(notIn(newValue));
         await Promise.all(

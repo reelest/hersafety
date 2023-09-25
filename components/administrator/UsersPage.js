@@ -4,12 +4,8 @@ import { Modal, Paper } from "@mui/material";
 import Form, { FormErrors, FormField, FormSubmit } from "../Form";
 import ModelTable from "../ModelTable";
 import { createUser } from "@/logic/admin";
-import Prescriptions from "./PrescriptionsView";
-import FormDialog from "../FormDialog";
-
 export default function UsersPage() {
   const [formCreationRequest, setFormCreationRequest] = useState(null);
-  const [activeUser, setActiveUser] = useState(null);
   const _return = (value) => {
     setFormCreationRequest((e) => {
       e?.(value);
@@ -55,11 +51,6 @@ export default function UsersPage() {
           });
         }}
       />
-      <FormDialog
-        open={activeUser}
-        closeOnSubmit={false}
-        as={Prescriptions}
-      ></FormDialog>
     </>
   );
 }

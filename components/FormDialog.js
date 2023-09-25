@@ -7,8 +7,7 @@ import Form from "./Form";
 
 export default function FormDialog({
   isOpen = false,
-  edit,
-  closeOnSubmit = !edit,
+  closeOnSubmit,
   title,
   onSubmit,
   onClose = noop,

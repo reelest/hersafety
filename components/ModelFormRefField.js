@@ -36,6 +36,7 @@ import { useOnCreateItem } from "./ModelForm";
 import { getDefaultValue } from "../models/lib/model_type_info";
 import { noop } from "@/utils/none";
 import useLogger from "@/utils/useLogger";
+import typeOf from "@/utils/typeof";
 /**
  * @type {import("react").Context<import("@/utils/useIterator").UseIterator<import("@/models/lib/model").Item>>}
  */
@@ -129,7 +130,7 @@ function RefField({
     onChange({ target: { value: _id(e) } });
   });
 
-  useLogger({ id, value, open, query });
+  useLogger({ id, value, s: typeOf(value), open, query });
   const activeItem = useMemo(
     () =>
       value &&

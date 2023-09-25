@@ -30,6 +30,7 @@ export default function ModelItemPreview({ item, ...props }) {
         } else return { title: item.uniqueName() };
       } else return { title: String(item) };
     }, [item]) ?? {};
+  console.log({ title });
   return (
     <Template as={Box} props={props}>
       {image ? (

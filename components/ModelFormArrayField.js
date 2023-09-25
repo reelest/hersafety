@@ -2,9 +2,10 @@ import { Button, IconButton, Modal, Paper, Typography } from "@mui/material";
 import ModelFormField from "./ModelFormField";
 import Form, { FormField, FormSubmit } from "./Form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Add, ArrowUp, CloseCircle } from "iconsax-react";
+import { Add, ArrowDown, ArrowUp, CloseCircle, Edit } from "iconsax-react";
 import deepEqual from "deep-equal";
 import { getDefaultValue } from "@/models/lib/model_type_info";
+import useLogger from "@/utils/useLogger";
 
 /**
  *
@@ -15,7 +16,7 @@ import { getDefaultValue } from "@/models/lib/model_type_info";
 function ArrayField({ name, id, meta, value, onChange, ...props }) {
   if (!value) value = [];
   const _id = useCallback((e) => name + "[" + e + "]", [name]);
-  const _new = useMemo(() => _id(""), [_id]);
+  const _new = useMemo(() => _id(value.length), [_id, value.length]);
   const [edit, setEdit] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -43,11 +44,11 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
   const initialValue = useMemo(
     () =>
       value.reduce((a, e, i) => ((a[_id(i)] = e), a), {
-        [_new]: getDefaultValue(meta),
+        [_new]: getDefaultValue(meta.arrayType),
       }),
     [value, meta, _id, _new]
   );
-
+  console.log({ initialValue });
   const _newValue = useRef(initialValue[_new]);
 
   const move = (e, from, to) => {
@@ -59,7 +60,6 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       setValue(value);
     }
   };
-
   const remove = (e, from) => {
     if (value[from] === e) {
       setValue([...value.slice(0, from), ...value.slice(from + 1)]);
@@ -79,8 +79,8 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       </div>
       <Form>
         {value.map((e, i) => (
-          <div className="flex flex-wrap" key={e}>
-            <Typography sx={{ mr: 4 }}>{i + 1}</Typography>
+          <div className="flex flex-wrap items-center" key={e}>
+            <Typography sx={{ mr: 4 }}>{i + 1}.</Typography>
             <ModelFormField name={_id(i)} meta={meta.arrayType} disabled />
             <div className="flex">
               <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
@@ -90,10 +90,10 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
                 onClick={() => move(e, i, i + 1)}
                 disabled={i === value.length - 1}
               >
-                <ArrowUp />
+                <ArrowDown />
               </IconButton>
               <IconButton onClick={() => setEdit({ value: e, index: i })}>
-                <CloseCircle />
+                <Edit />
               </IconButton>
               <IconButton onClick={() => remove(e, i)}>
                 <CloseCircle />
@@ -124,17 +124,20 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
             initialValue={initialValue}
             onSubmit={(data) => {
               setValue([
-                ...value.slice(edit ? edit.index : 0),
+                ...value.slice(0, edit ? edit.index : value.length),
                 data[edit ? _id(edit.index) : _new],
                 ...value.slice(edit ? edit.index + 1 : value.length),
               ]);
+              setShowForm(false);
             }}
           >
             <ModelFormField
               name={edit ? _id(edit.index) : _new}
               meta={meta.arrayType}
             />
-            <FormSubmit>{edit ? "Update" : "Save"}</FormSubmit>
+            <FormSubmit variant="contained">
+              {edit ? "Update" : "Save"}
+            </FormSubmit>
           </Form>
         </Paper>
       </Modal>

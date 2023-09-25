@@ -13,6 +13,7 @@ export default function ModelFormDialog({
   closeOnSubmit = !edit,
   model: Model,
   noSave,
+  ...props
 }) {
   const [item, setItem] = useState(null);
 
@@ -30,6 +31,7 @@ export default function ModelFormDialog({
       item={item}
       noSave={noSave}
       closeOnSubmit={closeOnSubmit}
+      {...props}
     />
   );
 }

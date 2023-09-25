@@ -24,10 +24,15 @@ export default function ModelTable({
   onClickRow = noop,
   pluralTitle = sentenceCase(modelName),
   onCreate,
+  deps = [],
 }) {
-  const { data: items, pager } = useQuery(() => Query.pageSize(10), [], {
-    watch: true,
-  });
+  const { data: items, pager } = useQuery(
+    () => Query?.pageSize?.(10),
+    [...deps],
+    {
+      watch: true,
+    }
+  );
   const [formVisible, setFormVisible] = useState(false);
   const [item, setItem] = useState(null);
   useEffect(() => {
@@ -69,14 +74,19 @@ export default function ModelTable({
           </Typography>
         </div>
         <div className="flex flex-wrap pt-6 -mx-2 justify-center">
-          <Button variant="contained" size="large" onClick={createItem}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={createItem}
+            disabled={!Query}
+          >
             {addActionTitle} <Add size={32} className="ml-2" />
           </Button>
         </div>
         <ThemedTable
           title={pluralTitle}
           headers={headers.concat(actions.map(() => ""))}
-          results={items}
+          results={Query ? items : []}
           pager={pager}
           onClickRow={
             (_, row) => onClickRow(items[row]) /*(_, row) => showModal(row)*/
