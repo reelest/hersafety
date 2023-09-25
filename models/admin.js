@@ -1,5 +1,5 @@
 import { CountedModel } from "./lib/counted_model";
-import { UserData } from "./user_data";
+import { UserData, UserMeta } from "./user_data";
 
 class Admin extends UserData {
   getRole() {
@@ -7,5 +7,7 @@ class Admin extends UserData {
   }
 }
 
-const Admins = new CountedModel("admins", Admin);
+const Admins = new CountedModel("admins", Admin, {
+  ...UserMeta,
+});
 export default Admins;

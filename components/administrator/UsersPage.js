@@ -1,12 +1,15 @@
 import Clients from "@/models/client";
 import { useState } from "react";
 import { Modal, Paper } from "@mui/material";
-import Form, { FormField, FormSubmit } from "../Form";
+import Form, { FormErrors, FormField, FormSubmit } from "../Form";
 import ModelTable from "../ModelTable";
 import { createUser } from "@/logic/admin";
+import Prescriptions from "./PrescriptionsView";
+import FormDialog from "../FormDialog";
 
 export default function UsersPage() {
   const [formCreationRequest, setFormCreationRequest] = useState(null);
+  const [activeUser, setActiveUser] = useState(null);
   const _return = (value) => {
     setFormCreationRequest((e) => {
       e?.(value);
@@ -22,18 +25,18 @@ export default function UsersPage() {
       >
         <Paper className="max-w-xl pt-4 px-8 max-sm:px-4 pb-4">
           <Form
-            initialValue={{ name: "" }}
-            onSubmit={async (data) => {
+            initialValue={{ email: "" }}
+            onSubmit={async ({ email }) => {
               const DEFAULT_PASSWORD = "student987";
-              let s = await createUser(data, DEFAULT_PASSWORD);
+              let s = await createUser(email, DEFAULT_PASSWORD);
               let m = await Clients.getOrCreate(s, async (item, txn) => {
-                if (item.isLocalOnly())
-                  await item.set({ name: data.name }, txn);
+                if (item.isLocalOnly()) await item.set({ email: email }, txn);
               });
               _return(m);
             }}
           >
-            <FormField name="email" label="Client email" />
+            <FormErrors />
+            <FormField name="email" label="Client email" type="email" />
             <FormSubmit
               variant="contained"
               sx={{ mt: 5, mx: "auto", display: "block" }}
@@ -45,12 +48,18 @@ export default function UsersPage() {
       </Modal>
       <ModelTable
         Model={Clients}
+        allowDelete={false}
         onCreate={() => {
           return new Promise((r, j) => {
             setFormCreationRequest(() => r);
           });
         }}
       />
+      <FormDialog
+        open={activeUser}
+        closeOnSubmit={false}
+        as={Prescriptions}
+      ></FormDialog>
     </>
   );
 }

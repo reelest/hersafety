@@ -1,4 +1,8 @@
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 export default function AppLogo({ size, ...props }) {
-  return <Typography variant="displayLarge">MOUOA</Typography>;
+  return (
+    <Box class="flex">
+      <Typography variant="displayLarge">MOUOA</Typography>
+    </Box>
+  );
 }

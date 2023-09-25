@@ -5,10 +5,7 @@ import useUserData from "@/logic/user_data";
 
 const DASHBOARD_URL = {
   admin: "/admin",
-  student: "/admin",
-  parent: "/parent",
-  teacher: "/admin",
-  guest: "/guest",
+  client: "/client",
 };
 
 export default function UserRedirect({

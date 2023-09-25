@@ -45,6 +45,7 @@ const MuiTheme = createTheme({
       main: tailWindTheme.colors.primary,
       dark: tailWindTheme.colors.primaryDark,
       hover: "rgba(255, 255, 255, 0.3)",
+      contrastText: "rgba(255, 255, 255, 1)",
     },
     secondary: {
       main: tailWindTheme.colors.secondary,

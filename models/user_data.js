@@ -100,6 +100,7 @@ export const UserMeta = {
   photoURL: {
     required: false,
     type: "image",
+    label: "Profile picture",
   },
   [MODEL_ITEM_PREVIEW](item) {
     return {

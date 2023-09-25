@@ -9,21 +9,23 @@ import ModelFormDialog from "./ModelFormDialog";
 import ThemedTable from "./ThemedTable";
 import { supplyModelValues } from "./ModelDataView";
 import capitalize from "@/utils/capitalize";
-import { addClassToColumns, supplyValue } from "./Table";
+import { addClassToColumns, addHeaderClass, supplyValue } from "./Table";
 import { noop } from "@/utils/none";
 
 export default function ModelTable({
   Model,
+  Query = Model.all(),
   props = Object.keys(Model.Meta).filter((e) => e[0] !== "!"),
   headers = props.map((e) => capitalize(Model.Meta[e].label)),
   modelName = sentenceCase(Model.uniqueName()),
   addActionTitle = "Create " + singular(modelName),
   allowEdit = true,
   allowDelete = true,
+  onClickRow = noop,
   pluralTitle = sentenceCase(modelName),
   onCreate,
 }) {
-  const { data: items, pager } = useQuery(() => Model.all().pageSize(10), [], {
+  const { data: items, pager } = useQuery(() => Query.pageSize(10), [], {
     watch: true,
   });
   const [formVisible, setFormVisible] = useState(false);
@@ -76,8 +78,11 @@ export default function ModelTable({
           headers={headers.concat(actions.map(() => ""))}
           results={items}
           pager={pager}
-          onClickRow={noop /*(_, row) => showModal(row)*/}
+          onClickRow={
+            (_, row) => onClickRow(items[row]) /*(_, row) => showModal(row)*/
+          }
           renderHooks={[
+            addHeaderClass("pr-4"),
             supplyModelValues(props),
             addClassToColumns("w-0", [props.length, props.length + 1]),
             supplyValue((row, col, data) => {

@@ -73,8 +73,13 @@ export default function ModelDataView({ name, item }) {
       return value ? (
         <ModelItemPreview item={meta.refModel.item(value)} />
       ) : undefined;
-    case "object":
     case "image":
+      return value ? (
+        <Link href={value} rel="noopener">
+          View
+        </Link>
+      ) : null;
+    case "object":
     case "array":
     case "map":
       throw new UnimplementedError(

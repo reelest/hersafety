@@ -4,6 +4,7 @@ import { Box } from "@mui/material";
 import DashboardLayout from "../DashboardLayout";
 import { UserEdit, Airdrop } from "iconsax-react";
 import UsersPage from "./UsersPage";
+import InventoryPage from "./InventoryPage";
 
 const TABS = [
   {
