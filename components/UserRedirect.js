@@ -1,4 +1,3 @@
-import { useUser } from "@/logic/auth";
 import { useRouter } from "next/router";
 import isServerSide from "@/utils/is_server_side";
 import FullscreenLoader from "./FullscreenLoader";
