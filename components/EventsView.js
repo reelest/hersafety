@@ -36,7 +36,7 @@ function EventsView({ date = new Date() }) {
   /**
    * @type {{data: import("@/models/event").Event[]}}
    */
-  const { data: events } = useQuery(() => Events.all());
+  const { data: events } = useQuery(() => Events.all(), [], { watch: true });
   const startOfDay = new Date(date.getTime());
   startOfDay.setHours(0, 0, 0, 0);
   const currentMonth = sentenceCase(months[date.getMonth()]);

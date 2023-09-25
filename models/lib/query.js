@@ -21,7 +21,13 @@ import { range } from "d3";
 import usePager from "@/utils/usePager";
 import useLogger from "@/utils/useLogger";
 import { InvalidParameters, InvalidState } from "./errors";
+import pool from "@/utils/request_pool";
 
+const compareQuery = (query1, query2) => {
+  return query1.isEqual(query2);
+};
+const _getDoc = pool(getDoc, compareQuery);
+const _getDocs = pool(getDocs, compareQuery);
 export const DEFAULT_ORDERING = "!model-default-ordering";
 export const DEFAULT_ORDERING_DESCENDING = "!model-default-descending";
 export const SECONDARY_ORDERING = "!model-secondary-ordering";
@@ -187,6 +193,9 @@ class LocalCache {
 
 const PAGE_DIRECTION_FORWARDS = 1;
 const PAGE_DIRECTION_BACKWARDS = -1;
+/**
+ * TODO: caching queries that start and stop frequently by using a snapshot/local cache
+ */
 export class QueryCursor {
   _pageSize = 100;
   _scrollDirection = PAGE_DIRECTION_FORWARDS;
@@ -267,7 +276,7 @@ export class QueryCursor {
     } else {
       const x = await this._cache.run(async () => {
         this._hasLoaded = true;
-        return this._cache.onNewData(await getDocs(this.query));
+        return this._cache.onNewData(await _getDocs(this.query));
       });
       // Restart subscription just in case a listener subscribed while this was running.
       // This could unintentionally resume a paused subscription ie
@@ -396,7 +405,7 @@ export class QueryCursor {
       this._cache.setPage(closestIndex);
       let query = this.query;
       this._pageSize = prevPageSize;
-      this._cache.onNewData(await getDocs(query));
+      this._cache.onNewData(await _getDocs(query));
       // TODO allow cancellation or something
       const m = this._cache.closestAnchor(targetIndex);
       if (closestIndex > m) {
@@ -450,7 +459,7 @@ export class QueryCursor {
         },
         error: this._onError,
       });
-    else getDocs(_query).then((snapshot) => cb(snapshot.docs[0]));
+    else _getDocs(_query).then((snapshot) => cb(snapshot.docs[0]));
   }
   /**
    * Synchronize the current page. This method also resets backward pagination.
@@ -542,7 +551,7 @@ export class DocumentQueryCursor {
   }
   async get() {
     if (noFirestore) return;
-    return (await getDoc(this.query)).data();
+    return (await _getDoc(this.query)).data();
   }
   watch(cb, onError = console.error) {
     if (noFirestore) return noop;

@@ -85,7 +85,13 @@ function createFormField(name, meta, { disabled } = {}) {
     disabled: disabled || meta.disabled,
     fullWidth: false,
     required: meta.required,
-    sx: { minWidth: "15em", flexGrow: 1, mx: 1 },
+    sx: {
+      minWidth: meta.type === "number" ? "5em" : "15em",
+      maxWidth: meta.type === "number" ? "15em" : "none",
+      width: meta.type === "number" ? "0" : undefined,
+      flexGrow: 1,
+      mx: 4,
+    },
   };
   switch (meta.type) {
     case "string":
@@ -108,6 +114,7 @@ function createFormField(name, meta, { disabled } = {}) {
             ? { inputMode: "numeric", pattern: "[0-9]*" }
             : None)}
           {...collectInputProps(meta)}
+          rows={meta.stringType === "longtext" ? 4 : undefined}
         />
       );
     case "boolean":
@@ -150,3 +157,5 @@ function createFormField(name, meta, { disabled } = {}) {
       throw new UnimplementedError("Unhandled Input type " + meta.type);
   }
 }
+
+export default ModelFormField;

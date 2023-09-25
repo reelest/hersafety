@@ -1,4 +1,4 @@
-import { increment } from "firebase/firestore";
+import UpdateValue from "./update_value";
 import { Item, noFirestore } from "./model";
 import { InvalidState } from "./errors";
 import deepEqual from "deep-equal";
@@ -58,7 +58,7 @@ export class CountedItem extends Item {
   }
 
   /**
-   * @param {(txn: import("firebase/firestore").Transaction, doc: ThisType)=>Promise} cb
+   * @param {(txn: import("./transaction").default, doc: ThisType)=>Promise} cb
    * @returns
    */
   async atomicUpdate(cb, needsPrevState = true, txn, prevState) {
@@ -67,7 +67,9 @@ export class CountedItem extends Item {
         if (this.#inUpdate) throw InvalidState("Nested Update!!");
         this.#inUpdate = true;
         if (
-          (needsPrevState || this.#needsTransaction === TRANSACTION_NEEDED) &&
+          (needsPrevState ||
+            (!this.isLocalOnly() &&
+              this.#needsTransaction === TRANSACTION_NEEDED)) &&
           !prevState
         ) {
           const doc = await txn.get(this._ref);
@@ -145,13 +147,14 @@ export class CountedItem extends Item {
 
   // eslint-disable-next-line no-unused-vars
   async onAddItem(txn, newState) {
+    console.log("Running on add item");
     await onRefsAddItem(this, txn, newState);
     await onSearchAddItem(this, txn, newState);
     await onFilesAddItem(this, txn, newState);
     if (this.getCounter())
       this.getCounter().set(
         {
-          itemCount: increment(1),
+          itemCount: UpdateValue.add(1),
         },
         txn
       );
@@ -165,7 +168,7 @@ export class CountedItem extends Item {
     if (this.getCounter())
       this.getCounter().set(
         {
-          itemCount: increment(-1),
+          itemCount: UpdateValue.add(-1),
         },
         txn
       );
@@ -187,7 +190,11 @@ export class CountedItem extends Item {
           return this[storedValue];
         },
         set(v) {
-          if (this._isCreated && !deepEqual(v, this[storedValue])) {
+          if (
+            this._isCreated &&
+            this._isLoaded &&
+            !deepEqual(v, this[storedValue])
+          ) {
             console.trace(e);
             this._scheduleUpdateTxn(needsPrevState, e);
           }
@@ -199,7 +206,6 @@ export class CountedItem extends Item {
           value: this[propsNeedingUpdateTxn] || [],
         });
       this.prototype[propsNeedingUpdateTxn].push(e);
-
       Object.defineProperty(this.prototype, e, {
         ...descriptor,
         set(v) {

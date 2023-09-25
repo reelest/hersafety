@@ -50,7 +50,8 @@ function ThemedTable({
               color: selected === row ? "white" : undefined,
             },
           },
-          className: row >= data.length ? "invisible" : "shadow-3",
+          className:
+            row >= data.length ? "invisible" : "shadow-3 hover:bg-hoverPrimary",
         })}
         renderHooks={[
           ...[_pager ? null : pageData(controller.page, pageSize)].filter(
