@@ -1,7 +1,7 @@
 import { increment } from "firebase/firestore";
 import { CountedItem } from "./lib/counted_item";
 import { Item, Model, USES_EXACT_IDS } from "./lib/model";
-import { HiddenField, HiddenTime } from "./lib/model_types";
+import { HiddenField } from "./lib/model_types";
 import { trackFiles } from "./lib/trackFiles";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
 import { indexForSearch } from "./lib/indexForSearch";

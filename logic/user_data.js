@@ -1,7 +1,5 @@
-import Students from "@/models/student";
-import Teachers from "@/models/teacher";
-import Parents from "@/models/parent";
 import Admins from "@/models/admin";
+import Clients from "@/models/client";
 import { onUser, useUser } from "./auth";
 import usePromise from "@/utils/usePromise";
 import { useRef } from "react";

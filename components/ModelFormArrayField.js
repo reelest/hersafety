@@ -73,9 +73,9 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
 
       <div className="flex items-center justify-between w-full">
         <Typography variant="h6">{meta.label}</Typography>
-        {/* <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)}>
           Add New <Add />
-        </Button> */}
+        </Button>
       </div>
       <Form>
         {value.map((e, i) => (
