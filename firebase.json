@@ -6,6 +6,7 @@
   "hosting": {
     "site": "mouoa",
     "public": "dist",
+    "cleanUrls": true,
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   },
   "storage": {
