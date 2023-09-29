@@ -21,18 +21,17 @@ export const MODEL_ITEM_PREVIEW = "!model-item-preview";
  * @param {import("../models/lib/model").Item} props.item
  */
 export default function ModelItemPreview({ item, ...props }) {
+  // return <div {...props}>{JSON.stringify(item ?? "nothing")}</div>;
   /**@type {import("../models/lib/model").Model}*/
   const { title, description, image, avatar } =
     usePromise(async () => {
-      console.log({ o: item });
       if (item instanceof Item) {
         if (item.model().Meta[MODEL_ITEM_PREVIEW]) {
+          item = getItemFromStore(item._ref) ?? item;
           try {
             if (!item._isLoaded) await item.load();
           } catch (e) {
             checkError(e, ItemDoesNotExist);
-            item = getItemFromStore(item._ref);
-            console.error(e);
           }
           if (item._isLoaded)
             return item.model().Meta[MODEL_ITEM_PREVIEW](item);

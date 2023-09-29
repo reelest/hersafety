@@ -13,6 +13,7 @@ import useIterator from "@/utils/useIterator";
 import {
   Autocomplete,
   Box,
+  Button,
   CircularProgress,
   IconButton,
   LinearProgress,
@@ -39,7 +40,7 @@ import useLogger from "@/utils/useLogger";
 import typeOf from "@/utils/typeof";
 import { getItemFromStore } from "@/models/lib/item_store";
 
-export const SKIP_PREVIEW = "!skip-preview";
+export const SKIP_PICKER = "!skip-preview";
 /**
  * @type {import("react").Context<import("@/utils/useIterator").UseIterator<import("@/models/lib/model").Item>>}
  */
@@ -54,32 +55,32 @@ const iteratorContext = createContext();
 export default function ModelFormRefField(props) {
   return <FormField as={RefField} {...props} />;
 }
-const testIterator = async function* (i = 0) {
-  while (true) {
-    i += 10;
-    await delay(6000);
-    yield [
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-      "Helllo " + ++i,
-    ];
-  }
-};
+// const testIterator = async function* (i = 0) {
+//   while (true) {
+//     i += 10;
+//     await delay(6000);
+//     yield [
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//       "Helllo " + ++i,
+//     ];
+//   }
+// };
 async function* asyncIteratorOf(func) {
   yield* await func();
 }
@@ -117,14 +118,16 @@ function RefField({
   ...props
 }) {
   const allowCreate = !meta.refModel.Meta[USES_EXACT_IDS];
-  const skipPreview = !!meta[SKIP_PREVIEW];
+  const skipPicker = !!meta[SKIP_PICKER];
+  console.log({ id, value });
   const newItem = useMemo(
     () => allowCreate && meta.refModel.create(),
     [meta, allowCreate]
   );
-  const [open, setOpen] = useState(skipPreview);
 
-  const query = useMemo(
+  const [newItemModalOpen, setNewItemModalOpen] = useState(skipPicker);
+
+  const pickerQuery = useMemo(
     () =>
       meta.pickRefQuery === true ? meta.refModel.all() : meta.pickRefQuery,
     [meta]
@@ -134,29 +137,31 @@ function RefField({
     onChange({ target: { value: _id(e) } });
   });
 
-  useLogger({ id, value, s: typeOf(value), open, query });
   const activeItem = useMemo(
     () =>
       value &&
-      (getItemFromStore(meta.refModel.ref(value)) || meta.refModel.item(value)),
-    [value, meta]
+      (newItem && value === newItem.id()
+        ? newItem
+        : getItemFromStore(meta.refModel.ref(value)) ||
+          meta.refModel.item(value)),
+    [value, meta, newItem]
   );
   const onCreateItem = useOnCreateItem();
   useEffect(() => {
     (async () => {
+      if (!activeItem) return;
       try {
-        if (activeItem === newItem) {
+        if (activeItem.isLocalOnly() && !getItemFromStore(activeItem._ref)) {
           onCreateItem(activeItem);
         } else {
-          await (activeItem && activeItem.load());
+          await activeItem.load();
         }
       } catch (e) {
         checkError(e, ItemDoesNotExist);
         setValue(getDefaultValue(meta));
       }
     })();
-  }, [activeItem, newItem, onCreateItem, setValue, meta]);
-  console.log({ activeItem });
+  }, [activeItem, onCreateItem, setValue, meta]);
   return (
     <div className="flex items-end">
       <input
@@ -169,14 +174,14 @@ function RefField({
         form={props?.inputProps?.form}
         style={{ padding: 0, maxWidth: 0, border: "none" }}
       />
-      {query ? (
+      {pickerQuery ? (
         <PickRef
           {...{
             value,
             disabled,
             setValue,
             activePreview: activeItem,
-            query,
+            query: pickerQuery,
             props,
           }}
         />
@@ -203,12 +208,12 @@ function RefField({
               setValue(newItem.id());
             }}
             closeOnSubmit
-            isOpen={open}
-            onClose={() => setOpen(false)}
+            isOpen={newItemModalOpen}
+            onClose={() => setNewItemModalOpen(false)}
           />
-          <IconButton onClick={() => setOpen(true)}>
-            <AddCircle />
-          </IconButton>
+          <Button onClick={() => setNewItemModalOpen(true)}>
+            New <AddCircle />
+          </Button>
         </>
       ) : null}
     </div>
@@ -258,7 +263,7 @@ function PickRef({ value, disabled, setValue, activePreview, query, props }) {
   );
   const iterator = useIterator(resultIterator);
   const { value: results, loading } = iterator;
-  const active = results.find((e) => value === _id(e)) ?? null;
+  const activeResult = results.find((e) => value === _id(e)) ?? null;
   const filterable = useMemo(() => results.some(_searchValue), [results]);
   return (
     <iteratorContext.Provider value={iterator}>
@@ -274,7 +279,7 @@ function PickRef({ value, disabled, setValue, activePreview, query, props }) {
         )}
         // {...{ groupBy, getOptionLabel, renderGroup }}
         options={results}
-        value={active}
+        value={activeResult}
         onChange={(_, e) => setValue(e)}
         getOptionLabel={() => ""}
         selectOnFocus

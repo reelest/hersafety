@@ -20,8 +20,7 @@ export default function ModelFormDialog({
   useEffect(() => {
     setItem(isOpen ? edit || (noSave ? null : Model.create()) : null);
   }, [edit, isOpen, Model, noSave]);
-  const id = useId();
-  useLogger({ item, id, dialog: isOpen });
+  // const id = useId();
 
   return (
     <FormDialog

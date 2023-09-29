@@ -7,6 +7,8 @@ import deepEqual from "deep-equal";
 import { getDefaultValue } from "@/models/lib/model_type_info";
 import useLogger from "@/utils/useLogger";
 import ModelForm from "./ModelForm";
+import ModelDataView from "./ModelDataView";
+import Spacer from "./Spacer";
 
 /**
  *
@@ -49,10 +51,10 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
-  const displayMeta = useMemo(
-    () => value.reduce((a, e, i) => ((a[_id(i)] = meta.arrayType), a), {}),
-    [value, meta, _id]
-  );
+  // const displayMeta = useMemo(
+  //   () => value.reduce((a, e, i) => ((a[_id(i)] = meta.arrayType), a), {}),
+  //   [value, meta, _id]
+  // );
   console.log({ initialValue });
   return (
     <>
@@ -65,7 +67,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
           Add New <Add />
         </Button>
       </div>
-      <ModelForm initialValue={initialValue} meta={displayMeta}>
+      <div>
         {value.map((e, i) => (
           <ModelFormArrayItem
             key={e}
@@ -77,7 +79,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
             setEdit={setEdit}
           />
         ))}
-      </ModelForm>
+      </div>
       <Modal
         open={showForm}
         onClose={(_, reason) =>
@@ -105,9 +107,6 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
                 ...value.slice(edit ? edit.index + 1 : value.length),
               ]);
               setShowForm(false);
-            }}
-            onChange={(data) => {
-              console.log({ data });
             }}
           >
             <ModelFormField
@@ -155,8 +154,9 @@ function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
   }, [meta, _value, index, remove]);
   return (
     <div className="flex flex-wrap items-center" key={e}>
-      <Typography sx={{ mr: 4 }}>{i + 1}.</Typography>
-      <ModelFormField name={getId(i)} meta={meta} disabled />
+      <Typography sx={{ mr: 4, width: "1em" }}>{i + 1}.</Typography>
+      <ModelDataView meta={meta} value={_value} />
+      <Spacer />
       <div className="flex">
         <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
           <ArrowUp />

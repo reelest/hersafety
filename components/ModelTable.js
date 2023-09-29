@@ -63,6 +63,7 @@ export default function ModelTable({
         <ModelFormDialog
           isOpen={formVisible}
           edit={item}
+          onChange={console.log}
           onClose={() => setFormVisible(false)}
           model={Model}
         />

@@ -87,8 +87,6 @@ export class CountedItem extends Item {
     }
   }
   async _update(txn, newState, prevState = null) {
-    console.log("Updating " + this.uniqueName() + "....");
-
     if (this[propsNeedingUpdateTxn]) {
       newState = { ...newState };
       for (let key of this[propsNeedingUpdateTxn]) {
@@ -111,7 +109,6 @@ export class CountedItem extends Item {
     return ret;
   }
   async save(txn) {
-    console.log("Saving.....");
     if (noFirestore) throw InvalidState("No Firestore!!");
     if (this.isLocalOnly()) {
       //TODO: Needs testing to assert that isLocalOnly assertion is actually true
@@ -146,7 +143,6 @@ export class CountedItem extends Item {
 
   // eslint-disable-next-line no-unused-vars
   async onAddItem(txn, newState) {
-    console.log("Running on add item");
     await onRefsAddItem(this, txn, newState);
     await onSearchAddItem(this, txn, newState);
     await onFilesAddItem(this, txn, newState);

@@ -12,7 +12,6 @@ export default function PrescriptionsPage() {
       <ModelForm
         initialValue={{ user: activeUser }}
         onChange={({ user }) => {
-          console.log({ user });
           setActiveUser(user);
         }}
         meta={{ user: Prescriptions.Meta.user }}

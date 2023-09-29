@@ -371,6 +371,7 @@ export function FormErrors({ lines = 2 }) {
   return showErrors ? (
     <Typography
       paragraph
+      as="div"
       className="text-error"
       sx={{ display: "block", width: "100%" }}
     >

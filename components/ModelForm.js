@@ -62,7 +62,6 @@ export default function ModelForm({
       <Form
         key={item?.id?.() ?? ""}
         onSubmit={async (data) => {
-          console.log({ data, update, item });
           data = await prepareForUpload(data, meta);
           if (!noSave) await item.set(data);
           await onSubmit(data);
@@ -139,7 +138,7 @@ const prepareForUpload = async (data, meta) => {
   );
   for (let key in meta) {
     if (hasProp(data, key)) {
-      if (!meta[key]) console.warn({ key });
+      if (!meta[key]) console.warn("Missing meta for " + key);
       switch (meta[key].type) {
         case "datetime":
         case "date":
@@ -158,7 +157,6 @@ const prepareForUpload = async (data, meta) => {
           data[key] = Number(data[key]) || 0;
           break;
         case "array":
-          console.log({ meta });
           data[key] = await Promise.all(
             data[key]?.map?.(
               async (e) =>
