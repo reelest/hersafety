@@ -76,12 +76,12 @@ function ThemedTable({
         ]}
       />
 
-      <div className="flex items-center mt-12">
+      <div className="flex flex-wrap items-center justify-center mt-12">
         <Spacer />
         <Typography variant="body2" sx={{ mr: 4 }}>
           Total
         </Typography>
-        <span className="text-disabled">
+        <span className="text-disabled mr-2">
           <Await value={controller.count} />
         </span>
         <Spacer />
@@ -89,7 +89,7 @@ function ThemedTable({
           <Pager controller={controller} />
         </div>
         {enablePrint ? (
-          <Button onClick={() => ref.current && printElement(ref.current)}>
+          <Button sx={{my: 2}} onClick={() => ref.current && printElement(ref.current)}>
             Print <Printer />{" "}
           </Button>
         ) : null}

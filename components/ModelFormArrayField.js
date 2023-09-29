@@ -89,32 +89,10 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
           <Typography variant="h4" sx={{ mb: 4 }}>
             {edit ? "Replace Item" : "Add new item"}
           </Typography>
-          <Form
-            {...props}
-            className="w-full mt-4"
-            initialValue={initialValue}
-            onSubmit={(data) => {
-              setValue([
-                ...value.slice(0, edit ? edit.index : value.length),
-                data[edit ? _id(edit.index) : _new],
-                ...value.slice(edit ? edit.index + 1 : value.length),
-              ]);
-              setShowForm(false);
-            }}
-          >
-            <ModelFormField
-              name={edit ? _id(edit.index) : _new}
-              meta={meta.arrayType}
-            />
-            <FormSubmit variant="contained">
-              {edit ? "Update" : "Save"}
-            </FormSubmit>
-          </Form>
+          
         </Paper>
       </Modal>
     </>
-  );
-}
 
 function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
   const e = value[index];
@@ -123,7 +101,7 @@ function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
     if (value[from] === e && value[to] !== undefined) {
       value = value.slice();
       const temp = value[from];
-      value[from] = value[to];
+      va[from] = value[to];
       value[to] = temp;
       setValue(value);
     }
