@@ -3,7 +3,8 @@ import { Avatar, Box, Typography } from "@mui/material";
 import Image from "next/image";
 import { Item } from "../models/lib/model";
 import Template from "./Template";
-import { ItemDoesNotExist } from "@/models/lib/errors";
+import { ItemDoesNotExist, checkError } from "@/models/lib/errors";
+import { getItemFromStore } from "@/models/lib/item_store";
 
 /**
  * @typedef {{
@@ -23,14 +24,21 @@ export default function ModelItemPreview({ item, ...props }) {
   /**@type {import("../models/lib/model").Model}*/
   const { title, description, image, avatar } =
     usePromise(async () => {
+      console.log({ o: item });
       if (item instanceof Item) {
         if (item.model().Meta[MODEL_ITEM_PREVIEW]) {
-          if (!item._isLoaded) await item.load();
-          return item.model().Meta[MODEL_ITEM_PREVIEW](item);
+          try {
+            if (!item._isLoaded) await item.load();
+          } catch (e) {
+            checkError(e, ItemDoesNotExist);
+            item = getItemFromStore(item._ref);
+            console.error(e);
+          }
+          if (item._isLoaded)
+            return item.model().Meta[MODEL_ITEM_PREVIEW](item);
         } else return { title: item.uniqueName() };
       } else return { title: String(item) };
     }, [item]) ?? {};
-  console.log({ title });
   return (
     <Template as={Box} props={props}>
       {image ? (

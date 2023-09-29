@@ -6,6 +6,7 @@ import { Add, ArrowDown, ArrowUp, CloseCircle, Edit } from "iconsax-react";
 import deepEqual from "deep-equal";
 import { getDefaultValue } from "@/models/lib/model_type_info";
 import useLogger from "@/utils/useLogger";
+import ModelForm from "./ModelForm";
 
 /**
  *
@@ -48,7 +49,11 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
-
+  const displayMeta = useMemo(
+    () => value.reduce((a, e, i) => ((a[_id(i)] = meta.arrayType), a), {}),
+    [value, meta, _id]
+  );
+  console.log({ initialValue });
   return (
     <>
       {/* For stop browser form validation errors*/}
@@ -60,19 +65,19 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
           Add New <Add />
         </Button>
       </div>
-      <Form>
+      <ModelForm initialValue={initialValue} meta={displayMeta}>
         {value.map((e, i) => (
           <ModelFormArrayItem
             key={e}
-            meta={meta.arrayType}
             index={i}
             value={value}
             setValue={setValue}
             getId={_id}
+            meta={meta.arrayType}
             setEdit={setEdit}
           />
         ))}
-      </Form>
+      </ModelForm>
       <Modal
         open={showForm}
         onClose={(_, reason) =>
@@ -80,19 +85,47 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
         }
       >
         {/* Modal must have only one child */}
-        <Paper className="w-96 mx-auto max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
+        <Paper className="w-[32rem] mx-auto max-w-[90%] pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
           <div className="text-right -mx-3.5 max-sm:-mx-0.5">
             <IconButton onClick={() => setShowForm(false)}>
               <CloseCircle />
             </IconButton>
           </div>
-          <Typography variant="h4" sx={{ mb: 4 }}>
+          <Typography variant="h5" sx={{ mb: 4 }}>
             {edit ? "Replace Item" : "Add new item"}
           </Typography>
-          
+          <Form
+            {...props}
+            className="w-full"
+            initialValue={initialValue}
+            onSubmit={(data) => {
+              setValue([
+                ...value.slice(0, edit ? edit.index : value.length),
+                data[edit ? _id(edit.index) : _new],
+                ...value.slice(edit ? edit.index + 1 : value.length),
+              ]);
+              setShowForm(false);
+            }}
+            onChange={(data) => {
+              console.log({ data });
+            }}
+          >
+            <ModelFormField
+              name={edit ? _id(edit.index) : _new}
+              meta={meta.arrayType}
+            />
+            <FormSubmit
+              variant="contained"
+              sx={{ mt: 4, ml: "auto", display: "block" }}
+            >
+              {edit ? "Update" : "Save"}
+            </FormSubmit>
+          </Form>
         </Paper>
       </Modal>
     </>
+  );
+}
 
 function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
   const e = value[index];
@@ -101,16 +134,25 @@ function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
     if (value[from] === e && value[to] !== undefined) {
       value = value.slice();
       const temp = value[from];
-      va[from] = value[to];
+      value[from] = value[to];
       value[to] = temp;
       setValue(value);
     }
   };
-  const remove = (e, from) => {
-    if (value[from] === e) {
-      setValue([...value.slice(0, from), ...value.slice(from + 1)]);
+  const remove = useCallback(
+    (e, from) => {
+      if (value[from] === e) {
+        setValue([...value.slice(0, from), ...value.slice(from + 1)]);
+      }
+    },
+    [value, setValue]
+  );
+  const _value = value[index];
+  useEffect(() => {
+    if (meta.arrayType === "ref" && !_value) {
+      remove(_value, index);
     }
-  };
+  }, [meta, _value, index, remove]);
   return (
     <div className="flex flex-wrap items-center" key={e}>
       <Typography sx={{ mr: 4 }}>{i + 1}.</Typography>

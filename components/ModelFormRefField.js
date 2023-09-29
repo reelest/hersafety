@@ -37,6 +37,7 @@ import { getDefaultValue } from "../models/lib/model_type_info";
 import { noop } from "@/utils/none";
 import useLogger from "@/utils/useLogger";
 import typeOf from "@/utils/typeof";
+import { getItemFromStore } from "@/models/lib/item_store";
 
 export const SKIP_PREVIEW = "!skip-preview";
 /**
@@ -116,7 +117,7 @@ function RefField({
   ...props
 }) {
   const allowCreate = !meta.refModel.Meta[USES_EXACT_IDS];
-  const skipPreview = !!meta[!SKIP_PREVIEW];
+  const skipPreview = !!meta[SKIP_PREVIEW];
   const newItem = useMemo(
     () => allowCreate && meta.refModel.create(),
     [meta, allowCreate]
@@ -137,8 +138,8 @@ function RefField({
   const activeItem = useMemo(
     () =>
       value &&
-      (value === newItem?.id?.() ? newItem : meta.refModel.item(value)),
-    [value, meta, newItem]
+      (getItemFromStore(meta.refModel.ref(value)) || meta.refModel.item(value)),
+    [value, meta]
   );
   const onCreateItem = useOnCreateItem();
   useEffect(() => {
@@ -155,6 +156,7 @@ function RefField({
       }
     })();
   }, [activeItem, newItem, onCreateItem, setValue, meta]);
+  console.log({ activeItem });
   return (
     <div className="flex items-end">
       <input
@@ -180,9 +182,11 @@ function RefField({
         />
       ) : (
         <>
-          <ModelItemPreview item={activeItem} {...props} />
+          <div className="flex h-10 items-center">
+            <ModelItemPreview item={activeItem} {...props} />
+          </div>
           {!disabled ? (
-            <IconButton>
+            <IconButton onClick={() => setValue("")}>
               <CloseCircle />
             </IconButton>
           ) : null}
@@ -198,6 +202,7 @@ function RefField({
               newItem.setData(data);
               setValue(newItem.id());
             }}
+            closeOnSubmit
             isOpen={open}
             onClose={() => setOpen(false)}
           />

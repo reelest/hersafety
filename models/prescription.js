@@ -5,6 +5,7 @@ import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
 import { noop } from "@/utils/none";
 import { DeleteItemAction, SetIDAction, trackRefs } from "./lib/trackRefs";
+import { SKIP_PREVIEW } from "@/components/ModelFormRefField";
 
 class DrugDetail extends CountedItem {
   prescriptionId = "";
@@ -60,6 +61,7 @@ const Prescriptions = new CountedModel("prescriptions", Prescription, {
     arrayType: {
       type: "ref",
       refModel: DrugDetails,
+      [SKIP_PREVIEW]: true,
     },
   },
 });
