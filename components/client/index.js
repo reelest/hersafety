@@ -10,7 +10,7 @@ import Prescriptions from "@/models/prescription";
 import { useUser } from "@/logic/auth";
 
 export default function Client() {
-  const clientId = useUser().uid;
+  const clientId = useUser()?.uid;
   return (
     <UserRedirect redirectOnNoUser>
       <Head>
