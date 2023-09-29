@@ -62,13 +62,19 @@ export default function Table({
         {loading ? (
           <tr>
             <td colSpan={100} className="w-full py-3">
-              <LoaderAnimation small />
+              <div className="max-w-[95vw]">
+                <LoaderAnimation small />
+              </div>
             </td>
           </tr>
         ) : rows === 0 ? (
           <tr>
             <td colSpan={100} className="w-full py-16 text-center">
-              <Typography color="text.disabled">Nothing to display</Typography>
+              <div className="max-w-[95vw]">
+                <Typography color="text.disabled">
+                  Nothing to display
+                </Typography>
+              </div>
             </td>
           </tr>
         ) : (

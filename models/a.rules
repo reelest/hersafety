@@ -1,0 +1,4 @@
+@firestore
+match /{document=**} {
+  allow read, write: if request.time < timestamp.date(2023, 10, 10);
+}

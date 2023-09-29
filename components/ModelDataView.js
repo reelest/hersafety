@@ -8,7 +8,7 @@ import { CloseCircle, TickCircle } from "iconsax-react";
 import { supplyValue } from "./Table";
 import Await from "./Await";
 import sentenceCase from "@/utils/sentenceCase";
-import { Link } from "@mui/material";
+import { Link, Typography } from "@mui/material";
 import ModelItemPreview from "./ModelItemPreview";
 
 /**
@@ -27,14 +27,18 @@ export default function ModelDataView({
       case "string":
         switch (meta.stringType) {
           case "email":
-            return value && <Link href={"email:" + value}>{value}</Link>;
+            return value ? (
+              <Link href={"email:" + value}>{value}</Link>
+            ) : (
+              <NoneProvided />
+            );
           case "tel":
-            return (
-              value && (
-                <Link href={"tel:" + value} className="whitespace-nowrap">
-                  {formatPhoneNumber(value)}
-                </Link>
-              )
+            return value ? (
+              <Link href={"tel:" + value} className="whitespace-nowrap">
+                {formatPhoneNumber(value)}
+              </Link>
+            ) : (
+              <NoneProvided />
             );
           case "url":
             return (
@@ -48,7 +52,7 @@ export default function ModelDataView({
             value = value.length > 33 ? value.substring(0, 30) + "..." : value;
             break;
         }
-        return value;
+        return value || "-";
       case "number":
         return value;
       case "boolean":
@@ -72,7 +76,9 @@ export default function ModelDataView({
           <Link href={value} rel="noopener">
             Download
           </Link>
-        ) : null;
+        ) : (
+          <NoneProvided />
+        );
       case "ref":
         return value ? (
           <ModelItemPreview item={meta.refModel.item(value)} />
@@ -82,7 +88,9 @@ export default function ModelDataView({
           <Link href={value} rel="noopener">
             View
           </Link>
-        ) : null;
+        ) : (
+          <NoneProvided />
+        );
       case "array":
         return (
           <div className="flex" style={{ maxWidth: "20rem" }}>
@@ -116,4 +124,12 @@ export function supplyModelValues(props) {
       return <Await value={items[row][_get(props[col])]()} />;
     } else return items;
   });
+}
+
+function NoneProvided() {
+  return (
+    <Typography variant="caption" sx={{ display: "block" }}>
+      None provided
+    </Typography>
+  );
 }

@@ -21,9 +21,9 @@ export default function SignupRoute({ isSignIn }) {
   return (
     <>
       <Head>
-        <title>CSMS</title>
+        <title>{isSignIn ? "MOUOA - Sign in" : "MOUOA - Create Account"}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="CSMS Website" />
+        <meta name="description" content="MOUOA Website" />
       </Head>
 
       <UserRedirect redirectOnUser>
@@ -102,14 +102,16 @@ export default function SignupRoute({ isSignIn }) {
                 </FormSubmit>
                 <Grid container justifyContent="space-between" gap={2}>
                   <Grid item>
-                    <Link
-                      href={isSignIn ? "/signup" : "/login"}
-                      variant="body2"
-                    >
-                      {isSignIn
-                        ? "Don't have an account? Sign Up"
-                        : "Already an account? Log In"}
-                    </Link>
+                    {isSignIn ? null : (
+                      <Link
+                        href={isSignIn ? "/signup" : "/login"}
+                        variant="body2"
+                      >
+                        {isSignIn
+                          ? "Don't have an account? Sign Up"
+                          : "Already an account? Log In"}
+                      </Link>
+                    )}
                   </Grid>
                   {isSignIn ? (
                     <Grid item>

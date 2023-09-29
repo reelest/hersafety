@@ -37,6 +37,8 @@ import { getDefaultValue } from "../models/lib/model_type_info";
 import { noop } from "@/utils/none";
 import useLogger from "@/utils/useLogger";
 import typeOf from "@/utils/typeof";
+
+export const SKIP_PREVIEW = "!skip-preview";
 /**
  * @type {import("react").Context<import("@/utils/useIterator").UseIterator<import("@/models/lib/model").Item>>}
  */
@@ -114,11 +116,12 @@ function RefField({
   ...props
 }) {
   const allowCreate = !meta.refModel.Meta[USES_EXACT_IDS];
+  const skipPreview = !!meta[!SKIP_PREVIEW];
   const newItem = useMemo(
     () => allowCreate && meta.refModel.create(),
     [meta, allowCreate]
   );
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(skipPreview);
 
   const query = useMemo(
     () =>

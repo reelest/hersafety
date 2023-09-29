@@ -1,4 +1,5 @@
 import tailwindConfig from "@/tailwind.config.js";
+import { blue } from "@mui/material/colors";
 import { createTheme } from "@mui/material/styles";
 import Link from "next/link";
 import React from "react";
@@ -14,6 +15,11 @@ const MuiTheme = createTheme({
     MuiLink: {
       defaultProps: {
         component: LinkBehavior,
+      },
+      styleOverrides: {
+        root: () => ({
+          color: blue[800],
+        }),
       },
     },
     MuiButtonBase: {
@@ -31,11 +37,6 @@ const MuiTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         borderWidth: 1,
-        root: ({ theme }) => ({
-          "&:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline": {
-            borderColor: theme.palette.primary.dark,
-          },
-        }),
       },
     },
   },
@@ -66,34 +67,34 @@ const MuiTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Poppins", "Helvetica", "Arial", sans-serif',
+    fontFamily: 'Inter, "Helvetica", "Arial", sans-serif',
     h1: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "4.214rem",
     },
     h2: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "3.161rem",
     },
     h3: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "2.37rem",
     },
     h4: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "1.78rem",
     },
     h5: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "1.33333333rem",
     },
     h6: {
-      fontFamily: '"Poppins", sans-serif',
+      fontFamily: "Inter, sans-serif",
       fontWeight: "bold",
       fontSize: "1.1666666rem",
     },

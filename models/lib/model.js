@@ -94,6 +94,7 @@ export class Model {
   /**
    * @param {string} id
    * @param {(item: T, txn: Txn)=> Promise<void>} init
+   * @param {Txn} txn
    * @returns {Promise<T>}
    */
 
@@ -101,29 +102,32 @@ export class Model {
     id,
     init = async (item, txn) => {
       if (item.isLocalOnly()) await item.save(txn);
-    }
+    },
+    txn
   ) {
     if (!this.Meta[USES_EXACT_IDS]) {
       throw new InvalidState(
         this.uniqueName() + " is not configured to use exact ids."
       );
     }
-    return Txn.run(async (txn) => {
+    const cb = async (_txn) => {
       //TODO - this can lead to unnecessary transaction retries
       const m = new this._Item(this.ref(id), true, this);
       try {
-        await m.load(txn);
+        await m.load(_txn);
       } catch (e) {
         checkError(e, ItemDoesNotExist);
       }
-      if (!m.isLocalOnly()) txn.ignorePreviousReads();
+      if (!txn && !m.isLocalOnly()) _txn.ignorePreviousReads();
       m.onCreate();
-      await init(m, txn);
-      txn.onCommit(() => {
+      await init(m, _txn);
+      _txn.onCommit(() => {
         if (m.isLocalOnly()) m._isCreated = false; //Prevent saving outside of this transaction
       });
       return m;
-    });
+    };
+    if (txn) return cb(txn);
+    return Txn.run(cb);
   }
   /**
    * @returns {T}

@@ -21,6 +21,7 @@ export default function ModelTable({
   addActionTitle = "Create " + singular(modelName),
   allowEdit = true,
   allowDelete = true,
+  enablePrint = false,
   onClickRow = noop,
   pluralTitle = sentenceCase(modelName),
   onCreate,
@@ -68,12 +69,12 @@ export default function ModelTable({
       ) : null}
 
       <Box className="px-4 sm:px-8 py-8">
-        <div className="flex flex-wrap justify-between">
+        <div className="flex flex-wrap justify-between mx-2">
           <Typography variant="h6" as="h2">
             {pluralTitle}
           </Typography>
         </div>
-        <div className="flex flex-wrap pt-6 -mx-2 justify-center">
+        <div className="flex flex-wrap pt-0 justify-end mx-2">
           <Button
             variant="contained"
             size="large"
@@ -84,17 +85,21 @@ export default function ModelTable({
           </Button>
         </div>
         <ThemedTable
-          title={pluralTitle}
+          // title={pluralTitle}
           headers={headers.concat(actions.map(() => ""))}
           results={Query ? items : []}
           pager={pager}
+          enablePrint={enablePrint}
           onClickRow={
             (_, row) => onClickRow(items[row]) /*(_, row) => showModal(row)*/
           }
           renderHooks={[
             addHeaderClass("pr-4"),
             supplyModelValues(props),
-            addClassToColumns("w-0", [props.length, props.length + 1]),
+            addClassToColumns("w-0 pt-0 pb-0", [
+              props.length,
+              props.length + 1,
+            ]),
             supplyValue((row, col, data) => {
               col -= props.length;
               switch (actions[col]) {

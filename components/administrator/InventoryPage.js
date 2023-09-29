@@ -19,16 +19,19 @@ export default function InventoryPage() {
           color="error"
           sx={{
             p: 4,
-            m: 4,
+            my: 4,
+            mx: 6,
             backgroundColor: "rgba(255,0,0,0.1)",
+            color: "rgba(180,0,20,1)",
             border: "error",
           }}
+          elevation={5}
         >
-          The following drugs have fallen below minimum stock levels{" "}
+          The following drugs have fallen below minimum stock levels:{" "}
           {finishedDrugs.map((e) => e.name).join(", ")}.
         </Card>
       ) : null}
-      <ModelTable Model={Drugs} />
+      <ModelTable Model={Drugs} addActionTitle="Add Drug" />
     </>
   );
 }

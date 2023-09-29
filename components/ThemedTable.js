@@ -11,8 +11,12 @@ import Table, {
 import Spacer from "./Spacer";
 import Pager from "./Pager";
 import usePager from "@/utils/usePager";
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import Await from "./Await";
+import { Printer } from "iconsax-react";
+import { ref } from "firebase/storage";
+import { useRef } from "react";
+import printElement from "@/utils/printElement";
 
 function ThemedTable({
   container: TableWrapper = ThemedBox,
@@ -20,6 +24,7 @@ function ThemedTable({
   headers,
   renderHooks = [],
   selected,
+  enablePrint = false,
   pager: _pager,
   tableRef,
   onClickRow,
@@ -29,13 +34,17 @@ function ThemedTable({
   /** @type {typeof defaultPager} */
   const pager = _pager ?? defaultPager;
   const { data, pageSize, ...controller } = pager;
+  const ref = useRef();
   return (
     <TableWrapper selected={selected} {...props}>
       <Table
         loading={!results}
         data={results}
         scrollable
-        tableRef={tableRef}
+        tableRef={(el) => {
+          ref.current = el;
+          if (tableRef) tableRef.current = false;
+        }}
         onClickRow={onClickRow}
         cols={headers.length}
         rows={Math.min(pageSize, results?.length)}
@@ -57,9 +66,11 @@ function ThemedTable({
           ...[_pager ? null : pageData(controller.page, pageSize)].filter(
             Boolean
           ),
-          addHeaderClass("first:pl-4 pr-2 last:pr-0 "),
+          addHeaderClass(
+            "first:pl-8 pr-4 last:pr-0 font-normal text-gray-400 whitespace-nowrap pb-2"
+          ),
           addClassToColumns(
-            "first:pl-4 pr-4 pt-1 pb-1 first:rounded-l last:rounded-r"
+            "text-gray-800 first:pl-8 pr-8 pt-1 pb-1 first:rounded-l last:rounded-r"
           ),
           ...renderHooks,
         ]}
@@ -77,6 +88,11 @@ function ThemedTable({
         <div className="print:hidden">
           <Pager controller={controller} />
         </div>
+        {enablePrint ? (
+          <Button onClick={() => ref.current && printElement(ref.current)}>
+            Print <Printer />{" "}
+          </Button>
+        ) : null}
       </div>
     </TableWrapper>
   );
@@ -93,10 +109,14 @@ const ThemedBox = function ({
   return (
     <TableContext.Provider value={[selected, setSelected]}>
       <Card1 boxClass="px-6 py-5" className="my-2 mx-2" {...props}>
-        <TableHeader>
-          <Typography variant="h5">{title}</Typography>
-          {headerButtons}
-        </TableHeader>
+        {title || headerButtons ? (
+          <TableHeader>
+            <Typography variant="h5">{title}</Typography>
+            {headerButtons}
+          </TableHeader>
+        ) : (
+          <div className="mb-2"></div>
+        )}
         {children}
       </Card1>
     </TableContext.Provider>

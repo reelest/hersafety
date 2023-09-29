@@ -48,23 +48,6 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
-  console.log({ initialValue });
-  const _newValue = useRef(initialValue[_new]);
-
-  const move = (e, from, to) => {
-    if (value[from] === e && value[to] !== undefined) {
-      value = value.slice();
-      const temp = value[from];
-      value[from] = value[to];
-      value[to] = temp;
-      setValue(value);
-    }
-  };
-  const remove = (e, from) => {
-    if (value[from] === e) {
-      setValue([...value.slice(0, from), ...value.slice(from + 1)]);
-    }
-  };
 
   return (
     <>
@@ -79,27 +62,15 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       </div>
       <Form>
         {value.map((e, i) => (
-          <div className="flex flex-wrap items-center" key={e}>
-            <Typography sx={{ mr: 4 }}>{i + 1}.</Typography>
-            <ModelFormField name={_id(i)} meta={meta.arrayType} disabled />
-            <div className="flex">
-              <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
-                <ArrowUp />
-              </IconButton>
-              <IconButton
-                onClick={() => move(e, i, i + 1)}
-                disabled={i === value.length - 1}
-              >
-                <ArrowDown />
-              </IconButton>
-              <IconButton onClick={() => setEdit({ value: e, index: i })}>
-                <Edit />
-              </IconButton>
-              <IconButton onClick={() => remove(e, i)}>
-                <CloseCircle />
-              </IconButton>
-            </div>
-          </div>
+          <ModelFormArrayItem
+            key={e}
+            meta={meta.arrayType}
+            index={i}
+            value={value}
+            setValue={setValue}
+            getId={_id}
+            setEdit={setEdit}
+          />
         ))}
       </Form>
       <Modal
@@ -142,6 +113,48 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
         </Paper>
       </Modal>
     </>
+  );
+}
+
+function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
+  const e = value[index];
+  const i = index;
+  const move = (e, from, to) => {
+    if (value[from] === e && value[to] !== undefined) {
+      value = value.slice();
+      const temp = value[from];
+      value[from] = value[to];
+      value[to] = temp;
+      setValue(value);
+    }
+  };
+  const remove = (e, from) => {
+    if (value[from] === e) {
+      setValue([...value.slice(0, from), ...value.slice(from + 1)]);
+    }
+  };
+  return (
+    <div className="flex flex-wrap items-center" key={e}>
+      <Typography sx={{ mr: 4 }}>{i + 1}.</Typography>
+      <ModelFormField name={getId(i)} meta={meta} disabled />
+      <div className="flex">
+        <IconButton onClick={() => move(e, i, i - 1)} disabled={i === 0}>
+          <ArrowUp />
+        </IconButton>
+        <IconButton
+          onClick={() => move(e, i, i + 1)}
+          disabled={i === value.length - 1}
+        >
+          <ArrowDown />
+        </IconButton>
+        <IconButton onClick={() => setEdit({ value: e, index: i })}>
+          <Edit />
+        </IconButton>
+        <IconButton onClick={() => remove(e, i)}>
+          <CloseCircle />
+        </IconButton>
+      </div>
+    </div>
   );
 }
 

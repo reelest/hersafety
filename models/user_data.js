@@ -7,10 +7,16 @@ import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
 import { indexForSearch } from "./lib/indexForSearch";
 //A clone of the firebase authentication model is stored in firestore
 //in order to manage users with the uid as the key
-//Deleting users makes use of the firebase admin sdk
+//Creating users can make use of the client sdk
+//But getting users uid and deleting users makes use of the firebase admin sdk
+//We make use of a UserRole map because checking if a user exists costs 1 read.
+//With the UserRole map, we can get it using 2 reads all the time.
+//Rather than 1 to N reads for all the users
+//However, the concept of a filtered collection is also there and might be explored in future.
 
+const DEFAULT_ROLE = "client";
 class UserRole extends Item {
-  role = "guest";
+  role = DEFAULT_ROLE;
 }
 export const UserRoles = new Model("roles", UserRole, {
   [USES_EXACT_IDS]: true,
@@ -28,7 +34,7 @@ export class UserData extends CountedItem {
   photoURL = "";
   lastLogin = new Date(0);
   profileCompleted = false;
-
+  disabled = false;
   getName() {
     return `${this.firstName} ${this.otherNames} ${this.lastName}`;
   }
@@ -58,6 +64,14 @@ export class UserData extends CountedItem {
   }
   async onAddItem(txn, newState) {
     await super.onAddItem(txn, newState);
+    await UserRoles.getOrCreate(
+      this.id(),
+      async (userRole, txn) => {
+        // TODO : Handle previous roles
+        await userRole.set({ role: this.getRole() }, txn);
+      },
+      txn
+    );
     if (newState.profileCompleted)
       this.getCounter().set(
         {
@@ -89,6 +103,7 @@ export const UserMeta = {
   },
   email: {
     stringType: "email",
+    disabled: true,
   },
   lastUpdated: HiddenField,
   lastLogin: HiddenField,

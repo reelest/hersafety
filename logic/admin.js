@@ -36,16 +36,19 @@ const parseName = (name) => {
     lastName: a.length > 1 ? a[1] : "",
   };
 };
-
-export const activateUser = async (item) => {
-  await UserRoles.getOrCreate(item.uid, async (userRole, txn) => {
-    userRole.role = item.role;
-    await userRole.save(txn);
-  });
-  const userModel = mapRoleToUserModel(item.role);
-  await userModel.getOrCreate(item.uid, async (user, txn) => {
-    user.setData({ email: item.email, ...parseName(item.name) });
-    await user.save(txn);
-    await item.delete(txn);
-  });
+/**
+ * @param {({role: string, uid: string, name: string} & import("@/models/lib/model_type_info").Item?)} activationRequest
+ */
+export const activateUser = async (activationRequest) => {
+  await mapRoleToUserModel(activationRequest.role).getOrCreate(
+    activationRequest.uid,
+    async (user, txn) => {
+      user.setData({
+        email: activationRequest.email,
+        ...parseName(activationRequest.name),
+      });
+      await user.save(txn);
+      await activationRequest?.delete?.(txn);
+    }
+  );
 };

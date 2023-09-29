@@ -16,9 +16,9 @@ export default function ForgotPassword() {
   return (
     <>
       <Head>
-        <title>CSMS - Reset Password</title>
+        <title>MOUOA - Reset Password</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Reset password to CSMS Dashboard" />
+        <meta name="description" content="Reset password to MOUOA Dashboard" />
       </Head>
 
       <Container component="main" maxWidth="xs">

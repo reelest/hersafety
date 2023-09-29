@@ -9,43 +9,24 @@ import PrescriptionsPage from "./PrescriptionsPage";
 import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
+import Prescriptions from "@/models/prescription";
+import { useUser } from "@/logic/auth";
 
-const TABS = [
-  {
-    name: "Users",
-    icon: UserEdit,
-    component: UsersPage,
-  },
-  {
-    name: "Inventory",
-    icon: Airdrop,
-    component: InventoryPage,
-  },
-  {
-    name: "Prescriptions",
-    icon: Airdrop,
-    component: PrescriptionsPage,
-  },
-];
-export default function Admin() {
+export default function Client() {
+  const clientId = useUser().uid;
   return (
     <UserRedirect redirectOnNoUser>
       <Head>
-        <title>MOUOA - Admin Dashboard</title>
+        <title>MOUOA - Client Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Reset password to MOUOA Dashboard" />
       </Head>
-
-      <DashboardLayout
-        tabs={TABS}
-        renderChild={(tab) => {
-          return (
-            <>
-              <PageHeader />
-              <tab.component />
-            </>
-          );
-        }}
+      <ModelTable
+        Model={Prescriptions}
+        props={["date", "drugs"]}
+        enablePrint
+        deps={[clientId]}
+        Query={clientId && Prescriptions.withFilter("user", "==", clientId)}
       />
     </UserRedirect>
   );

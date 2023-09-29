@@ -3,7 +3,7 @@ import { parseQuery } from "@/utils/createQuery";
 import hasProp from "@/utils/hasProp";
 import uniq from "@/utils/uniq";
 /**
- * @typedef {import("../models/lib/counted_item").CountedItem} CountedItem
+ * @typedef {import("./counted_item").CountedItem} CountedItem
  */
 
 const _id = (item) => item.uniqueName().replace(/\//g, "^");
@@ -43,7 +43,7 @@ export function createIndexEntry(props, item, state, prev) {
     description: prev ? prev.description : "",
     avatar: prev ? prev.avatar : "",
     image: prev ? prev.image : "",
-    filters: [item.model()._ref.path]
+    filters: [item.model().uniqueName()]
       .concat(prev ? prev.filters : [])
       .filter(uniq),
     tokens: props

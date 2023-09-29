@@ -1,9 +1,10 @@
 {
-  "name": "react-components",
+  "name": "mouoa",
   "version": "1.0.0",
-  "description": "Shared React Components",
+  "description": "Micheal Okpara University Of Agriculture - Drug Prescription System",
   "scripts": {
     "dev": "next",
+    "rules": "node ./scripts/packer.mjs && firebase deploy --only firestore,storage",
     "build": "next build",
     "start": "next start",
     "build:static": "next build && next out"

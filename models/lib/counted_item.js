@@ -72,10 +72,9 @@ export class CountedItem extends Item {
               this.#needsTransaction === TRANSACTION_NEEDED)) &&
           !prevState
         ) {
-          const doc = await txn.get(this._ref);
-          if (doc.exists()) {
-            prevState = doc.data();
-          } else return false;
+          prevState = await this.read(txn);
+          //TODO: Should this throw an error
+          if (prevState === undefined) return false;
         }
         return await cb(txn, prevState);
       } finally {

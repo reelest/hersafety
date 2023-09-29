@@ -27,6 +27,7 @@ export default function PrescriptionsPage() {
       <ModelTable
         Model={Prescriptions}
         props={["date", "drugs"]}
+        enablePrint
         onCreate={() => {
           if (!clientId) return false;
           const item = Prescriptions.create();

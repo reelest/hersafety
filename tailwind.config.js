@@ -15,7 +15,7 @@ module.exports = {
         disabledOnPrimaryDark: "#aeafb5",
       },
       borderRadius: {
-        DEFAULT: "12px",
+        DEFAULT: "8px",
       },
     },
   },

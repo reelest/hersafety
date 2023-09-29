@@ -1,0 +1,10 @@
+{
+  "pack": [
+    {
+      "input": "./models/base.rules",
+      "output": "./firestore.rules",
+      "include": "./{models,components,utils,pages}/**/*.rules",
+      "keepIndent": true
+    }
+  ]
+}
