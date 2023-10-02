@@ -117,12 +117,18 @@ function _ModelDataView({
 const _get = (x) => {
   return "get" + sentenceCase(x);
 };
+
+const ModelDataView = memo(_ModelDataView);
+export default ModelDataView;
+const ModelComputedView = memo(function ModelComputedView({ item, prop }) {
+  return <Await value={item[_get(prop)]()} />;
+});
 export function supplyModelValues(props) {
   return supplyValue((row, col, items) => {
     if (items?.[row] && props[col] in items[row]) {
       return <ModelDataView item={items[row]} name={props[col]} />;
     } else if (items?.[row] && _get(props[col]) in items[row]) {
-      return <Await value={items[row][_get(props[col])]()} />;
+      return <ModelComputedView item={items[row]} prop={props[col]} />;
     } else return items;
   });
 }
@@ -134,6 +140,3 @@ function NoneProvided() {
     </Typography>
   );
 }
-
-const ModelDataView = memo(_ModelDataView);
-export default ModelDataView;
