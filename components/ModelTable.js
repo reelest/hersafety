@@ -16,7 +16,7 @@ export default function ModelTable({
   Model,
   Query = Model.all(),
   props = Model.fields(),
-  headers = props.map((e) => capitalize(Model.Meta[e].label)),
+  headers = props.map((e) => capitalize(Model?.Meta?.[e]?.label ?? e)),
   modelName = sentenceCase(Model.uniqueName()),
   addActionTitle = "Create " + singular(modelName),
   allowEdit = true,

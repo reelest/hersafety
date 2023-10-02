@@ -40,7 +40,7 @@ export default function PrescriptionsPage() {
       {clientId ? (
         <ModelTable
           Model={Prescriptions}
-          props={["date", "drugs"]}
+          props={["date", "drugs", "price"]}
           enablePrint
           onClickRow={(prescription) => showReceipt(prescription)}
           onCreate={() => {

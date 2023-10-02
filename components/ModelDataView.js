@@ -10,13 +10,14 @@ import Await from "./Await";
 import sentenceCase from "@/utils/sentenceCase";
 import { Link, Typography } from "@mui/material";
 import ModelItemPreview from "./ModelItemPreview";
+import { memo } from "react";
 
 /**
  * @param {Object} param0
  * @param {String} param0.name
  * @param {import("@/models/lib/model_type_info").Item} param0.item
  */
-export default function ModelDataView({
+function _ModelDataView({
   name,
   item,
   meta = item && item.model().Meta[name],
@@ -93,7 +94,7 @@ export default function ModelDataView({
         );
       case "array":
         return (
-          <div className="flex" style={{ maxWidth: "20rem" }}>
+          <div className="flex flex-wrap" style={{ maxWidth: "20rem" }}>
             {value.map((e, i, a) => (
               <>
                 <ModelDataView value={e} meta={meta.arrayType} key={"" + i} />
@@ -133,3 +134,6 @@ function NoneProvided() {
     </Typography>
   );
 }
+
+const ModelDataView = memo(_ModelDataView);
+export default ModelDataView;

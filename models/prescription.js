@@ -13,7 +13,8 @@ class DrugDetail extends CountedItem {
   drug = "";
   amount = 0;
   async getPrice(txn) {
-    return (await Drugs.item(this.drug).read(txn)).price;
+    await this.load();
+    return (await Drugs.item(this.drug).read(txn)).price * this.amount;
   }
   static {
     trackRefs(this, ["drug", "prescriptionId"]);
@@ -45,9 +46,14 @@ class Prescription extends CountedItem {
   drugs = [];
   paid = "";
   async getPrice(txn) {
-    return await Promise.all(
-      this.drugs.map((e) => DrugDetails.item(e).getPrice(txn))
-    );
+    await this.load();
+    return (
+      await Promise.all(
+        this.drugs.map(async (e) => {
+          return await DrugDetails.item(e).getPrice(txn);
+        })
+      )
+    ).reduce((e, i) => e + i, 0);
   }
   async acceptPayment(txn) {
     return this.atomicUpdate(
