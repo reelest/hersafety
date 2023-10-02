@@ -47,6 +47,7 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
           ? []
           : toArray((await item.read(txn))?.[e]);
         console.log({ newValue, oldValue });
+        console.log({ newValue, oldValue });
         const added = newValue.filter(notIn(oldValue));
         const removed = oldValue.filter(notIn(newValue));
         await Promise.all(
@@ -56,7 +57,7 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
               meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
             const refItem = refModel.item(id);
             await Promise.all(
-              RemoveActions[e]?.map?.(async (action) => {
+              RemoveActions[e].map(async (action) => {
                 await action.run(txn, item, refItem);
               })
             );
@@ -73,7 +74,7 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
             }
             const refItem = created ?? refModel.item(id);
             await Promise.all(
-              AddActions[e]?.map?.(async (action) => {
+              AddActions[e].map(async (action) => {
                 await action.run(txn, item, refItem);
               })
             );
@@ -210,14 +211,16 @@ export function trackRefs(ItemClass, props, addActions, removeActions) {
       {},
       prev ? prev.AddActions : null,
       ...props.map((e) => ({
-        [e]: prev ? prev.AddActions[e].concat(addActions) : addActions,
+        [e]: prev ? prev.AddActions[e].concat(addActions) : addActions ?? [],
       }))
     ),
     RemoveActions: Object.assign(
       {},
       prev ? prev.RemoveActions : null,
       ...props.map((e) => ({
-        [e]: prev ? prev.RemoveActions[e].concat(removeActions) : addActions,
+        [e]: prev
+          ? prev.RemoveActions[e].concat(removeActions)
+          : removeActions ?? [],
       }))
     ),
   };

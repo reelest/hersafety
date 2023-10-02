@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import ModelItemPreview, { MODEL_ITEM_PREVIEW } from "./ModelItemPreview";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { useDebounce, useIntersection } from "react-use";
+import { useDebounce, useIntersection, useUpdate } from "react-use";
 import { Item, USES_EXACT_IDS } from "@/models/lib/model";
 import { IndexEntry } from "@/models/search_index";
 import ModelFormDialog from "./ModelFormDialog";
@@ -32,7 +32,7 @@ import Template from "./Template";
 import delay from "@/utils/delay";
 import { ItemDoesNotExist, checkError } from "@/models/lib/errors";
 import useStable from "@/utils/useStable";
-import { AddCircle, CloseCircle } from "iconsax-react";
+import { Add, AddCircle, Additem, BoxAdd, CloseCircle } from "iconsax-react";
 import { useOnCreateItem } from "./ModelForm";
 import { getDefaultValue } from "../models/lib/model_type_info";
 import { noop } from "@/utils/none";
@@ -146,6 +146,7 @@ function RefField({
           meta.refModel.item(value)),
     [value, meta, newItem]
   );
+  const update = useUpdate();
   const onCreateItem = useOnCreateItem();
   useEffect(() => {
     (async () => {
@@ -155,13 +156,25 @@ function RefField({
           onCreateItem(activeItem);
         } else {
           await activeItem.load();
+          update();
         }
       } catch (e) {
         checkError(e, ItemDoesNotExist);
         setValue(getDefaultValue(meta));
       }
     })();
-  }, [activeItem, onCreateItem, setValue, meta]);
+  }, [activeItem, onCreateItem, setValue, meta, update]);
+  const stopRefresh = useRef(false);
+  const loaded = (stopRefresh.current =
+    !value ||
+    (activeItem && activeItem._isLoaded) ||
+    (newItemModalOpen && stopRefresh.current));
+  useMemo(() => {
+    if (skipPicker && activeItem && loaded) {
+      newItem.setData(activeItem.data());
+    }
+  }, [skipPicker, activeItem, newItem, loaded]);
+  useLogger({ value, activeItem, loaded });
   return (
     <div className="flex items-end">
       <input
@@ -198,23 +211,29 @@ function RefField({
         </>
       )}
       {!disabled && allowCreate ? (
-        <>
-          <ModelFormDialog
-            edit={newItem}
-            model={meta.refModel}
-            noSave
-            onSubmit={(data) => {
-              newItem.setData(data);
-              setValue(newItem.id());
-            }}
-            closeOnSubmit
-            isOpen={newItemModalOpen}
-            onClose={() => setNewItemModalOpen(false)}
-          />
-          <Button onClick={() => setNewItemModalOpen(true)}>
-            New <AddCircle />
+        newItemModalOpen ? (
+          loaded ? (
+            <ModelFormDialog
+              edit={newItem}
+              key={loaded}
+              model={meta.refModel}
+              noSave
+              onSubmit={(data) => {
+                newItem.setData(data);
+                setValue(newItem.id());
+              }}
+              closeOnSubmit
+              isOpen={newItemModalOpen}
+              onClose={() => setNewItemModalOpen(false)}
+            />
+          ) : (
+            <CircularProgress />
+          )
+        ) : (
+          <Button sx={{ mr: 2 }} onClick={() => setNewItemModalOpen(true)}>
+            New <Add className="ml-1" />
           </Button>
-        </>
+        )
       ) : null}
     </div>
   );

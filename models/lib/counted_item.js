@@ -16,6 +16,7 @@ import {
   onFilesDeleteItem,
   onFilesUpdateItem,
 } from "./trackFiles";
+import typeOf from "@/utils/typeof";
 
 /**
  * A counted item is an item that updates external documents when it changes.
@@ -58,7 +59,7 @@ export class CountedItem extends Item {
   }
 
   /**
-   * @param {(txn: import("./transaction").default, doc: ThisType)=>Promise} cb
+   * @param {(txn: import("./transaction").default, doc: this)=>Promise} cb
    * @returns
    */
   async atomicUpdate(cb, needsPrevState = true, txn, prevState) {
@@ -187,10 +188,11 @@ export class CountedItem extends Item {
         set(v) {
           if (
             this._isCreated &&
+            (v = this.validate(e, v)) !== undefined &&
             this._isLoaded &&
             !deepEqual(v, this[storedValue])
           ) {
-            console.trace(e);
+            console.trace("Update triggered for " + e, v, this[storedValue]);
             this._scheduleUpdateTxn(needsPrevState, e);
           }
           this[storedValue] = v;

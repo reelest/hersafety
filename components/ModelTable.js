@@ -10,21 +10,23 @@ import ThemedTable from "./ThemedTable";
 import { supplyModelValues } from "./ModelDataView";
 import capitalize from "@/utils/capitalize";
 import { addClassToColumns, addHeaderClass, supplyValue } from "./Table";
-import { noop } from "@/utils/none";
+import { None, noop } from "@/utils/none";
 
 export default function ModelTable({
   Model,
   Query = Model.all(),
-  props = Object.keys(Model.Meta).filter((e) => e[0] !== "!"),
+  props = Model.fields(),
   headers = props.map((e) => capitalize(Model.Meta[e].label)),
   modelName = sentenceCase(Model.uniqueName()),
   addActionTitle = "Create " + singular(modelName),
   allowEdit = true,
   allowDelete = true,
+  allowCreate = true,
   enablePrint = false,
   onClickRow = noop,
   pluralTitle = sentenceCase(modelName),
   onCreate,
+  renderHooks = [],
   deps = [],
 }) {
   const { data: items, pager } = useQuery(
@@ -46,7 +48,7 @@ export default function ModelTable({
     setFormVisible(true);
   };
   const createItem = useMutex(async () => {
-    if (allowEdit) {
+    if (allowCreate) {
       const item = (await onCreate?.()) ?? null;
       if (item !== false) {
         setItem(item);
@@ -59,7 +61,7 @@ export default function ModelTable({
   );
   return (
     <>
-      {allowEdit ? (
+      {allowCreate ? (
         <ModelFormDialog
           isOpen={formVisible}
           edit={item}
@@ -75,32 +77,44 @@ export default function ModelTable({
             {pluralTitle}
           </Typography>
         </div>
-        <div className="flex flex-wrap pt-0 justify-end mx-2">
-          <Button
-            variant="contained"
-            size="large"
-            onClick={createItem}
-            disabled={!Query}
-          >
-            {addActionTitle} <Add size={32} className="ml-2" />
-          </Button>
-        </div>
+        {allowCreate ? (
+          <div className="flex flex-wrap pt-0 justify-end mx-2">
+            <Button
+              variant="contained"
+              size="large"
+              onClick={createItem}
+              disabled={!Query}
+            >
+              {addActionTitle} <Add size={32} className="ml-2" />
+            </Button>
+          </div>
+        ) : null}
         <ThemedTable
           // title={pluralTitle}
           headers={headers.concat(actions.map(() => ""))}
           results={Query ? items : []}
           pager={pager}
           enablePrint={enablePrint}
-          onClickRow={
-            (_, row) => onClickRow(items[row]) /*(_, row) => showModal(row)*/
-          }
+          onClickRow={(_, row) => onClickRow(items[row])}
+          rowProps={{
+            ...(onClickRow !== noop
+              ? {
+                  sx: {
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "gray.light",
+                    },
+                  },
+                }
+              : None),
+          }}
           renderHooks={[
             addHeaderClass("pr-4"),
-            supplyModelValues(props),
             addClassToColumns("w-0 pt-0 pb-0", [
               props.length,
               props.length + 1,
             ]),
+            supplyModelValues(props),
             supplyValue((row, col, data) => {
               col -= props.length;
               switch (actions[col]) {
@@ -124,7 +138,9 @@ export default function ModelTable({
                     </IconButton>
                   );
               }
+              return data;
             }),
+            ...renderHooks,
           ]}
         />
       </Box>

@@ -112,6 +112,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
             <ModelFormField
               name={edit ? _id(edit.index) : _new}
               meta={meta.arrayType}
+              onChange={() => alert("hi")}
             />
             <FormSubmit
               variant="contained"

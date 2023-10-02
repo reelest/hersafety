@@ -17,6 +17,7 @@ import { Printer } from "iconsax-react";
 import { ref } from "firebase/storage";
 import { useRef } from "react";
 import printElement from "@/utils/printElement";
+import { None } from "@/utils/none";
 
 function ThemedTable({
   container: TableWrapper = ThemedBox,
@@ -28,6 +29,7 @@ function ThemedTable({
   pager: _pager,
   tableRef,
   onClickRow,
+  rowProps,
   ...props
 }) {
   const defaultPager = usePager(results || [], 10);
@@ -52,12 +54,14 @@ function ThemedTable({
         rowSpacing={1}
         headerClass="text-disabled text-left"
         rowProps={(row) => ({
+          ...(rowProps || None),
           sx: {
             backgroundColor: selected === row ? "primary.light" : "white",
             color: selected === row ? "white" : null,
             "& .MuiLink-root": {
               color: selected === row ? "white" : undefined,
             },
+            ...(rowProps?.sx ?? None),
           },
           className:
             row >= data.length ? "invisible" : "shadow-3 hover:bg-hoverPrimary",
@@ -89,7 +93,10 @@ function ThemedTable({
           <Pager controller={controller} />
         </div>
         {enablePrint ? (
-          <Button sx={{my: 2}} onClick={() => ref.current && printElement(ref.current)}>
+          <Button
+            sx={{ my: 2, mx: 2 }}
+            onClick={() => ref.current && printElement(ref.current)}
+          >
             Print <Printer />{" "}
           </Button>
         ) : null}

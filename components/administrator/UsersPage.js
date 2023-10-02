@@ -5,6 +5,7 @@ import Form, { FormErrors, FormField, FormSubmit } from "../Form";
 import ModelTable from "../ModelTable";
 import { createUser } from "@/logic/admin";
 import Admins from "@/models/admin";
+import { useRouter } from "next/router";
 export default function UsersPage() {
   const [formCreationRequest, setFormCreationRequest] = useState(null);
   const [userModel, setUserModel] = useState(Admins);
@@ -14,6 +15,7 @@ export default function UsersPage() {
       return null;
     });
   };
+  const router = useRouter();
   return (
     <>
       <Modal
@@ -47,6 +49,11 @@ export default function UsersPage() {
       <ModelTable
         Model={Clients}
         allowDelete={false}
+        onClickRow={(user) =>
+          router.replace(
+            "?tab=prescriptions&user=" + encodeURIComponent(user.id())
+          )
+        }
         onCreate={() => {
           return new Promise((r, j) => {
             setUserModel(Clients);

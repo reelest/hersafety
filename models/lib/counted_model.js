@@ -29,6 +29,7 @@ class MetadataItem extends Item {
 const Metadata = new Model("metadata", MetadataItem, {
   [USES_EXACT_IDS]: true,
 });
+
 /**
  * @template {CountedItem} T
  * @extends {Model<T>}
@@ -36,7 +37,7 @@ const Metadata = new Model("metadata", MetadataItem, {
 export class CountedModel extends Model {
   /**
    * @param {string} _collectionID
-   * @param {Class<T>} ItemClass
+   * @param {import("./model").Class<T>} ItemClass
    * @param {[ConstructorParameters<typeof Model>[2]]} props
    */
   constructor(_collectionID, ItemClass = CountedItem, ...props) {

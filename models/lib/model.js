@@ -16,6 +16,7 @@ import isPureObject from "@/utils/isPureObject";
 import typeOf from "@/utils/typeof";
 import hasProp from "@/utils/hasProp";
 import { isUpdateValue } from "./update_value";
+import { None } from "@/utils/none";
 /**
  * (new|(?<!Model )extends) \w*Model\b
  */
@@ -27,6 +28,10 @@ export const USES_EXACT_IDS = "!uses-exact-ids";
 /**
  * @template T
  * @typedef {{new(): T}} Class
+ */
+/**
+ * @template T
+ * @typedef {Pick<T, { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]>} Data
  */
 /**
  * @template {Item} T
@@ -149,6 +154,9 @@ export class Model {
   uniqueName() {
     return this._ref.path;
   }
+  fields() {
+    return Object.keys(this.Meta).filter((e) => e[0] !== "!");
+  }
 }
 
 /**
@@ -213,7 +221,6 @@ export class Item {
           this.#isLocalOnly = false;
         });
       } else {
-        console.trace("Setting...");
         await setDoc(this._ref, this.data(), { merge: true });
         this.#isLocalOnly = false;
       }
@@ -267,60 +274,52 @@ export class Item {
     return Object.assign({}, this);
   }
   setData(d) {
-    let copy;
-    const isCompatible = (key) => {
-      const val = d[key],
-        valueType = typeOf(val),
-        expectedType = typeOf(this[key]);
-      if (valueType === expectedType) return true;
-      if (!copy) copy = Object.assign({}, d);
-      if (valueType === "timestamp" && expectedType === "date") {
-        copy[key] = val.toDate();
-      } else if (
-        isUpdateValue(val) &&
-        (expectedType === "array" ||
-          expectedType === "number" ||
-          expectedType === "date")
-      ) {
-        return true; //Allow this for now.
-      } else if (
-        valueType === "string" &&
-        expectedType === "number" &&
-        !isNaN(val)
-      ) {
-        copy[key] = Number(val);
-        return true;
-      } else if (valueType === "number" && expectedType === "date") {
-        copy[key] = new Date(val);
-      } else if (
-        valueType === "string" &&
-        expectedType === "date" &&
-        !Number.isNaN(Date.parse(val))
-      ) {
-        copy[key] = new Date(val);
-      } else {
-        console.warn(
-          "Ignored attempt to supply invalid data for " +
-            this.model()?.uniqueName?.() +
-            "." +
-            key +
-            " " +
-            expectedType +
-            " is not compatible with " +
-            valueType +
-            " value =",
-          val,
-          "."
-        );
-        return false;
-      }
-      return true;
-    };
-    // Run this first to obtain copy if necessary
-    const validKeys = Object.keys(this).filter(
-      (e) => hasProp(d, e) && isCompatible(e)
-    );
-    Object.assign(this, pick(copy ?? d, validKeys));
+    const validKeys = Object.keys(this).filter((e) => hasProp(d, e));
+    Object.assign(this, pick(d, validKeys));
+  }
+  validate(key, val) {
+    const valueType = typeOf(val);
+    const expectedType = typeOf(this[key]);
+    if (valueType === expectedType) return val;
+    if (valueType === "timestamp" && expectedType === "date") {
+      return val.toDate();
+    } else if (
+      isUpdateValue(val) &&
+      (expectedType === "array" ||
+        expectedType === "number" ||
+        expectedType === "date")
+    ) {
+      return val; //Allow this for now.
+    } else if (
+      valueType === "string" &&
+      expectedType === "number" &&
+      !isNaN(val)
+    ) {
+      return Number(val);
+    } else if (valueType === "number" && expectedType === "date") {
+      return new Date(val);
+    } else if (
+      valueType === "string" &&
+      expectedType === "date" &&
+      !Number.isNaN(Date.parse(val))
+    ) {
+      return new Date(val);
+    } else {
+      console.warn(
+        "Ignored attempt to supply invalid data for " +
+          this.model()?.uniqueName?.() +
+          "." +
+          key +
+          " " +
+          expectedType +
+          " is not compatible with " +
+          valueType +
+          " value =",
+        val,
+        "."
+      );
+      return undefined;
+    }
   }
   asQuery() {
     return new DocumentQueryCursor(this._ref);
@@ -351,6 +350,11 @@ export class Item {
   onCreate() {
     this._isCreated = true;
   }
+
+  /**
+   * @param {Txn} txn
+   * @returns {Promise<Data<this>>}
+   */
   async read(txn) {
     if (txn) return (await txn.get(this._ref)).data();
     else return await this.asQuery().get();

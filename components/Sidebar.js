@@ -15,11 +15,12 @@ import createSubscription from "@/utils/createSubscription";
 import { noop } from "@/utils/none";
 import delay from "@/utils/delay";
 import { useEffect } from "react";
+import useQueryState from "@/utils/useQueryState";
 
 export const [useSidebar, , setSidebar] = createSubscription(noop, false);
 
 export function useActiveTab(tabs) {
-  return useRouter().query["tab"] || tabs[0]?.name?.toLowerCase?.();
+  return useQueryState("tab", tabs[0]?.name?.toLowerCase?.())[0];
 }
 
 export default function Sidebar({ children, isStatic = false, tabs = [] }) {
