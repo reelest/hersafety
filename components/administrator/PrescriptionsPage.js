@@ -1,15 +1,18 @@
 import { useState } from "react";
 import ModelTable from "../ModelTable";
-import Prescriptions from "@/models/prescription";
+import Prescriptions, { Prescription } from "@/models/prescription";
 import ModelFormRefField from "../ModelFormRefField";
 import ModelForm from "../ModelForm";
-import { Box, Modal, Paper, Typography } from "@mui/material";
+import { Box, Button, Modal, Paper, Typography } from "@mui/material";
 import useQueryState from "@/utils/useQueryState";
+import { supplyValue } from "../Table";
+import useUserData from "@/logic/user_data";
 
 export default function PrescriptionsPage() {
   const [activeUser, setActiveUser] = useQueryState("user", null);
   const [modalOpen, showReceipt] = useState(null);
   const clientId = activeUser;
+  const userRole = useUserData()?.getRole?.();
   return (
     <div>
       <Box
@@ -40,7 +43,7 @@ export default function PrescriptionsPage() {
       {clientId ? (
         <ModelTable
           Model={Prescriptions}
-          props={["date", "drugs", "price"]}
+          props={["date", "drugs", "price", ""]}
           enablePrint
           onClickRow={(prescription) => showReceipt(prescription)}
           onCreate={() => {
@@ -50,6 +53,31 @@ export default function PrescriptionsPage() {
             return item;
           }}
           deps={[clientId]}
+          renderHooks={[
+            supplyValue((row, col, prescriptions) => {
+              if (col === 3) {
+                /** @type {Prescription} */
+                const data = prescriptions[row];
+                if (data.paid) {
+                  return "Paid";
+                } else {
+                  return userRole === "admin" ? (
+                    <Button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await data.acceptPayment();
+                      }}
+                    >
+                      Verify Payment
+                    </Button>
+                  ) : (
+                    "Awaiting payment"
+                  );
+                }
+              }
+              return prescriptions;
+            }),
+          ]}
           Query={clientId && Prescriptions.withFilter("user", "==", clientId)}
         />
       ) : (

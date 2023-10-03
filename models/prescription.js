@@ -4,7 +4,6 @@ import Drugs from "./inventory";
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
 import { noop } from "@/utils/none";
-import { DeleteItemAction, SetIDAction, trackRefs } from "./lib/trackRefs";
 import { SKIP_PICKER } from "@/components/ModelFormRefField";
 import Payments from "./payment";
 
@@ -16,14 +15,11 @@ class DrugDetail extends CountedItem {
     await this.load();
     return (await Drugs.item(this.drug).read(txn)).price * this.amount;
   }
-  static {
-    trackRefs(this, ["drug", "prescriptionId"]);
-  }
 }
 const DrugDetails = new CountedModel("drug_details", DrugDetail, {
   prescriptionId: {
     type: "ref",
-    refModel: Clients,
+    refModel: null,
     hidden: true,
   },
   drug: {
@@ -39,8 +35,8 @@ const DrugDetails = new CountedModel("drug_details", DrugDetail, {
     };
   },
 });
-
-class Prescription extends CountedItem {
+DrugDetails.hasOneOrMore(Drugs);
+export class Prescription extends CountedItem {
   user = "";
   date = new Date();
   drugs = [];
@@ -61,18 +57,10 @@ class Prescription extends CountedItem {
         if (doc.paid) return false;
         const payment = Payments.create();
         await payment.set({ amount: await this.getPrice(txn) }, txn);
-        await this.set({ paid: payment.id() });
+        await this.set({ paid: payment.id() }, txn);
       },
       true,
       txn
-    );
-  }
-  static {
-    trackRefs(
-      this,
-      ["drugs"],
-      [new SetIDAction("prescriptionId")],
-      [new DeleteItemAction()]
     );
   }
 }
@@ -100,5 +88,11 @@ const Prescriptions = new CountedModel("prescriptions", Prescription, {
     pickRefQuery: Payments.all(),
   },
 });
+Prescriptions.hasOneOrMore(DrugDetails, "prescriptionId", {
+  field: "drugs",
+  deleteOnRemove: true,
+});
+Prescriptions.hasOneOrMore(Clients, null, { field: "user" });
+Prescriptions.hasOneOrMore(Payments, null, { field: "paid" });
 
 export default Prescriptions;

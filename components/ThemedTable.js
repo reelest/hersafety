@@ -85,7 +85,7 @@ function ThemedTable({
         <Typography variant="body2" sx={{ mr: 4 }}>
           Total
         </Typography>
-        <span className="text-disabled mr-2">
+        <span className="text-disabled mr-2 my-2">
           <Await value={controller.count} />
         </span>
         <Spacer />
@@ -94,7 +94,7 @@ function ThemedTable({
         </div>
         {enablePrint ? (
           <Button
-            sx={{ my: 2, mx: 2 }}
+            sx={{ mt: 4, mb: 2, mx: 2 }}
             onClick={() => ref.current && printElement(ref.current)}
           >
             Print <Printer />{" "}

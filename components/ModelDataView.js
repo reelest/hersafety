@@ -10,7 +10,7 @@ import Await from "./Await";
 import sentenceCase from "@/utils/sentenceCase";
 import { Link, Typography } from "@mui/material";
 import ModelItemPreview from "./ModelItemPreview";
-import { memo } from "react";
+import { Fragment, memo } from "react";
 
 /**
  * @param {Object} param0
@@ -96,10 +96,10 @@ function _ModelDataView({
         return (
           <div className="flex flex-wrap" style={{ maxWidth: "20rem" }}>
             {value.map((e, i, a) => (
-              <>
-                <ModelDataView value={e} meta={meta.arrayType} key={"" + i} />
+              <Fragment key={"" + i}>
+                <ModelDataView value={e} meta={meta.arrayType} />
                 {a[i + 1] ? ", " : ""}
-              </>
+              </Fragment>
             ))}
           </div>
         );

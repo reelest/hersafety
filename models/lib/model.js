@@ -6,7 +6,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { firestore } from "@/logic/firebase_init";
+import { firestoreNS, firestore } from "@/logic/firebase_init";
 import { InvalidState, ItemDoesNotExist, checkError } from "./errors";
 import getModelTypeInfo from "./model_type_info";
 import pick from "@/utils/pick";
@@ -45,8 +45,8 @@ export class Model {
    */
   constructor(_collectionID, ItemClass = Item, meta) {
     this._ref = noFirestore
-      ? { path: _collectionID }
-      : collection(firestore, _collectionID);
+      ? { path: firestoreNS + _collectionID }
+      : collection(firestore, firestoreNS + _collectionID);
     this._Item = ItemClass ?? Item;
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
@@ -152,7 +152,7 @@ export class Model {
       : doc(this._ref, ...id);
   }
   uniqueName() {
-    return this._ref.path;
+    return this._ref.path.substring(firestoreNS.length);
   }
   fields() {
     return Object.keys(this.Meta).filter((e) => e[0] !== "!");
@@ -209,9 +209,9 @@ export class Item {
     Used for creating and overwriting documents in firestore.
   */
   async save(txn) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
     if (!this._isCreated)
-      throw InvalidState("Cannot save item that is not initialized.");
+      throw new InvalidState("Cannot save item that is not initialized.");
     if (this.#isLocalOnly) {
       // We add merge:true here to handle Metadata and SchoolData's unique case (non-unique uids).
       // Might refactor out later
@@ -232,22 +232,24 @@ export class Item {
   /**
    *
    * @param {Record<keyof ThisParameterType, any>} data
-   * @param {*} txn
+   * @param {Txn} txn
    */
   async set(data, txn) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
 
     //needed especially to trigger update transactions
     this.setData(data);
     if (this.#isLocalOnly) {
       await this.save(txn);
-    } else await this._update(txn, data);
+    } else {
+      await this._update(txn, data);
+    }
   }
 
   async _update(txn, data) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
     if (!this._isCreated)
-      throw InvalidState("Cannot save item that is not initialized.");
+      throw new InvalidState("Cannot save item that is not initialized.");
     if (this._useFastUpdate) {
       if (!txn)
         throw new InvalidState("Fast updates can only be done in transactions");
@@ -263,7 +265,7 @@ export class Item {
   // if restoration was made possible by marking it as local only,
   // each client would be able to restore potentially conflicting versions of the same document.
   async delete(txn) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
     if (txn) txn.delete(this._ref);
     else await deleteDoc(this._ref);
   }
@@ -274,52 +276,56 @@ export class Item {
     return Object.assign({}, this);
   }
   setData(d) {
-    const validKeys = Object.keys(this).filter((e) => hasProp(d, e));
-    Object.assign(this, pick(d, validKeys));
+    Object.keys(this).forEach((e) => {
+      if (hasProp(d, e)) {
+        let m = this.validate(e, d[e]);
+        if (m !== undefined) this[e] = m;
+      }
+    });
   }
   validate(key, val) {
     const valueType = typeOf(val);
     const expectedType = typeOf(this[key]);
     if (valueType === expectedType) return val;
+    if (valueType === "null" && expectedType === "string") return "";
     if (valueType === "timestamp" && expectedType === "date") {
       return val.toDate();
-    } else if (
+    }
+    if (
       isUpdateValue(val) &&
       (expectedType === "array" ||
         expectedType === "number" ||
         expectedType === "date")
     ) {
       return val; //Allow this for now.
-    } else if (
-      valueType === "string" &&
-      expectedType === "number" &&
-      !isNaN(val)
-    ) {
+    }
+    if (valueType === "string" && expectedType === "number" && !isNaN(val)) {
       return Number(val);
-    } else if (valueType === "number" && expectedType === "date") {
+    }
+    if (valueType === "number" && expectedType === "date") {
       return new Date(val);
-    } else if (
+    }
+    if (
       valueType === "string" &&
       expectedType === "date" &&
       !Number.isNaN(Date.parse(val))
     ) {
       return new Date(val);
-    } else {
-      console.warn(
-        "Ignored attempt to supply invalid data for " +
-          this.model()?.uniqueName?.() +
-          "." +
-          key +
-          " " +
-          expectedType +
-          " is not compatible with " +
-          valueType +
-          " value =",
-        val,
-        "."
-      );
-      return undefined;
     }
+    console.warn(
+      "Ignored attempt to supply invalid data for " +
+        this.model()?.uniqueName?.() +
+        "." +
+        key +
+        " " +
+        expectedType +
+        " is not compatible with " +
+        valueType +
+        " value =",
+      val,
+      "."
+    );
+    return undefined;
   }
   asQuery() {
     return new DocumentQueryCursor(this._ref);

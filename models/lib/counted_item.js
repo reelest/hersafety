@@ -47,6 +47,7 @@ export class CountedItem extends Item {
 
   // eslint-disable-next-line no-unused-vars
   didUpdate(prop) {
+    if (this.isLocalOnly()) return true;
     if (this.#needsTransaction === NO_TRANSACTION_NEEDED) return false;
     if (!this.#inUpdate)
       throw new InvalidState(
@@ -64,23 +65,17 @@ export class CountedItem extends Item {
    */
   async atomicUpdate(cb, needsPrevState = true, txn, prevState) {
     if (txn) {
-      try {
-        if (this.#inUpdate) throw InvalidState("Nested Update!!");
-        this.#inUpdate = true;
-        if (
-          (needsPrevState ||
-            (!this.isLocalOnly() &&
-              this.#needsTransaction === TRANSACTION_NEEDED)) &&
-          !prevState
-        ) {
-          prevState = await this.read(txn);
-          //TODO: Should this throw an error
-          if (prevState === undefined) return false;
-        }
-        return await cb(txn, prevState);
-      } finally {
-        this.#inUpdate = false;
+      if (
+        (needsPrevState ||
+          (!this.isLocalOnly() &&
+            this.#needsTransaction === TRANSACTION_NEEDED)) &&
+        !prevState
+      ) {
+        prevState = await this.read(txn);
+        //TODO: Should this throw an error
+        if (prevState === undefined) return false;
       }
+      return await cb(txn, prevState);
     } else {
       return Txn.run((txn) =>
         this.atomicUpdate(cb, needsPrevState, txn, prevState)
@@ -96,21 +91,28 @@ export class CountedItem extends Item {
         }
       }
     }
-    const ret = await this.atomicUpdate(
-      async (txn, prevState) => {
-        await super._update(txn, newState, prevState);
-        await this.onUpdateItem(txn, newState, prevState);
-      },
-      this.#needsTransaction === TRANSACTION_NEEDED,
-      txn,
-      prevState
-    );
-    this.#updatedKeys.length = 0;
-    this.#needsTransaction = NO_TRANSACTION_NEEDED;
-    return ret;
+    try {
+      if (this.#inUpdate) throw new InvalidState("Nested Update!!");
+      this.#inUpdate = true;
+
+      const ret = await this.atomicUpdate(
+        async (txn, prevState) => {
+          await super._update(txn, newState, prevState);
+          await this.onUpdateItem(txn, newState, prevState);
+        },
+        this.#needsTransaction === TRANSACTION_NEEDED,
+        txn,
+        prevState
+      );
+      this.#updatedKeys.length = 0;
+      this.#needsTransaction = NO_TRANSACTION_NEEDED;
+      return ret;
+    } finally {
+      this.#inUpdate = false;
+    }
   }
   async save(txn) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
     if (this.isLocalOnly()) {
       //TODO: Needs testing to assert that isLocalOnly assertion is actually true
       await ensureCounter(this.model());
@@ -129,17 +131,31 @@ export class CountedItem extends Item {
     this.#needsTransaction = NO_TRANSACTION_NEEDED;
   }
   async delete(txn, prevState) {
-    if (noFirestore) throw InvalidState("No Firestore!!");
+    if (noFirestore) throw new InvalidState("No Firestore!!");
+    if (this[propsNeedingUpdateTxn]) {
+      for (let key of this[propsNeedingUpdateTxn]) {
+        if (!this.#updatedKeys.includes(key)) {
+          this.#updatedKeys.push(key);
+        }
+      }
+    }
 
-    await this.atomicUpdate(
-      async (txn, prevState) => {
-        await super.delete(txn);
-        await this.onDeleteItem(txn, prevState);
-      },
-      true,
-      txn,
-      prevState
-    );
+    try {
+      if (this.#inUpdate) throw new InvalidState("Nested Update!!");
+      this.#inUpdate = true;
+
+      await this.atomicUpdate(
+        async (txn, prevState) => {
+          await super.delete(txn);
+          await this.onDeleteItem(txn, prevState);
+        },
+        true,
+        txn,
+        prevState
+      );
+    } finally {
+      this.#inUpdate = false;
+    }
   }
 
   // eslint-disable-next-line no-unused-vars

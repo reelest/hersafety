@@ -8,7 +8,7 @@ export class Payment extends CountedItem {
   date = new Date();
 }
 
-const Payments = new CountedModel("m_payments", Payment, {
+const Payments = new CountedModel("payments", Payment, {
   [MODEL_ITEM_PREVIEW](item) {
     return {
       title: "#Paid " + formatNumber(item.amount),

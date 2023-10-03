@@ -1,6 +1,8 @@
 import UpdateValue from "./update_value";
 import { Model, Item, noFirestore, USES_EXACT_IDS } from "./model";
 import { CountedItem } from "./counted_item";
+import { singular } from "@/utils/plural";
+import { hasOneOrMore } from "./trackRefs";
 
 const createdCounters = new Set();
 
@@ -55,5 +57,22 @@ export class CountedModel extends Model {
   }
   async initCounter(item) {
     item.itemCount = UpdateValue.add(0);
+  }
+  /**
+   * @template {Item} L
+   * @param {Model<L>} modelB
+   * @param {keyof L} fieldB
+   * @param {{
+   *    field: keyof T,
+   *    deleteOnRemove: boolean
+   * }} opts
+   */
+  async hasOneOrMore(
+    modelB,
+    fieldB = modelB.Meta[singular(this.uniqueName())] &&
+      singular(this.uniqueName()),
+    { field = singular(modelB.uniqueName()), deleteOnRemove = false } = {}
+  ) {
+    return hasOneOrMore(this, field, modelB, fieldB, deleteOnRemove);
   }
 }

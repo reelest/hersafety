@@ -22,3 +22,4 @@ const app = isServerSide ? null : initializeApp(firebaseConfig);
 export const firestore = isServerSide ? null : getFirestore(app);
 export const storage = isServerSide ? null : getStorage(app);
 export const auth = isServerSide ? null : getAuth(app);
+export const firestoreNS = "m_";

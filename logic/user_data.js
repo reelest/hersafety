@@ -6,6 +6,7 @@ import { minutesToMs } from "@/utils/time_utils";
 import { checkError } from "@/models/lib/errors";
 import { FirebaseError } from "firebase/app";
 import createSubscription from "@/utils/createSubscription";
+import Clients from "@/models/client";
 
 const lookupRole = async (uid) => (await UserRoles.getOrCreate(uid, noop)).role;
 
@@ -19,12 +20,8 @@ export const updateUserRole = async (uid, role) => {
  */
 export const mapRoleToUserModel = (role) => {
   switch (role) {
-    case "student":
-      return Students;
-    case "teacher":
-      return Teachers;
-    case "parent":
-      return Parents;
+    case "client":
+      return Clients;
     case "admin":
       return Admins;
   }

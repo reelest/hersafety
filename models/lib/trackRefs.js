@@ -15,14 +15,21 @@ function toArray(e) {
 const updateSink = [];
 const withUpdate = async (item, prop, cb) => {
   const x = { m: item.model(), id: item.id(), prop };
-  if (updateSink.some((e) => e.m === x.m && e.id === x.id && e.prop === x.prop))
+  if (
+    updateSink.some(
+      (e) =>
+        e.m === x.m &&
+        e.id === x.id &&
+        (!e.prop || !x.prop || e.prop === x.prop)
+    )
+  )
     return;
   try {
-    console.log("Updating ", x);
+    console.log("Updating ", item.uniqueName() + "." + prop);
     updateSink.push(x);
     return await cb();
   } finally {
-    console.log("Updated", x);
+    console.log("Updated ", item.uniqueName() + "." + prop);
     updateSink.splice(updateSink.indexOf(x), 1);
   }
 };
@@ -46,8 +53,6 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
         const oldValue = item.isLocalOnly()
           ? []
           : toArray((await item.read(txn))?.[e]);
-        console.log({ newValue, oldValue });
-        console.log({ newValue, oldValue });
         const added = newValue.filter(notIn(oldValue));
         const removed = oldValue.filter(notIn(newValue));
         await Promise.all(
@@ -57,9 +62,11 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
               meta.type === "array" ? meta.arrayType.refModel : meta.refModel;
             const refItem = refModel.item(id);
             await Promise.all(
-              RemoveActions[e].map(async (action) => {
-                await action.run(txn, item, refItem);
-              })
+              RemoveActions[e].map(async (action) =>
+                withUpdate(refItem, action.prop, () =>
+                  action.run(txn, item, refItem)
+                )
+              )
             );
           })
         );
@@ -74,9 +81,11 @@ export async function onRefsUpdateItem(item, txn, newState, isUpdate = true) {
             }
             const refItem = created ?? refModel.item(id);
             await Promise.all(
-              AddActions[e].map(async (action) => {
-                await action.run(txn, item, refItem);
-              })
+              AddActions[e].map(async (action) =>
+                withUpdate(refItem, action.prop, () =>
+                  action.run(txn, item, refItem)
+                )
+              )
             );
           })
         );
@@ -211,14 +220,16 @@ export function trackRefs(ItemClass, props, addActions, removeActions) {
       {},
       prev ? prev.AddActions : null,
       ...props.map((e) => ({
-        [e]: prev ? prev.AddActions[e].concat(addActions) : addActions ?? [],
+        [e]: prev?.AddActions?.[e]
+          ? prev.AddActions[e].concat(addActions)
+          : addActions ?? [],
       }))
     ),
     RemoveActions: Object.assign(
       {},
       prev ? prev.RemoveActions : null,
       ...props.map((e) => ({
-        [e]: prev
+        [e]: prev?.RemoveActions?.[e]
           ? prev.RemoveActions[e].concat(removeActions)
           : removeActions ?? [],
       }))
@@ -229,87 +240,54 @@ export function trackRefs(ItemClass, props, addActions, removeActions) {
 }
 
 /**
- * Actions are used to implement associations
- * Following the method used by sequelize, associations are of four types
- * i. A HasOne B - 1-to-1 with foreign key defined in B
- * ii. A BelongsTo B - 1-to-1 with foreign key defined in A
- * iii. A hasMany B - 1-to-many with foreign key defined in B
- * iv. A belongsToMany B - there is a mapping table between A and B
+ * @typedef {import("./model").Item} Item
  */
-
 /**
- * @template {import("./model").Item} K
- * @template {import("./model").Item} L
- * @param {import("./model").Model<K>} model1
- * @param {keyof K} prop1
- * @param {import("./model").Model<L>} model2
- * @param {keyof L} prop2
+ * Actions are used to implement associations
+ * @template {Item} K
+ * @template {Item} L
+ * @param {import("./model").Model<K>} modelA
+ * @param {keyof K} fieldA
+ * @param {import("./model").Model<L>} modelB
+ * @param {keyof L} fieldB
  * @param {boolean} deleteOnRemove
  */
-export function associateModels(
-  model1,
-  prop1,
-  model2,
-  prop2,
+export function hasOneOrMore(
+  modelA,
+  fieldA,
+  modelB,
+  fieldB,
   deleteOnRemove,
   noRecurse
 ) {
-  const isTwoWay = !!prop2;
-  const isArray1 = model1.Meta[prop1].type === "array";
-  const isArray2 = isTwoWay && model2.Meta[prop2].type === "array";
+  const isTwoWay = !!fieldB;
+  const isArray1 = modelA.Meta[fieldA].type === "array";
+  const isArray2 = isTwoWay && modelB.Meta[fieldB].type === "array";
   if (isArray2 && deleteOnRemove)
     throw new InvalidParameters("Cannot use deleteOnRemove with array target");
+
   trackRefs(
-    model1._Item,
-    [prop1],
+    modelA._Item,
+    [fieldA],
     [
       isArray2
-        ? new AppendIDAction(prop2)
+        ? new AppendIDAction(fieldB)
         : isTwoWay
-        ? new SetIDAction(prop2)
+        ? new SetIDAction(fieldB)
         : null,
     ].filter(Boolean),
     [
       deleteOnRemove
         ? new DeleteItemAction()
         : isTwoWay
-        ? new UnsetIDAction(prop2)
+        ? new UnsetIDAction(fieldB)
         : null,
     ].filter(Boolean)
   );
 
-  if (isArray1) model1.Meta[prop1].arrayType.refModel = model2;
-  else model1.Meta[prop1].refModel = model2;
+  if (isArray1) modelA.Meta[fieldA].arrayType.refModel = modelB;
+  else modelA.Meta[fieldA].refModel = modelB;
   if (!noRecurse && isTwoWay) {
-    associateModels(model2, prop2, model1, prop1, false, true);
+    hasOneOrMore(modelB, fieldB, modelA, fieldA, false, true);
   }
-}
-/**
- * @template {Item} K
- * @template {Item} L
- * @param {import("./model").Model<K>} model1
- * @param {keyof K} prop1
- * @param {import("./model").Model<L>} model2
- * @param {keyof L} prop2
- * @param {boolean} deleteOnRemove
- */
-export function belongsTo(model1, prop1, model2, prop2, deleteOnRemove) {}
-
-/**
- * @template {Item} K
- * @template {Item} L
- * @param {import("./model").Model<K>} model1
- * @param {keyof K} prop1
- * @param {import("./model").Model<L>} model2
- * @param {keyof L} prop2
- * @param {boolean} deleteOnRemove
- */
-export function belongsToMany(model1, prop1, model2, prop2, deleteOnRemove) {
-  trackRefs(
-    model1,
-    [prop1],
-    [new SetIDAction(prop2)],
-    [deleteOnRemove ? new DeleteItemAction() : new RemoveIDAction(prop2)]
-  );
-  model2.Meta[prop2].refModel = model1;
 }
