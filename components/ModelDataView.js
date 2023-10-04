@@ -58,7 +58,7 @@ function _ModelDataView({
         return value;
       case "boolean":
         return (
-          <div className="text-center">
+          <div className="min-h-full  flex items-center justify-center">
             {value ? <TickCircle color="green" /> : <CloseCircle color="red" />}
           </div>
         );

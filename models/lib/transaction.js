@@ -94,7 +94,7 @@ export default class Txn {
   _call(txn) {
     const cbs = this.cbs;
     this.cbs = [];
-    cbs.forEach(([method, ...args]) => txn[method](...args));
+    compress(cbs).forEach(([method, ...args]) => txn[method](...args));
   }
   commit() {
     if (this.useTxn) {
@@ -164,3 +164,24 @@ export default class Txn {
     // if (process.env.NODE_ENV !== "production") console.log(this.id, ...val);
   }
 }
+
+const compress = (cbs) => {
+  // Split callbacks by refs
+  const map = [];
+  cbs.forEach((e) =>
+    map
+      .find(
+        (x) =>
+          refEqual(x.ref, e[1]) || map[map.push({ ref: e[1], cbs: [] }) - 1]
+      )
+      .cbs.push(e)
+  );
+  map.forEach(x=>x.cbs= x.cbs.reduce((a,e)=>{
+    let m =a[a.length-1];
+    if(m){
+      // Check if adjacent sets can be merged
+      if(m[0])
+    }
+  },[]))
+  // Check if adjacent updates can be merged
+};

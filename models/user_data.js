@@ -67,6 +67,10 @@ export class UserData extends CountedItem {
       );
     await UserRoles.item(this.id()).delete(txn);
   }
+  async onUpdateItem(txn, prevState) {
+    await super.onUpdateItem(txn, prevState);
+    await this.set({ lastUpdated: Date.now() }, txn);
+  }
   async onAddItem(txn, newState) {
     await super.onAddItem(txn, newState);
     await UserRoles.getOrCreate(
@@ -91,6 +95,7 @@ export class UserData extends CountedItem {
   static {
     trackFiles(this, ["photoURL"]);
     this.markTriggersUpdateTxn(["profileCompleted"]);
+
     indexForSearch(this, [
       "firstName",
       "lastName",

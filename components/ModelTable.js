@@ -91,6 +91,7 @@ export default function ModelTable({
         ) : null}
         <ThemedTable
           // title={pluralTitle}
+
           headers={headers.concat(actions.map(() => ""))}
           results={Query ? items : []}
           pager={pager}
@@ -112,23 +113,17 @@ export default function ModelTable({
             addHeaderClass("pr-4"),
             addClassToColumns("w-0", [props.length, props.length + 1]),
             supplyModelValues(props),
-            ({ attrs: { style, ...attrs }, next }) =>
-              next({
-                attrs: {
-                  ...attrs,
-                  style: { ...style, paddingTop: 0, paddingBottom: 0 },
-                },
-              }),
+
             supplyValue((row, col, data) => {
+              if (!data) return;
               col -= props.length;
               switch (actions[col]) {
                 case "e":
                   return (
                     <IconButton
                       color="primary"
-                      onClick={(e) => {
+                      onClick={() => {
                         showModal(row);
-                        e.stopPropagation();
                       }}
                     >
                       <Edit />
@@ -138,8 +133,7 @@ export default function ModelTable({
                   return (
                     <IconButton
                       color="error"
-                      onClick={async (e) => {
-                        e.stopPropagation();
+                      onClick={async () => {
                         if (await confirm("Delete selected item")) {
                           await data[row].delete();
                         }

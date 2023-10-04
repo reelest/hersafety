@@ -22,7 +22,10 @@ export default function UserRedirect({
       if (!isServerSide) router.replace("/login");
       return <FullscreenLoader />;
     }
-  } else if (redirectOnUser) {
+  } else if (
+    redirectOnUser ||
+    !router.route.startsWith(DASHBOARD_URL[userData.getRole()])
+  ) {
     if (!isServerSide) router.replace(DASHBOARD_URL[userData.getRole()]);
     return <FullscreenLoader />;
   }

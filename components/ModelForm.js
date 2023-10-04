@@ -57,7 +57,7 @@ export default function ModelForm({
 
   return (
     <ItemStoreContext.Provider
-      value={noSave && outerStore ? outerStore.keep : itemStore.current.keep}
+      value={noSave && outerStore ? outerStore : itemStore.current.keep}
     >
       <Form
         key={item?.id?.() ?? ""}

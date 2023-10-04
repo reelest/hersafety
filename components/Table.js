@@ -23,6 +23,7 @@ const borderSpacings = [
   "border-spacing-y-4",
   "border-spacing-y-5",
 ];
+
 export default function Table({
   data,
   rows = Array.isArray(data) ? data.length : 0,
@@ -80,10 +81,13 @@ export default function Table({
               as="tr"
               key={row}
               onClick={
-                onClickRow
-                  ? (e) => onClickRow(e, row)
-                  : setSelected
-                  ? () => setSelected(selected === row ? -1 : row)
+                onClickRow || setSelected
+                  ? (e) => {
+                      shouldIgnoreClick(e) ||
+                        (onClickRow
+                          ? onClickRow(e, row)
+                          : setSelected(selected === row ? -1 : row));
+                    }
                   : null
               }
               {...(typeof rowProps === "function" ? rowProps(row) : {})}
@@ -123,6 +127,16 @@ export const TableButton = ({ onClick, ...props }) => {
   );
 };
 
+const shouldIgnoreClick = (e) => {
+  let m = e.target;
+  while (m && m !== e.currentTarget) {
+    if (/^(?:BUTTON|A)$/.test(m.tagName)) {
+      return true;
+    }
+    m = m.parentElement;
+  }
+  return false;
+};
 /**
  * Render Hooks
  * @typedef {string|import("react").Component} TableCellValue

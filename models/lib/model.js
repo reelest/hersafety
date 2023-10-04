@@ -17,6 +17,7 @@ import typeOf from "@/utils/typeof";
 import hasProp from "@/utils/hasProp";
 import { isUpdateValue } from "./update_value";
 import { None } from "@/utils/none";
+import { getItemFromStore } from "./item_store";
 /**
  * (new|(?<!Model )extends) \w*Model\b
  */
@@ -156,6 +157,14 @@ export class Model {
   }
   fields() {
     return Object.keys(this.Meta).filter((e) => e[0] !== "!");
+  }
+  async preview(id) {
+    let item = getItemFromStore(this.ref(id));
+    if (!item) {
+      item = this.item(item);
+    }
+    if (!item._isLoaded) await item.load();
+    return item;
   }
 }
 

@@ -58,13 +58,12 @@ export default function PrescriptionsPage() {
               if (col === 3) {
                 /** @type {Prescription} */
                 const data = prescriptions[row];
-                if (data.paid) {
+                if (data?.paid) {
                   return "Paid";
                 } else {
                   return userRole === "admin" ? (
                     <Button
-                      onClick={async (e) => {
-                        e.stopPropagation();
+                      onClick={async () => {
                         await data.acceptPayment();
                       }}
                     >

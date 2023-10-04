@@ -39,6 +39,7 @@ import { noop } from "@/utils/none";
 import useLogger from "@/utils/useLogger";
 import typeOf from "@/utils/typeof";
 import { getItemFromStore } from "@/models/lib/item_store";
+import Spacer from "./Spacer";
 
 export const SKIP_PICKER = "!skip-preview";
 /**
@@ -176,7 +177,7 @@ function RefField({
   }, [skipPicker, activeItem, newItem, loaded]);
   useLogger({ value, activeItem, loaded });
   return (
-    <div className="flex items-end">
+    <div className="flex items-end flex-wrap justify-end">
       <input
         name={name}
         value={value}
@@ -188,27 +189,32 @@ function RefField({
         style={{ padding: 0, maxWidth: 0, border: "none" }}
       />
       {pickerQuery ? (
-        <PickRef
-          {...{
-            value,
-            disabled,
-            setValue,
-            activePreview: activeItem,
-            query: pickerQuery,
-            props,
-          }}
-        />
-      ) : (
         <>
-          <div className="flex h-10 items-center">
-            <ModelItemPreview item={activeItem} {...props} />
-          </div>
+          <PickRef
+            {...{
+              value,
+              disabled,
+              setValue,
+              activePreview: activeItem,
+              query: pickerQuery,
+              props,
+            }}
+          />
+          <Spacer />
+        </>
+      ) : (
+        <div className="flex flex-grow h-10 items-center">
+          <ModelItemPreview
+            item={activeItem}
+            {...props}
+            sx={{ ...props.sx, minWidth: 0, flexGrow: 1 }}
+          />
           {!disabled ? (
             <IconButton onClick={() => setValue("")}>
               <CloseCircle />
             </IconButton>
           ) : null}
-        </>
+        </div>
       )}
       {!disabled && allowCreate ? (
         newItemModalOpen ? (

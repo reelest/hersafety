@@ -29,7 +29,7 @@ const DrugDetails = new CountedModel("drug_details", DrugDetail, {
   },
 
   async [MODEL_ITEM_PREVIEW](item) {
-    const drug = await Drugs.item(item.drug).load();
+    const drug = await Drugs.preview(item.drug);
     return {
       title: `${drug.name}(${item.amount})`,
     };
