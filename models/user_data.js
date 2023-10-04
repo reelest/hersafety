@@ -38,6 +38,9 @@ export class UserData extends CountedItem {
   getName() {
     return `${this.firstName} ${this.otherNames} ${this.lastName}`;
   }
+  canUpgradeFrom(role) {
+    return false;
+  }
   getRole() {
     return "guest";
   }
@@ -67,8 +70,9 @@ export class UserData extends CountedItem {
     await UserRoles.getOrCreate(
       this.id(),
       async (userRole, txn) => {
-        // TODO : Handle previous roles
-        await userRole.set({ role: this.getRole() }, txn);
+        // TODO : Handle previous UserRoles
+        if (userRole.isLocalOnly() || this.canUpgradeFrom(userRole.role))
+          await userRole.set({ role: this.getRole() }, txn);
       },
       txn
     );

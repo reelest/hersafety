@@ -42,14 +42,14 @@ const loadUserData = async (user) => {
             item.email = user.email;
             item.emailVerified = user.emailVerified;
             item.phoneNumber = user.phoneNumber;
-          } else {
-            const lastLogin = new Date();
-            if (
-              Math.abs(lastLogin.getTime() - item.lastLogin.getTime()) >
-              minutesToMs(1)
-            )
-              await item.set({ lastLogin }, txn);
           }
+          const lastLogin = new Date();
+          if (
+            item.isLocalOnly() ||
+            Math.abs(lastLogin.getTime() - item.lastLogin.getTime()) >
+              minutesToMs(1)
+          )
+            await item.set({ lastLogin }, txn);
         }
       )) ?? UserData.of(user)
     );

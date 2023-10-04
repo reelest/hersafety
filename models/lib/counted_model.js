@@ -44,7 +44,7 @@ export class CountedModel extends Model {
    */
   constructor(_collectionID, ItemClass = CountedItem, ...props) {
     super(_collectionID, ItemClass ?? CountedItem, ...props);
-    this.counter = Metadata.item(this._ref.path);
+    this.counter = Metadata.item(this.uniqueName());
     if (!noFirestore)
       ensureCounter(this).catch((e) => {
         console.error(`Failed to ensure counter ${e}`);

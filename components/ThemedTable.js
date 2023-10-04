@@ -50,6 +50,7 @@ function ThemedTable({
         onClickRow={onClickRow}
         cols={headers.length}
         rows={Math.min(pageSize, results?.length)}
+        minRows={Math.min(pageSize, results?.length + 2)}
         headers={headers}
         rowSpacing={1}
         headerClass="text-disabled text-left"

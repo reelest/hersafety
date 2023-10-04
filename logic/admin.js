@@ -37,6 +37,7 @@ const parseName = (name) => {
   };
 };
 /**
+ * Turn a guest user into a real user
  * @param {({role: string, uid: string, name: string} & import("@/models/lib/model_type_info").Item?)} activationRequest
  */
 export const activateUser = async (activationRequest) => {

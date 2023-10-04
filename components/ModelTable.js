@@ -110,17 +110,27 @@ export default function ModelTable({
           }}
           renderHooks={[
             addHeaderClass("pr-4"),
-            addClassToColumns("w-0 pt-0 pb-0", [
-              props.length,
-              props.length + 1,
-            ]),
+            addClassToColumns("w-0", [props.length, props.length + 1]),
             supplyModelValues(props),
+            ({ attrs: { style, ...attrs }, next }) =>
+              next({
+                attrs: {
+                  ...attrs,
+                  style: { ...style, paddingTop: 0, paddingBottom: 0 },
+                },
+              }),
             supplyValue((row, col, data) => {
               col -= props.length;
               switch (actions[col]) {
                 case "e":
                   return (
-                    <IconButton color="primary" onClick={() => showModal(row)}>
+                    <IconButton
+                      color="primary"
+                      onClick={(e) => {
+                        showModal(row);
+                        e.stopPropagation();
+                      }}
+                    >
                       <Edit />
                     </IconButton>
                   );
@@ -128,7 +138,8 @@ export default function ModelTable({
                   return (
                     <IconButton
                       color="error"
-                      onClick={async () => {
+                      onClick={async (e) => {
+                        e.stopPropagation();
                         if (await confirm("Delete selected item")) {
                           await data[row].delete();
                         }

@@ -47,9 +47,6 @@ export default function Table({
       className={`${className} ${
         rowSpacing > 0 ? "border-separate" : "border-collapse"
       } ${borderSpacings[rowSpacing]}`}
-      style={{
-        minHeight: minRows + "em",
-      }}
     >
       <thead className={headerClass}>
         <tr>
@@ -78,7 +75,7 @@ export default function Table({
             </td>
           </tr>
         ) : (
-          range(rows).map((row) => (
+          range(Math.max(rows, minRows)).map((row) => (
             <Box
               as="tr"
               key={row}
@@ -151,7 +148,7 @@ const toReactComponent = (e) => {
 const renderTableCell = ({ data, row, col, classes, attrs }) => {
   return row >= 0 ? (
     <td key={row + ";" + col} className={classes.join(" ")} {...attrs}>
-      {toReactComponent(Array.isArray(data) ? data[row][col] : data)}
+      {toReactComponent(Array.isArray(data?.[row]) ? data[row][col] : data)}
     </td>
   ) : (
     <th key={col} className={classes.join(" ")} {...attrs}>
