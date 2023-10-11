@@ -37,8 +37,7 @@ export class CountedItem extends Item {
   #updatedKeys = [];
   _scheduleUpdateTxn(needsPrevState, prop) {
     if (!this.#updatedKeys.includes(prop)) this.#updatedKeys.push(prop);
-    if (!this.isLocalOnly())
-      console.trace("Scheduling transaction for " + prop + ".....");
+    // TODO - ensure all transaction updates are necessary
     this.#needsTransaction = Math.max(
       this.#needsTransaction,
       needsPrevState ? TRANSACTION_NEEDED : TRANSACTION_NEEDED_NO_PREV_STATE
@@ -82,6 +81,19 @@ export class CountedItem extends Item {
       );
     }
   }
+  async _create(txn) {
+    //TODO: Needs testing to assert that isLocalOnly assertion is actually true
+    await ensureCounter(this.model());
+    await this.atomicUpdate(
+      async (txn) => {
+        await super._create(txn);
+        await this.onAddItem(txn, this.data());
+      },
+      false,
+      txn,
+      null
+    );
+  }
   async _update(txn, newState, prevState = null) {
     if (this[propsNeedingUpdateTxn]) {
       newState = { ...newState };
@@ -112,21 +124,7 @@ export class CountedItem extends Item {
     }
   }
   async save(txn) {
-    if (noFirestore) throw new InvalidState("No Firestore!!");
-    if (this.isLocalOnly()) {
-      //TODO: Needs testing to assert that isLocalOnly assertion is actually true
-      await ensureCounter(this.model());
-      await this.atomicUpdate(
-        async (txn) => {
-          await super.save(txn);
-          await this.onAddItem(txn, this.data());
-        },
-        false,
-        txn,
-        null
-      );
-    } else await super.save(txn); // Guaranteed to call _update
-
+    await super.save(txn);
     this.#updatedKeys.length = 0;
     this.#needsTransaction = NO_TRANSACTION_NEEDED;
   }
@@ -208,7 +206,6 @@ export class CountedItem extends Item {
             this._isLoaded &&
             !deepEqual(v, this[storedValue])
           ) {
-            console.trace("Update triggered for " + e, v, this[storedValue]);
             this._scheduleUpdateTxn(needsPrevState, e);
           }
           this[storedValue] = v;

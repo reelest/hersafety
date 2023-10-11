@@ -56,6 +56,13 @@ export class UserData extends CountedItem {
     return m;
   }
 
+  async _update(txn, newState, prevState) {
+    return super._update(
+      txn,
+      Object.assign(newState, { lastUpdated: Date.now() }),
+      prevState
+    );
+  }
   async onDeleteItem(txn, prevState) {
     await super.onDeleteItem(txn, prevState);
     if (prevState.profileCompleted)
@@ -66,10 +73,6 @@ export class UserData extends CountedItem {
         txn
       );
     await UserRoles.item(this.id()).delete(txn);
-  }
-  async onUpdateItem(txn, prevState) {
-    await super.onUpdateItem(txn, prevState);
-    await this.set({ lastUpdated: Date.now() }, txn);
   }
   async onAddItem(txn, newState) {
     await super.onAddItem(txn, newState);

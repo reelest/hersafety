@@ -24,6 +24,12 @@ const borderSpacings = [
   "border-spacing-y-5",
 ];
 
+/**
+ *
+ * @param {Object} props
+ * @param {Array<TableRenderHook>} props.renderHooks
+ * @returns
+ */
 export default function Table({
   data,
   rows = Array.isArray(data) ? data.length : 0,
@@ -34,7 +40,7 @@ export default function Table({
   scrollable,
   headerClass = "border-b text-left",
   bodyClass = "leading-relaxed",
-  minRows = 5,
+  minRows = 0,
   rowProps,
   rowSpacing = 0,
   onClickRow,
@@ -93,7 +99,14 @@ export default function Table({
               {...(typeof rowProps === "function" ? rowProps(row) : {})}
             >
               {range(cols).map((j) =>
-                callHooks(data, row, j, [], {}, renderHooks)
+                callHooks(
+                  row >= rows ? null : data,
+                  row,
+                  j,
+                  [],
+                  {},
+                  renderHooks
+                )
               )}
             </Box>
           ))
@@ -114,6 +127,7 @@ export const TableHeader = (props) => (
     className="flex justify-between mb-4 items-baseline"
   />
 );
+
 export const TableButton = ({ onClick, ...props }) => {
   const [selected] = useContext(TableContext);
   return (
@@ -137,6 +151,7 @@ const shouldIgnoreClick = (e) => {
   }
   return false;
 };
+
 /**
  * Render Hooks
  * @typedef {string|import("react").Component} TableCellValue

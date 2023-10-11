@@ -10,8 +10,6 @@ export const uploadAndGetUrl = async (url, fileName = url.split("/").pop()) => {
       file: url,
       fileName: fileName,
     });
-    console.log(result);
-    // throw new Error("Test");
     return result.url;
   } catch (e) {
     console.log(e.stack);

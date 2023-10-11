@@ -11,6 +11,9 @@ import { useUpdate } from "react-use";
 import { ModelFormField } from "./ModelFormField";
 import { getDefaultValue } from "@/models/lib/model_type_info";
 import pick from "@/utils/pick";
+import { checkError } from "@/models/lib/errors";
+import { FirestoreError } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
 const FORM_SECTION = "!modelform-section";
 
 const ItemStoreContext = createContext();
@@ -62,9 +65,19 @@ export default function ModelForm({
       <Form
         key={item?.id?.() ?? ""}
         onSubmit={async (data) => {
-          data = await prepareForUpload(data, meta);
-          if (!noSave) await item.set(data);
-          await onSubmit(data);
+          try {
+            data = await prepareForUpload(data, meta);
+            if (!noSave) await item.set(data);
+            await onSubmit(data);
+          } catch (e) {
+            checkError(e, FirebaseError);
+            console.error(e);
+            throw new Error(
+              e.code === "not-found"
+                ? "Server Error: One or more documents have been deleted since this operation started."
+                : "Unknown Server Error"
+            );
+          }
         }}
         initialValue={item ? prepareForRender(item.data(), meta) : None}
         {...props}

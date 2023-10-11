@@ -25,11 +25,11 @@ const withUpdate = async (item, prop, cb) => {
   )
     return;
   try {
-    console.log("Updating ", item.uniqueName() + "." + prop);
+    // console.log("Updating ", item.uniqueName() + "." + prop);
     updateSink.push(x);
     return await cb();
   } finally {
-    console.log("Updated ", item.uniqueName() + "." + prop);
+    // console.log("Updated ", item.uniqueName() + "." + prop);
     updateSink.splice(updateSink.indexOf(x), 1);
   }
 };
@@ -123,9 +123,9 @@ export class AppendIDAction extends Action {
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    console.log(
-      "appending " + item.id() + " to " + refItem.uniqueName() + "." + this.prop
-    );
+    // console.log(
+    //   "appending " + item.id() + " to " + refItem.uniqueName() + "." + this.prop
+    // );
     await refItem.set({ [this.prop]: UpdateValue.arrayUnion(item.id()) }, txn);
   }
 }
@@ -138,14 +138,14 @@ export class SetIDAction extends Action {
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    console.log(
-      "setting value " +
-        item.id() +
-        " for " +
-        refItem.uniqueName() +
-        "." +
-        this.prop
-    );
+    // console.log(
+    //   "setting value " +
+    //     item.id() +
+    //     " for " +
+    //     refItem.uniqueName() +
+    //     "." +
+    //     this.prop
+    // );
     await refItem.set({ [this.prop]: item.id() }, txn);
   }
 }
@@ -158,14 +158,14 @@ export class RemoveIDAction extends Action {
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    console.log(
-      "removing value " +
-        item.id() +
-        " from items in " +
-        refItem.uniqueName() +
-        "." +
-        this.prop
-    );
+    // console.log(
+    //   "removing value " +
+    //     item.id() +
+    //     " from items in " +
+    //     refItem.uniqueName() +
+    //     "." +
+    //     this.prop
+    // );
     await refItem.set({ [this.prop]: UpdateValue.arrayRemove(item.id()) }, txn);
   }
 }
@@ -178,14 +178,14 @@ export class UnsetIDAction extends Action {
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    console.log(
-      "clearing value " +
-        item.id() +
-        " for " +
-        refItem.uniqueName() +
-        "." +
-        this.prop
-    );
+    // console.log(
+    //   "clearing value " +
+    //     item.id() +
+    //     " for " +
+    //     refItem.uniqueName() +
+    //     "." +
+    //     this.prop
+    // );
     await refItem.set(
       { [this.prop]: getDefaultValue(refItem.model().Meta[this.prop]) },
       txn
@@ -201,7 +201,7 @@ export class DeleteItemAction extends Action {
    * @param {Item} refItem
    */
   async run(txn, item, refItem) {
-    console.log("deleting " + refItem.id());
+    // console.log("deleting " + refItem.id());
     await refItem.delete(txn);
   }
 }

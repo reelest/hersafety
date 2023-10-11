@@ -55,7 +55,13 @@ function inferType(value, key) {
       );
   }
 }
-
+export function guessMeta(value) {
+  try {
+    return _getModelPropInfo("?", value ?? "", {}, "?");
+  } catch (e) {
+    return null;
+  }
+}
 /**
  *
  * @param {string} key

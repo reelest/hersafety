@@ -158,10 +158,15 @@ export class Model {
   fields() {
     return Object.keys(this.Meta).filter((e) => e[0] !== "!");
   }
+  /**
+   *
+   * @param {String} id
+   * @returns {Promise<T>}
+   */
   async preview(id) {
     let item = getItemFromStore(this.ref(id));
     if (!item) {
-      item = this.item(item);
+      item = this.item(id);
     }
     if (!item._isLoaded) await item.load();
     return item;
@@ -222,17 +227,7 @@ export class Item {
     if (!this._isCreated)
       throw new InvalidState("Cannot save item that is not initialized.");
     if (this.#isLocalOnly) {
-      // We add merge:true here to handle Metadata and SchoolData's unique case (non-unique uids).
-      // Might refactor out later
-      if (txn) {
-        await txn.set(this._ref, this.data(), { merge: true });
-        txn.onCommit(() => {
-          this.#isLocalOnly = false;
-        });
-      } else {
-        await setDoc(this._ref, this.data(), { merge: true });
-        this.#isLocalOnly = false;
-      }
+      await this._create(txn);
     } else await this._update(txn, this.data());
   }
   /*
@@ -254,7 +249,19 @@ export class Item {
       await this._update(txn, data);
     }
   }
-
+  async _create(txn) {
+    // We add merge:true here to handle Metadata and SchoolData's unique case (non-unique uids).
+    // Might refactor out later
+    if (txn) {
+      await txn.set(this._ref, this.data(), { merge: true });
+      txn.onCommit(() => {
+        this.#isLocalOnly = false;
+      });
+    } else {
+      await setDoc(this._ref, this.data(), { merge: true });
+      this.#isLocalOnly = false;
+    }
+  }
   async _update(txn, data) {
     if (noFirestore) throw new InvalidState("No Firestore!!");
     if (!this._isCreated)

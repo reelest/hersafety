@@ -34,9 +34,11 @@ export default function ModelItemPreview({ item, ...props }) {
             checkError(e, ItemDoesNotExist);
           }
           if (item._isLoaded)
-            return item.model().Meta[MODEL_ITEM_PREVIEW](item);
+            return await item.model().Meta[MODEL_ITEM_PREVIEW](item);
         } else return { title: item.uniqueName() };
-      } else return { title: String(item) };
+      } else {
+        return { title: String(item) };
+      }
     }, [item]) ?? {};
   return (
     <Template as={Box} props={props}>

@@ -1,12 +1,10 @@
 import { Button, IconButton, Modal, Paper, Typography } from "@mui/material";
 import ModelFormField from "./ModelFormField";
 import Form, { FormField, FormSubmit } from "./Form";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Add, ArrowDown, ArrowUp, CloseCircle, Edit } from "iconsax-react";
 import deepEqual from "deep-equal";
 import { getDefaultValue } from "@/models/lib/model_type_info";
-import useLogger from "@/utils/useLogger";
-import ModelForm from "./ModelForm";
 import ModelDataView from "./ModelDataView";
 import Spacer from "./Spacer";
 
@@ -44,6 +42,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
   useEffect(() => {
     if (!showForm) setEdit(null);
   }, [showForm]);
+
   const initialValue = useMemo(
     () =>
       value.reduce((a, e, i) => ((a[_id(i)] = e), a), {
@@ -51,11 +50,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
-  // const displayMeta = useMemo(
-  //   () => value.reduce((a, e, i) => ((a[_id(i)] = meta.arrayType), a), {}),
-  //   [value, meta, _id]
-  // );
-  console.log({ initialValue });
+  console.log({ value });
   return (
     <>
       {/* For stop browser form validation errors*/}
@@ -74,7 +69,6 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
             index={i}
             value={value}
             setValue={setValue}
-            getId={_id}
             meta={meta.arrayType}
             setEdit={setEdit}
           />
@@ -127,7 +121,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
   );
 }
 
-function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
+function ModelFormArrayItem({ meta, index, value, setValue, setEdit }) {
   const e = value[index];
   const i = index;
   const move = (e, from, to) => {
@@ -147,11 +141,12 @@ function ModelFormArrayItem({ meta, index, value, setValue, getId, setEdit }) {
     },
     [value, setValue]
   );
-  const _value = value[index];
+  const _value = value[index] || undefined;
   useEffect(() => {
     if (meta.arrayType === "ref" && !_value) {
       remove(_value, index);
     }
+    //TODO handle missing refs
   }, [meta, _value, index, remove]);
   return (
     <div className="flex flex-wrap items-center" key={e}>

@@ -1,6 +1,7 @@
 import { firestore } from "@/logic/firebase_init";
 import { refEqual, runTransaction, writeBatch } from "firebase/firestore";
 import { InvalidState } from "./errors";
+import notIn from "@/utils/notIn";
 
 const promise = () => {
   let r, j;
@@ -94,7 +95,7 @@ export default class Txn {
   _call(txn) {
     const cbs = this.cbs;
     this.cbs = [];
-    compress(cbs).forEach(([method, ...args]) => txn[method](...args));
+    _compress(cbs).forEach(([method, ...args]) => txn[method](...args));
   }
   commit() {
     if (this.useTxn) {
@@ -165,23 +166,34 @@ export default class Txn {
   }
 }
 
-const compress = (cbs) => {
+export const _compress = (cbs) => {
   // Split callbacks by refs
   const map = [];
-  cbs.forEach((e) =>
-    map
-      .find(
-        (x) =>
-          refEqual(x.ref, e[1]) || map[map.push({ ref: e[1], cbs: [] }) - 1]
-      )
-      .cbs.push(e)
+  const method = 0,
+    ref = 1,
+    data = 2;
+  cbs.forEach((cb) =>
+    (
+      map.find((x) => refEqual(x.ref, cb[ref])) ||
+      map[map.push({ ref: cb[ref], cbs: [] }) - 1]
+    ).cbs.push(cb)
   );
-  map.forEach(x=>x.cbs= x.cbs.reduce((a,e)=>{
-    let m =a[a.length-1];
-    if(m){
-      // Check if adjacent sets can be merged
-      if(m[0])
-    }
-  },[]))
-  // Check if adjacent updates can be merged
+  return map
+    .map((x) =>
+      x.cbs.reduce((cbs, next) => {
+        let prev = cbs[cbs.length - 1];
+        if (prev) {
+          // Check if adjacent sets can be merged that is they modify different keys
+          if (
+            prev[method] === next[method] &&
+            (next[method] === "update" || next[method] === "set") &&
+            Object.keys(next[data]).every(notIn(Object.keys(prev[data])))
+          ) {
+            prev[data] = Object.assign({}, prev[data], next[data]);
+          } else cbs.push(next);
+        } else cbs.push(next);
+        return cbs;
+      }, [])
+    )
+    .flat();
 };

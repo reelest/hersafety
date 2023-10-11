@@ -65,7 +65,6 @@ export default function ModelTable({
         <ModelFormDialog
           isOpen={formVisible}
           edit={item}
-          onChange={console.log}
           onClose={() => setFormVisible(false)}
           model={Model}
         />
@@ -120,27 +119,31 @@ export default function ModelTable({
               switch (actions[col]) {
                 case "e":
                   return (
-                    <IconButton
-                      color="primary"
-                      onClick={() => {
-                        showModal(row);
-                      }}
-                    >
-                      <Edit />
-                    </IconButton>
+                    <div className="print:hidden">
+                      <IconButton
+                        color="primary"
+                        onClick={() => {
+                          showModal(row);
+                        }}
+                      >
+                        <Edit />
+                      </IconButton>
+                    </div>
                   );
                 case "d":
                   return (
-                    <IconButton
-                      color="error"
-                      onClick={async () => {
-                        if (await confirm("Delete selected item")) {
-                          await data[row].delete();
-                        }
-                      }}
-                    >
-                      <Trash />
-                    </IconButton>
+                    <div className="print:hidden">
+                      <IconButton
+                        color="error"
+                        onClick={async () => {
+                          if (await confirm("Delete selected item")) {
+                            await data[row].delete();
+                          }
+                        }}
+                      >
+                        <Trash />
+                      </IconButton>
+                    </div>
                   );
               }
               return data;

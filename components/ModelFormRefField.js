@@ -21,6 +21,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { _searchValue, _id } from "./SearchInput";
 import ModelItemPreview, { MODEL_ITEM_PREVIEW } from "./ModelItemPreview";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useDebounce, useIntersection, useUpdate } from "react-use";
@@ -86,17 +87,6 @@ async function* asyncIteratorOf(func) {
   yield* await func();
 }
 
-const _id = (e) =>
-  e instanceof IndexEntry ? e.getItemId() : e instanceof Item ? e.id() : e;
-
-const _searchValue = (e) =>
-  e instanceof IndexEntry
-    ? e.tokens
-    : e instanceof Item && e._isLoaded && e.model().Meta[MODEL_ITEM_PREVIEW]
-    ? Object.values(e.model().Meta[MODEL_ITEM_PREVIEW](e)).join(" ")
-    : typeof e === "string"
-    ? e
-    : "";
 /**
  * @param {Object} params
  * @param {*} params.inputProps
@@ -120,7 +110,6 @@ function RefField({
 }) {
   const allowCreate = !meta.refModel.Meta[USES_EXACT_IDS];
   const skipPicker = !!meta[SKIP_PICKER];
-  console.log({ id, value });
   const newItem = useMemo(
     () => allowCreate && meta.refModel.create(),
     [meta, allowCreate]

@@ -18,7 +18,6 @@ async function main() {
           i = index + match.length;
         });
         stream.push(input.slice(i));
-        console.log(stream);
         return tags;
       })();
 

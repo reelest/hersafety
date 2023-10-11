@@ -1,5 +1,4 @@
 import { CountedModel } from "./lib/counted_model";
-import { USES_EXACT_IDS } from "./lib/model";
 import { UserData, UserMeta } from "./user_data";
 
 class Client extends UserData {

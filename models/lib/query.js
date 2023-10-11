@@ -24,7 +24,6 @@ import useLogger from "@/utils/useLogger";
 import { InvalidParameters, InvalidState } from "./errors";
 import pool from "@/utils/request_pool";
 
-
 const _getDoc = pool(getDoc, queryEqual);
 const _getDocs = pool(getDocs, queryEqual);
 export const DEFAULT_ORDERING = "!model-default-ordering";
@@ -332,14 +331,14 @@ export class QueryCursor {
     while (results.length >= this._pageSize) {
       yield results;
       try {
-        results = await this.get();
         await this.advance();
+        results = await this.get();
       } catch (e) {
         this._onError?.(e);
         console.error(e);
       }
     }
-    return results;
+    yield results;
   }
   async advance() {
     return await this.seek(this._cache.end);

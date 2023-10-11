@@ -2,13 +2,14 @@ import Drugs from "@/models/inventory";
 import ModelTable from "../ModelTable";
 import { Box } from "@mui/material";
 import DashboardLayout from "../DashboardLayout";
-import { UserEdit, Airdrop } from "iconsax-react";
+import { UserEdit, Airdrop, Wallet } from "iconsax-react";
 import UsersPage from "./UsersPage";
 import InventoryPage from "./InventoryPage";
 import PrescriptionsPage from "./PrescriptionsPage";
 import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
+import PaymentsPage from "./PaymentsPage";
 
 const TABS = [
   {
@@ -25,6 +26,11 @@ const TABS = [
     name: "Prescriptions",
     icon: Airdrop,
     component: PrescriptionsPage,
+  },
+  {
+    name: "Payments",
+    icon: Wallet,
+    component: PaymentsPage,
   },
 ];
 export default function Admin() {

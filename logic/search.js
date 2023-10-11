@@ -7,7 +7,7 @@ import { parseQuery } from "@/utils/createQuery";
  * @param {number} limit
  * @returns
  */
-export async function* search(text, limit = 10, filters) {
+export async function* search(text, filters, limit = 10) {
   if (!text) return [];
   const query = SearchIndex.all().pageSize(limit);
   const tags = parseQuery(text);
@@ -22,11 +22,10 @@ export async function* search(text, limit = 10, filters) {
     await query.setFilter(
       "tokens",
       "array-contains-any",
-      tokens,
-      ...(filters ? ["filters", "array-contains-any", filters] : [])
+      tokens
+      // ...(filters ? ["filters", "array-contains-any", filters] : [])
     );
-
-    for (const m of query.iterator()) {
+    for await (const m of query.iterator()) {
       results.push(...m);
       if (results.length >= limit) {
         yield results;
@@ -38,5 +37,5 @@ export async function* search(text, limit = 10, filters) {
       if (!bucket) break;
     }
   } while (bucket);
-  return results;
+  yield results;
 }

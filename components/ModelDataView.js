@@ -7,22 +7,27 @@ import {
 import { CloseCircle, TickCircle } from "iconsax-react";
 import { supplyValue } from "./Table";
 import Await from "./Await";
-import sentenceCase from "@/utils/sentenceCase";
 import { Link, Typography } from "@mui/material";
 import ModelItemPreview from "./ModelItemPreview";
-import { Fragment, memo } from "react";
+import { Fragment, memo, useMemo } from "react";
+import usePromise from "@/utils/usePromise";
+import { guessMeta } from "@/models/lib/model_type_info";
+import typeOf from "@/utils/typeof";
 
 /**
  * @param {Object} param0
  * @param {String} param0.name
  * @param {import("@/models/lib/model_type_info").Item} param0.item
+ * @param {any} param0.value
+ * @param {import("@/models/lib/model_type_info").ModelTypeInfo} param0.meta
  */
 function _ModelDataView({
   name,
   item,
-  meta = item && item.model().Meta[name],
   value = item?.[name],
+  meta = (item && item.model().Meta[name]) || guessMeta(value),
 }) {
+  if (!meta) return <i className="error">Error displaying value</i>;
   try {
     switch (meta.type) {
       case "string":
@@ -55,7 +60,7 @@ function _ModelDataView({
         }
         return value || "-";
       case "number":
-        return value;
+        return Number(value).toLocaleString();
       case "boolean":
         return (
           <div className="min-h-full  flex items-center justify-center">
@@ -115,21 +120,42 @@ function _ModelDataView({
   }
 }
 const _get = (x) => {
-  return "get" + sentenceCase(x);
+  return x && "get" + x[0].toUpperCase() + x.slice(1);
 };
 
-const ModelDataView = memo(_ModelDataView);
+const ModelDataView = memo(_ModelDataView, (prev, next) => {
+  return (
+    prev.item === next.item &&
+    prev.name === next.name &&
+    ("value" in prev ? prev.value : prev.item?.[prev.name]) ===
+      ("value" in next ? next.value : next.item?.[next.name])
+  );
+});
 export default ModelDataView;
 const ModelComputedView = memo(function ModelComputedView({ item, prop }) {
-  return <Await value={item[_get(prop)]()} />;
+  const promise = useMemo(
+    () => Promise.resolve(item[_get(prop)]()).catch(console.error),
+    [item, prop]
+  );
+  const value = usePromise(() => promise, [promise]);
+  return (
+    <Await value={promise}>
+      {value === undefined || value === null ? null : (
+        <ModelDataView value={value} />
+      )}
+    </Await>
+  );
 });
 export function supplyModelValues(props) {
   return supplyValue((row, col, items) => {
-    if (items?.[row] && props[col] in items[row]) {
-      return <ModelDataView item={items[row]} name={props[col]} />;
-    } else if (items?.[row] && _get(props[col]) in items[row]) {
-      return <ModelComputedView item={items[row]} prop={props[col]} />;
-    } else return items;
+    if (items?.[row] && typeof items[row] === "object") {
+      if (props[col] in items[row]) {
+        return <ModelDataView item={items[row]} name={props[col]} />;
+      } else if (items?.[row] && _get(props[col]) in items[row]) {
+        return <ModelComputedView item={items[row]} prop={props[col]} />;
+      }
+    }
+    return items;
   });
 }
 
