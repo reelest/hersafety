@@ -93,6 +93,7 @@ export default class Txn {
     this.cbs.push(["delete", ref, data, ...props]);
   }
   _call(txn) {
+    console.log(this.cbs.slice(0));
     const cbs = this.cbs;
     this.cbs = [];
     _compress(cbs).forEach(([method, ...args]) => txn[method](...args));
@@ -178,7 +179,7 @@ export const _compress = (cbs) => {
       map[map.push({ ref: cb[ref], cbs: [] }) - 1]
     ).cbs.push(cb)
   );
-  return map
+  const result = map
     .map((x) =>
       x.cbs.reduce((cbs, next) => {
         let prev = cbs[cbs.length - 1];
@@ -188,6 +189,7 @@ export const _compress = (cbs) => {
             prev[method] === next[method] &&
             (next[method] === "update" || next[method] === "set") &&
             Object.keys(next[data]).every(notIn(Object.keys(prev[data])))
+            // TODO handle UpdateValues
           ) {
             prev[data] = Object.assign({}, prev[data], next[data]);
           } else cbs.push(next);
@@ -196,4 +198,6 @@ export const _compress = (cbs) => {
       }, [])
     )
     .flat();
+  console.log({ cbs, result });
+  return result;
 };

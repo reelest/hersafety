@@ -65,7 +65,6 @@ const [useUserData] = createSubscription((setUserData) => {
   let m;
   return onUser(async function retry(user) {
     try {
-      window.removeEventListener("online", retry);
       clearTimeout(m);
       if (user) {
         const userData = await loadUserData(user);
@@ -77,7 +76,11 @@ const [useUserData] = createSubscription((setUserData) => {
       retryDelay = retryDelay + Math.min(retryDelay, 60000);
       console.error(e, `Retrying in ${retryDelay / 1000} seconds`);
       m = setTimeout(() => retry(user), Math.min(retryDelay, 60000));
-      window.addEventListener("online", () => retry(user));
+      window.addEventListener("online", function m() {
+        console.log("Back Online");
+        window.removeEventListener("online", m);
+        retry(user);
+      });
     }
   });
 });

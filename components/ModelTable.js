@@ -12,6 +12,12 @@ import capitalize from "@/utils/capitalize";
 import { addClassToColumns, addHeaderClass, supplyValue } from "./Table";
 import { None, noop } from "@/utils/none";
 
+/**
+ *
+ * @param {Object} props
+ * @param {import("@/models/lib/model").Model<Item>} props.Model
+ * @returns
+ */
 export default function ModelTable({
   Model,
   Query = Model.all(),

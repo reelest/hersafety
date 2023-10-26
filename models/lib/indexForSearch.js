@@ -1,7 +1,7 @@
-import { SearchIndex } from "@/models/search_index";
 import { parseQuery } from "@/utils/createQuery";
 import hasProp from "@/utils/hasProp";
 import uniq from "@/utils/uniq";
+
 /**
  * @typedef {import("./counted_item").CountedItem} CountedItem
  */
@@ -9,8 +9,10 @@ import uniq from "@/utils/uniq";
 const _id = (item) => item.uniqueName().replace(/\//g, "^");
 const searchIndexProps = Symbol("searchIndexer");
 async function updateInTxn(txn, item, newState) {
+  const SearchIndex = (await import("@/models/search_index")).SearchIndex;
   if (item[searchIndexProps]) {
     const { props, indexer } = item[searchIndexProps];
+    console.log("Check index...");
     if (props.some((e) => item.didUpdate(e))) {
       const x = { ...newState };
       await Promise.all(
@@ -21,12 +23,14 @@ async function updateInTxn(txn, item, newState) {
           }
         })
       );
-      const index = SearchIndex.item(_id(item), true);
-      return index.set(await indexer(item, x), txn);
+      return SearchIndex.getOrCreate(_id(item), async (index, txn) => {
+        return index.set(await indexer(index, x), txn);
+      });
     }
   }
 }
 async function deleteInTxn(txn, item) {
+  const SearchIndex = (await import("@/models/search_index")).SearchIndex;
   if (item[searchIndexProps]) return SearchIndex.item(_id(item)).delete(txn);
 }
 
@@ -39,13 +43,6 @@ async function deleteInTxn(txn, item) {
  */
 export function createIndexEntry(props, item, state, prev) {
   return {
-    title: prev ? prev.title : "",
-    description: prev ? prev.description : "",
-    avatar: prev ? prev.avatar : "",
-    image: prev ? prev.image : "",
-    filters: [item.model().uniqueName()]
-      .concat(prev ? prev.filters : [])
-      .filter(uniq),
     tokens: props
       .map((e) => String(state[e] ?? ""))
       .filter(Boolean)

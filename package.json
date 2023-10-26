@@ -7,6 +7,8 @@
     "rules": "node ./scripts/packer.mjs && firebase deploy --only firestore,storage",
     "build": "next build",
     "start": "next start",
+    "pull:indexes": "firebase firestore:indexes > firestore.indexes.json",
+    "push:indexes": "firebase deploy --only firestore:indexes",
     "build:static": "next build && next out"
   },
   "dependencies": {

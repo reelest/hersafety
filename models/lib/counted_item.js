@@ -1,6 +1,6 @@
 import UpdateValue from "./update_value";
 import { Item, noFirestore } from "./model";
-import { InvalidState } from "./errors";
+import { InvalidState, ItemDoesNotExist } from "./errors";
 import deepEqual from "deep-equal";
 import { ensureCounter } from "./counted_model";
 import hasProp from "@/utils/hasProp";
@@ -70,9 +70,8 @@ export class CountedItem extends Item {
             this.#needsTransaction === TRANSACTION_NEEDED)) &&
         !prevState
       ) {
-        prevState = await this.read(txn);
-        //TODO: Should this throw an error
-        if (prevState === undefined) return false;
+        prevState = this._useFastUpdate ? undefined : await this.read(txn);
+        if (prevState === undefined) throw new ItemDoesNotExist(this);
       }
       return await cb(txn, prevState);
     } else {
@@ -95,6 +94,7 @@ export class CountedItem extends Item {
     );
   }
   async _update(txn, newState, prevState = null) {
+    console.log("Updating..." + this.uniqueName());
     if (this[propsNeedingUpdateTxn]) {
       newState = { ...newState };
       for (let key of this[propsNeedingUpdateTxn]) {
@@ -106,9 +106,10 @@ export class CountedItem extends Item {
     try {
       if (this.#inUpdate) throw new InvalidState("Nested Update!!");
       this.#inUpdate = true;
-
+      console.log("prepping for atomic update " + this.uniqueName());
       const ret = await this.atomicUpdate(
         async (txn, prevState) => {
+          console.log("Atomic update " + this.uniqueName());
           await super._update(txn, newState, prevState);
           await this.onUpdateItem(txn, newState, prevState);
         },
@@ -203,8 +204,8 @@ export class CountedItem extends Item {
           if (
             this._isCreated &&
             (v = this.validate(e, v)) !== undefined &&
-            this._isLoaded &&
-            !deepEqual(v, this[storedValue])
+            ((this._isLoaded && !deepEqual(v, this[storedValue])) ||
+              this._useFastUpdate)
           ) {
             this._scheduleUpdateTxn(needsPrevState, e);
           }

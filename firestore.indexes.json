@@ -1,4 +1,17 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "m_search_tags",
+      "fieldPath": "*",
+      "ttl": false,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "search_tags",
+      "fieldPath": "*",
+      "ttl": false,
+      "indexes": []
+    }
+  ]
 }

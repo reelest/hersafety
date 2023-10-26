@@ -128,7 +128,9 @@ export class Model {
       m.onCreate();
       await init(m, _txn);
       _txn.onCommit(() => {
-        if (m.isLocalOnly()) m._isCreated = false; //Prevent saving outside of this transaction
+        // Prevent saving outside of this transaction
+        // Subject to race conditions only if init does stuff outside the transaction
+        if (m.isLocalOnly()) m._isCreated = false;
       });
       return m;
     };
@@ -242,6 +244,7 @@ export class Item {
     if (noFirestore) throw new InvalidState("No Firestore!!");
 
     //needed especially to trigger update transactions
+    console.log("set....", this.uniqueName());
     this.setData(data);
     if (this.#isLocalOnly) {
       await this.save(txn);
@@ -264,6 +267,7 @@ export class Item {
   }
   async _update(txn, data) {
     if (noFirestore) throw new InvalidState("No Firestore!!");
+    console.log({ data, o: this.uniqueName() });
     if (!this._isCreated)
       throw new InvalidState("Cannot save item that is not initialized.");
     if (this._useFastUpdate) {

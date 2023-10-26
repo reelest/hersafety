@@ -64,9 +64,9 @@ export function SearchInput() {
       options={results}
       onChange={(_, e) => alert(e)}
       getOptionLabel={() => ""}
-      selectOnFocus
       handleHomeEndKeys
       open={open}
+      freeSolo
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       inputValue={filterText}
