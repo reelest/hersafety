@@ -4,12 +4,11 @@ import { Box } from "@mui/material";
 import DashboardLayout from "../DashboardLayout";
 import { UserEdit, Airdrop, Wallet } from "iconsax-react";
 import UsersPage from "./UsersPage";
-import InventoryPage from "./InventoryPage";
-import PrescriptionsPage from "./PrescriptionsPage";
+import ComplaintsPage from "./ComplaintsPage";
 import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
-import PaymentsPage from "./PaymentsPage";
+import NotificationsPage from "./NotificationsPage";
 
 const TABS = [
   {
@@ -18,19 +17,14 @@ const TABS = [
     component: UsersPage,
   },
   {
-    name: "Inventory",
+    name: "Complaints",
     icon: Airdrop,
-    component: InventoryPage,
+    component: ComplaintsPage,
   },
   {
-    name: "Prescriptions",
+    name: "Notifications",
     icon: Airdrop,
-    component: PrescriptionsPage,
-  },
-  {
-    name: "Payments",
-    icon: Wallet,
-    component: PaymentsPage,
+    component: NotificationsPage,
   },
 ];
 export default function Admin() {

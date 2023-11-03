@@ -1,14 +1,15 @@
+
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
 
-export class Drug extends CountedItem {
+export class PoliceStation extends CountedItem {
   name = "";
-  price = 0;
-  currentStock = 0;
+  phoneNumber = "";
+  address = "";
 }
 
-const Drugs = new CountedModel("drugs", Drug, {
+const PoliceStations = new CountedModel("police_station", PoliceStation, {
   [MODEL_ITEM_PREVIEW](item) {
     return {
       title: item.name,

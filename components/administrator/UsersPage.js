@@ -5,6 +5,8 @@ import Form, { FormErrors, FormField, FormSubmit } from "../Form";
 import ModelTable from "../ModelTable";
 import { createUser } from "@/logic/admin";
 import Admins from "@/models/admin";
+import Clients from "@/models/client";
+import Police from "@/models/police";
 import { useRouter } from "next/router";
 import SearchTestView from "./test_search";
 export default function UsersPage() {
@@ -16,7 +18,6 @@ export default function UsersPage() {
       return null;
     });
   };
-  const router = useRouter();
   return (
     <>
       <Modal
@@ -51,14 +52,19 @@ export default function UsersPage() {
       <ModelTable
         Model={Clients}
         allowDelete={false}
-        onClickRow={(user) =>
-          router.replace(
-            "?tab=prescriptions&user=" + encodeURIComponent(user.id())
-          )
-        }
         onCreate={() => {
           return new Promise((r, j) => {
             setUserModel(Clients);
+            setFormCreationRequest(() => r);
+          });
+        }}
+      />
+      <ModelTable
+        Model={Police}
+        allowDelete={false}
+        onCreate={() => {
+          return new Promise((r, j) => {
+            setUserModel(Police);
             setFormCreationRequest(() => r);
           });
         }}

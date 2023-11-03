@@ -1,25 +1,28 @@
+
+
 import { formatNumber } from "@/utils/formatNumber";
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
-import Admins from "./admin";
+import Clients from "./client.js";
 
-export class Payment extends CountedItem {
+export class Notification extends CountedItem {
   date = new Date();
-  amount = 0;
-  authorizedBy = "";
-  method = "offline";
+  user = getUser()?.uid ?? ""
+  title = "";
+  description = "";
 }
 
-const Payments = new CountedModel("payments", Payment, {
+const Notifications = new CountedModel("payments", Notification, {
   [MODEL_ITEM_PREVIEW](item) {
     return {
       title: "#Paid " + formatNumber(item.amount),
     };
   },
-  authorizedBy: {
+  user: {
     type: "ref",
-    refModel: Admins,
+    refModel: Clients,
+    hidden: true
   },
 });
-export default Payments;
+export default Notifications;

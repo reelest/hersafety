@@ -1,20 +1,15 @@
-import Drugs from "@/models/inventory";
+import Notifications from "@/models/notification";
 import ModelTable from "../ModelTable";
-import { useQuery } from "@/models/lib/query";
 import { Card } from "@mui/material";
 
 export default function InventoryPage() {
   /**
    * @type {{data: Drugs[]}}
    */
-  const { data: finishedDrugs } = useQuery(
-    () => Drugs.withFilter("currentStock", "<", 10).orderBy("currentStock"),
-    [],
-    { watch: true }
-  );
+  const { data: unreadNotifications } = {};
   return (
     <>
-      {finishedDrugs && finishedDrugs.length ? (
+      {unreadNotifications && unreadNotifications.length ? (
         <Card
           color="error"
           sx={{
@@ -27,11 +22,10 @@ export default function InventoryPage() {
           }}
           elevation={5}
         >
-          The following drugs have fallen below minimum stock levels:{" "}
-          {finishedDrugs.map((e) => e.name).join(", ")}.
+          {unreadNotifications}.
         </Card>
       ) : null}
-      <ModelTable Model={Drugs} addActionTitle="Add Drug" />
+      <ModelTable Model={Notifications} addActionTitle="New Notification" />
     </>
   );
 }
