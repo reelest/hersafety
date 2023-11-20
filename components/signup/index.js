@@ -21,9 +21,11 @@ export default function SignupRoute({ isSignIn }) {
   return (
     <>
       <Head>
-        <title>{isSignIn ? "MOUOA - Sign in" : "MOUOA - Create Account"}</title>
+        <title>
+          {isSignIn ? "Guardian - Sign in" : "Guardian - Create Account"}
+        </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="MOUOA Website" />
+        <meta name="description" content="Guardian Website" />
       </Head>
 
       <UserRedirect redirectOnUser>

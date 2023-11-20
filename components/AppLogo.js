@@ -5,7 +5,7 @@ export default function AppLogo({ ...props }) {
     <Template className="flex justify-center my-2" props={props}>
       <div className="rounded-full bg-secondary px-6 py-4">
         <Typography variant="h4" sx={{ color: "white" }}>
-          MOUOA
+          Guardian
         </Typography>
       </div>
     </Template>

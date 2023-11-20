@@ -31,9 +31,12 @@ export default function Admin() {
   return (
     <UserRedirect redirectOnNoUser>
       <Head>
-        <title>MOUOA - Admin Dashboard</title>
+        <title>Guardian - Admin Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Reset password to MOUOA Dashboard" />
+        <meta
+          name="description"
+          content="Reset password to Guardian Dashboard"
+        />
       </Head>
 
       <DashboardLayout

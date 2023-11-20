@@ -16,9 +16,12 @@ export default function ForgotPassword() {
   return (
     <>
       <Head>
-        <title>MOUOA - Reset Password</title>
+        <title>Guardian - Reset Password</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Reset password to MOUOA Dashboard" />
+        <meta
+          name="description"
+          content="Reset password to Guardian Dashboard"
+        />
       </Head>
 
       <Container component="main" maxWidth="xs">
