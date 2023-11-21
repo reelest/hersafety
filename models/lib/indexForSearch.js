@@ -12,7 +12,6 @@ async function updateInTxn(txn, item, newState) {
   const SearchIndex = (await import("@/models/search_index")).SearchIndex;
   if (item[searchIndexProps]) {
     const { props, indexer } = item[searchIndexProps];
-    console.log("Check index...");
     if (props.some((e) => item.didUpdate(e))) {
       const x = { ...newState };
       await Promise.all(
@@ -43,11 +42,8 @@ async function deleteInTxn(txn, item) {
  */
 export function createIndexEntry(props, item, state, prev) {
   return {
-    tokens: props
-      .map((e) => String(state[e] ?? ""))
-      .filter(Boolean)
-      .map(parseQuery)
-      .flat(2)
+    tokens: parseQuery(props.map((e) => String(state[e] ?? "")).join(" "))
+      .flat()
       .concat(prev ? prev.tokens : [])
       .filter(uniq),
   };

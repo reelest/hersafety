@@ -26,6 +26,11 @@ import { getItemFromStore } from "./item_store";
  */
 export const noFirestore = firestore === null;
 export const USES_EXACT_IDS = "!uses-exact-ids";
+
+const collections = new Map();
+export const getCollection = (key) => {
+  return collections.get(key);
+};
 /**
  * @template T
  * @typedef {{new(): T}} Class
@@ -37,6 +42,7 @@ export const USES_EXACT_IDS = "!uses-exact-ids";
 /**
  * @template {Item} T
  */
+
 export class Model {
   _Item;
   /**
@@ -52,6 +58,7 @@ export class Model {
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
     global[_collectionID + "Model"] = this;
+    collections.set(this.uniqueName(), this);
   }
   static converter(model) {
     return {
@@ -119,6 +126,7 @@ export class Model {
     const cb = async (_txn) => {
       //TODO - this can lead to unnecessary transaction retries
       const m = new this._Item(this.ref(id), true, this);
+      if (noFirestore) return m;
       try {
         await m.load(_txn);
       } catch (e) {
@@ -180,6 +188,7 @@ export class Model {
  * @property {import("firebase/firestore").DocumentReference} _ref
  */
 export class Item {
+  static strictKeys = true;
   /*
     An item can only be created on the server if one of two conditions are met.
     1. #isLocalOnly is established either by create of by getOrCreate
@@ -244,7 +253,6 @@ export class Item {
     if (noFirestore) throw new InvalidState("No Firestore!!");
 
     //needed especially to trigger update transactions
-    console.log("set....", this.uniqueName());
     this.setData(data);
     if (this.#isLocalOnly) {
       await this.save(txn);
@@ -267,7 +275,7 @@ export class Item {
   }
   async _update(txn, data) {
     if (noFirestore) throw new InvalidState("No Firestore!!");
-    console.log({ data, o: this.uniqueName() });
+
     if (!this._isCreated)
       throw new InvalidState("Cannot save item that is not initialized.");
     if (this._useFastUpdate) {
@@ -296,20 +304,24 @@ export class Item {
     return Object.assign({}, this);
   }
   setData(d) {
-    Object.keys(this).forEach((e) => {
-      if (hasProp(d, e)) {
-        let m = this.validate(e, d[e]);
-        if (m !== undefined) this[e] = m;
-      }
+    Object.keys(d ?? {}).forEach((e) => {
+      let m = this.validate(e, d[e]);
+      if (m !== undefined) this[e] = m;
     });
   }
   validate(key, val) {
     const valueType = typeOf(val);
-    const expectedType = typeOf(this[key]);
+    const expectedType =
+      hasProp(this, key) || (key in this && this[key] !== {}[key])
+        ? typeOf(this[key])
+        : "unset";
     if (valueType === expectedType) return val;
     if (valueType === "null" && expectedType === "string") return "";
     if (valueType === "timestamp" && expectedType === "date") {
       return val.toDate();
+    }
+    if (expectedType === "unset" && !this.constructor.strictKeys) {
+      return val;
     }
     if (
       isUpdateValue(val) &&
@@ -348,7 +360,7 @@ export class Item {
     return undefined;
   }
   asQuery() {
-    return new DocumentQueryCursor(this._ref);
+    return new DocumentQueryCursor(this);
   }
   isLocalOnly() {
     return this.#isLocalOnly;
@@ -363,7 +375,7 @@ export class Item {
     return this._model;
   }
   uniqueName() {
-    return this._ref.path;
+    return this._ref.path.substring(firestoreNS.length);
   }
 
   getPropertyLabel(name) {

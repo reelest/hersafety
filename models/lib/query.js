@@ -191,6 +191,7 @@ class LocalCache {
 
 const PAGE_DIRECTION_FORWARDS = 1;
 const PAGE_DIRECTION_BACKWARDS = -1;
+let _id = 1;
 /**
  * TODO: caching queries that start and stop frequently by using a snapshot/local cache
  */
@@ -212,7 +213,6 @@ export class QueryCursor {
     //Used for filtering
     this.model = model;
     this._cache = new LocalCache();
-    console.debug("Creating query cursor " + model.uniqueName());
     // A subscription that notifies listeners when this query completes
     [, this._subscribe, this._dispatch] = createSubscription(() => {
       this._start();
@@ -222,6 +222,7 @@ export class QueryCursor {
         x();
       };
     });
+    this.id = _id++;
     this.orderBy();
   }
 
@@ -234,7 +235,7 @@ export class QueryCursor {
   }
 
   _createQuery() {
-    console.warn("Recreating " + this.model.uniqueName() + " query....");
+    console.debug("Recreating " + this.model.uniqueName() + " query....");
     this._anchorValue =
       this._scrollDirection === PAGE_DIRECTION_FORWARDS
         ? this._cache.hasNextAnchor(this._cache.start)
@@ -510,6 +511,7 @@ export class QueryCursor {
     while (params.length > 0) {
       this._filters.push(where(...params.splice(0, 3)));
     }
+    this._query = null;
     this._cache.reset().then(() => this.restart());
     return this;
   }
@@ -533,6 +535,7 @@ export class QueryCursor {
     if (this._ordering.length === 0) {
       this._ordering.push(orderBy(documentId()));
     }
+    this._query = null;
     this._cache.reset().then(() => this.restart());
     return this;
   }
@@ -544,16 +547,22 @@ export class QueryCursor {
 }
 
 export class DocumentQueryCursor {
-  constructor(query) {
-    this.query = query;
+  /**
+   *
+   * @param {Item} item
+   */
+  constructor(item) {
+    this.item = item;
   }
   async get() {
     if (noFirestore) return;
-    return (await _getDoc(this.query)).data();
+    return this.item
+      .model()
+      .converter.fromFirestore(await _getDoc(this.item._ref), {});
   }
   watch(cb, onError = console.error) {
     if (noFirestore) return noop;
-    return onSnapshot(this.query, {
+    return onSnapshot(this.item._ref, {
       next(snapshot) {
         cb(snapshot.data());
       },
@@ -668,6 +677,7 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
   // TODO: test how this interacts with the null padded data
   useEffect(() => {
     if (
+      query &&
       data?.length !== undefined &&
       ((data.length < query._pageSize && !isOnLastPage) || data.length === 0)
     ) {

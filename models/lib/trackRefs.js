@@ -261,7 +261,11 @@ export function hasOneOrMore(
   noRecurse
 ) {
   const isTwoWay = !!fieldB;
+  if (!modelA.Meta[fieldA])
+    throw new Error("No usch field " + fieldA + " in " + modelA.uniqueName());
   const isArray1 = modelA.Meta[fieldA].type === "array";
+  if (isTwoWay && !modelB.Meta[fieldB])
+    throw new Error("No usch field " + fieldB + " in " + modelB.uniqueName());
   const isArray2 = isTwoWay && modelB.Meta[fieldB].type === "array";
   if (isArray2 && deleteOnRemove)
     throw new InvalidParameters("Cannot use deleteOnRemove with array target");

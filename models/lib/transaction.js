@@ -93,7 +93,6 @@ export default class Txn {
     this.cbs.push(["delete", ref, data, ...props]);
   }
   _call(txn) {
-    console.log(this.cbs.slice(0));
     const cbs = this.cbs;
     this.cbs = [];
     _compress(cbs).forEach(([method, ...args]) => txn[method](...args));
@@ -198,6 +197,5 @@ export const _compress = (cbs) => {
       }, [])
     )
     .flat();
-  console.log({ cbs, result });
   return result;
 };

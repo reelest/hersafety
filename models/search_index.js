@@ -1,19 +1,22 @@
-import { Item, Model, USES_EXACT_IDS } from "./lib/model";
+import { Item, Model, USES_EXACT_IDS, getCollection } from "./lib/model";
 import { CountedItem } from "./lib/counted_item";
 import UpdateValue from "./lib/update_value";
 import notIn from "@/utils/notIn";
 
-export const SearchTags = new Model("search_tags", Item);
-const collections = new Map();
+class SearchTag extends Item {
+  static strictKeys = false;
+}
+export const SearchTags = new Model("search_tags", SearchTag);
+
 export class IndexEntry extends CountedItem {
   tokens = [];
   getItem() {
-    const [collection, id] = this.id().split("^").pop();
-    return collections.get(collection).item(id);
+    const id = this.id().split("^").pop();
+    return this.getModel()?.item?.(id) ?? this;
   }
   getModel() {
-    const [collection] = this.id().split("^").pop();
-    return collections.get(collection);
+    const collection = this.id().split("^").shift();
+    return getCollection(collection);
   }
   async onAddItem(txn, newState) {
     await super.onAddItem(txn, newState);
@@ -25,7 +28,6 @@ export class IndexEntry extends CountedItem {
   }
   async onUpdateItem(txn, newState, prevState) {
     await super.onUpdateItem(txn, newState, prevState);
-    console.log({ newState, prevState });
     const added = newState.tokens.filter(notIn(prevState.tokens));
     const removed = prevState.tokens.filter(notIn(newState.tokens));
     updateTokens(removed, this.id(), txn, UpdateValue.arrayRemove);
@@ -42,7 +44,6 @@ function updateTokens(tokens, id, txn, method) {
   tokens.forEach((token) => {
     const index = getIndex(token);
     if (!m[index]) m[index] = {};
-    console.log({ id, token });
     m[index][token.slice(INDEX_SIZE) || "-"] = (
       m[index][token.slice(INDEX_SIZE) || "-"] || []
     ).concat(id);
@@ -55,35 +56,9 @@ function updateTokens(tokens, id, txn, method) {
   }
 }
 
-function getIndex(token) {
+export function getIndex(token) {
   token = token.normalize("NFKD").replace(/[\u0300-\u036F]/g, "");
   return token.slice(0, INDEX_SIZE);
-}
-
-let cache = new Map();
-export function clearCache() {
-  cache = new Map();
-}
-export async function* getSearchResults(tokens) {
-  for (let token of tokens) {
-    let key = getIndex(token);
-    /** @type {import("@/models/lib/model_type_info").Item} */
-    let item;
-    if (cache.has(key)) {
-      item = cache.get(key);
-    } else {
-      item = SearchTags.item(key);
-      cache.set(key, item);
-    }
-    if (!item._isLoaded) {
-      try {
-        await item.load();
-      } catch (e) {
-        return;
-      }
-    }
-    yield item[token.slice(INDEX_SIZE) || "-"];
-  }
 }
 
 export const SearchIndex = new Model("search_index", IndexEntry, {
