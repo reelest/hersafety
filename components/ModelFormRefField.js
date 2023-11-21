@@ -57,32 +57,6 @@ const iteratorContext = createContext();
 export default function ModelFormRefField(props) {
   return <FormField as={RefField} {...props} />;
 }
-// const testIterator = async function* (i = 0) {
-//   while (true) {
-//     i += 10;
-//     await delay(6000);
-//     yield [
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//       "Helllo " + ++i,
-//     ];
-//   }
-// };
 async function* asyncIteratorOf(func) {
   yield* await func();
 }
@@ -225,7 +199,12 @@ function RefField({
             <CircularProgress />
           )
         ) : (
-          <Button sx={{ mr: 2 }} onClick={() => setNewItemModalOpen(true)}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ mr: 2 }}
+            onClick={() => setNewItemModalOpen(true)}
+          >
             New <Add className="ml-1" />
           </Button>
         )

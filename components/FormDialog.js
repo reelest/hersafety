@@ -23,10 +23,10 @@ export default function FormDialog({
         onClose(e);
       }}
       open={isOpen}
-      className="p-4"
+      className="p-4 flex items-center"
     >
       {/* Modal must have only one child */}
-      <Paper className="mx-auto max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
+      <Paper className="mx-auto max-h-full max-w-2xl pt-4 px-8 max-sm:px-4 overflow-auto pb-12 flex flex-col">
         <SuccessDialog
           open={submitted}
           onClose={() => {
@@ -39,9 +39,11 @@ export default function FormDialog({
             <CloseCircle />
           </IconButton>
         </div>
-        <Typography variant="h4" sx={{ mb: 4 }}>
-          {title}
-        </Typography>
+        {title ? (
+          <Typography variant="h4" sx={{ mb: 4 }}>
+            {title}
+          </Typography>
+        ) : null}
         <As
           className="flex-grow flex flex-col"
           {...props}

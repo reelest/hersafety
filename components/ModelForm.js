@@ -14,6 +14,8 @@ import pick from "@/utils/pick";
 import { checkError } from "@/models/lib/errors";
 import { FirestoreError } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
+import { singular } from "@/utils/plural";
+import sentenceCase from "@/utils/sentenceCase";
 const FORM_SECTION = "!modelform-section";
 
 const ItemStoreContext = createContext();
@@ -86,7 +88,7 @@ export default function ModelForm({
           children
         ) : (
           <>
-            <div className="flex flex-wrap justify-between">
+            <div className="flex flex-wrap justify-between -mx-4">
               <Typography
                 variant="body2"
                 color="text.disabled"

@@ -17,6 +17,7 @@ import useUserData from "@/logic/user_data";
 import sentenceCase from "@/utils/sentenceCase";
 export default function PageHeader({ title, onSearch }) {
   const user = useUserData();
+  const p = useBreakpoints();
   return (
     <Paper
       className="flex max-sm:flex-wrap px-4 sm:px-8 h-15 items-center justify-end py-2"
@@ -31,7 +32,7 @@ export default function PageHeader({ title, onSearch }) {
         className="w-full sm:w-auto justify-between items-center flex"
         sx={{ mr: { sm: 8 }, my: { xs: 2, sm: 0 } }}
       >
-        <Hidden lgUp>
+        <Hidden lgUp implementation="js">
           <IconButton
             className="relative -left-2"
             onClick={() => {

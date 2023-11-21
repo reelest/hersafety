@@ -1,4 +1,11 @@
-import { Button, IconButton, Modal, Paper, Typography } from "@mui/material";
+import {
+  Button,
+  IconButton,
+  InputLabel,
+  Modal,
+  Paper,
+  Typography,
+} from "@mui/material";
 import ModelFormField from "./ModelFormField";
 import Form, { FormField, FormSubmit } from "./Form";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -50,19 +57,18 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       }),
     [value, meta, _id, _new]
   );
-  console.log({ value });
   return (
     <>
       {/* For stop browser form validation errors*/}
       <input name={name} id={id} type="hidden" />
 
-      <div className="flex items-center justify-between w-full">
-        <Typography variant="h6">{meta.label}</Typography>
+      <div className="flex items-center justify-between w-full mx-4 mt-4">
+        <InputLabel>{meta.label}</InputLabel>
         <Button onClick={() => setShowForm(true)}>
           Add New <Add />
         </Button>
       </div>
-      <div>
+      <div className="mx-4 w-full mb-4">
         {value.map((e, i) => (
           <ModelFormArrayItem
             key={e}

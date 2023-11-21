@@ -37,7 +37,7 @@ export default function ModelItemPreview({ item, ...props }) {
             return await item.model().Meta[MODEL_ITEM_PREVIEW](item);
         } else return { title: item.uniqueName() };
       } else {
-        return { title: String(item) };
+        return { title: JSON.stringify(item) };
       }
     }, [item]) ?? {};
   return (

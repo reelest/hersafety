@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Add, Edit, Trash } from "iconsax-react";
+import { Add, Edit, Trash, Warning2 } from "iconsax-react";
 import { useQuery } from "@/models/lib/query";
 import { singular } from "@/utils/plural";
 import sentenceCase from "@/utils/sentenceCase";
@@ -11,14 +11,12 @@ import { supplyModelValues } from "./ModelDataView";
 import capitalize from "@/utils/capitalize";
 import { addClassToColumns, addHeaderClass, supplyValue } from "./Table";
 import { None, noop } from "@/utils/none";
+import { ErrorBoundary } from "react-error-boundary";
+import Card2 from "./Card2";
+import Card1 from "./Card1";
 
-/**
- *
- * @param {Object} props
- * @param {import("@/models/lib/model").Model<Item>} props.Model
- * @returns
- */
-export default function ModelTable({
+function ModelTableInner({
+  /** @type {import("@/models/lib/model").Model<Item>} */
   Model,
   Query = Model.all(),
   props = Model.fields(),
@@ -95,8 +93,6 @@ export default function ModelTable({
           </div>
         ) : null}
         <ThemedTable
-          // title={pluralTitle}
-
           headers={headers.concat(actions.map(() => ""))}
           results={Query ? items : []}
           pager={pager}
@@ -118,7 +114,6 @@ export default function ModelTable({
             addHeaderClass("pr-4"),
             addClassToColumns("w-0", [props.length, props.length + 1]),
             supplyModelValues(props),
-
             supplyValue((row, col, data) => {
               if (!data) return;
               col -= props.length;
@@ -159,5 +154,31 @@ export default function ModelTable({
         />
       </Box>
     </>
+  );
+}
+
+export default function ModelTable(props) {
+  return (
+    <ErrorBoundary
+      fallbackRender={({ resetErrorBoundary }) => (
+        <Card1 className="w-50 max-w-sm p-10 text-center mx-auto my-5">
+          <Warning2 size={72} className="text-secondary" />
+          <br></br>
+          <Typography variant="caption">
+            Oops! Something has broken here.
+          </Typography>
+          <br />
+          <Button
+            className="mt-4"
+            variant="contained"
+            onClick={resetErrorBoundary}
+          >
+            Reload
+          </Button>
+        </Card1>
+      )}
+    >
+      <ModelTableInner {...props} />
+    </ErrorBoundary>
   );
 }

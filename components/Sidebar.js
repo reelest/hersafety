@@ -33,6 +33,7 @@ export default function Sidebar({ children, isStatic = false, tabs = [] }) {
       onClose={() => setSidebar(false)}
       variant={isStatic ? "permanent" : "temporary"}
       open={isOpen}
+      className="scroll-primary"
       sx={{
         "&>.MuiPaper-root": {
           backgroundColor: "primary.dark",

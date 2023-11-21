@@ -1,4 +1,4 @@
-import { Autocomplete, CircularProgress } from "@mui/material";
+import { Autocomplete, CircularProgress, TextField } from "@mui/material";
 import Box from "@mui/material/Box";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import { SearchNormal1 as SearchIcon } from "iconsax-react";
@@ -42,13 +42,12 @@ export function SearchInput() {
   }, [filterText]);
 
   const resultIterator = useMemo(
-    () => search(serverFilter, ["clients"]),
+    () => search(serverFilter, ["clients"], 1),
     [serverFilter]
   );
   const iterator = useIterator(resultIterator);
   const { value: results, loading } = iterator;
   const filterable = useMemo(() => results.some(_searchValue), [results]);
-  console.log({ iterator, filterText });
   return (
     <Autocomplete
       disablePortal
@@ -62,10 +61,16 @@ export function SearchInput() {
       )}
       // {...{ groupBy, getOptionLabel, renderGroup }}
       options={results}
-      onChange={(_, e) => alert(e)}
+      onChange={(_, e) => {
+        alert(e.uniqueName());
+      }}
       getOptionLabel={() => ""}
       handleHomeEndKeys
       open={open}
+      sx={{
+        flexGrow: 100,
+        maxWidth: "27rem",
+      }}
       freeSolo
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
@@ -83,31 +88,25 @@ export function SearchInput() {
       ListboxProps={{ elevation: 5 }}
       loadingText={<CircularProgress sx={{ display: "block", mx: "auto" }} />}
       renderInput={(params) => (
-        <Template
-          as={OutlinedInput}
+        <OutlinedInput
+          // as={OutlinedInput}
           placeholder="Search"
-          props={{
-            inputProps: {
-              ...params.inputProps,
-              // disable autocomplete and autofill
-            },
-          }}
+          {...params}
+          InputLabelProps={undefined}
           sx={{
             ...params.sx,
             "& .MuiInputBase-root": {
               flexWrap: "nowrap",
             },
-            flexGrow: 10,
             maxWidth: "27rem",
             backgroundColor: "gray.light",
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: "transparent",
             },
           }}
-          {...params}
           size="small"
           value={filterText}
-          InputProps={{
+          {...{
             ...params.InputProps,
             startAdornment: (
               <Box as={SearchIcon} size={20} className="mr-3 text-inherit" />

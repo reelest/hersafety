@@ -6,6 +6,8 @@ import ModelForm from "./ModelForm";
 import { noop } from "@/utils/none";
 import useLogger from "@/utils/useLogger";
 import FormDialog from "./FormDialog";
+import sentenceCase from "@/utils/sentenceCase";
+import { singular } from "@/utils/plural";
 
 export default function ModelFormDialog({
   isOpen = false,
@@ -13,6 +15,8 @@ export default function ModelFormDialog({
   closeOnSubmit = !edit,
   model: Model,
   noSave,
+  title = (edit ? "Update " : "Add ") +
+    sentenceCase(singular(Model.uniqueName())),
   ...props
 }) {
   const [item, setItem] = useState(null);
@@ -28,6 +32,7 @@ export default function ModelFormDialog({
       as={ModelForm}
       model={Model}
       item={item}
+      title={title}
       noSave={noSave}
       closeOnSubmit={closeOnSubmit}
       {...props}

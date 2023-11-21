@@ -1,14 +1,7 @@
-import { CLASSES } from "@/logic/config";
 import COUNTRIES from "@/assets/countries.json";
 
 export const Gender = {
   options: ["male", "female"],
-};
-export const Class = {
-  options: CLASSES.map((e) => ({
-    value: e,
-    label: e.toUpperCase().replace(/\d/, " $&"),
-  })),
 };
 
 export const HiddenField = {
