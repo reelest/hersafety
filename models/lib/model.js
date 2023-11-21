@@ -29,7 +29,9 @@ export const USES_EXACT_IDS = "!uses-exact-ids";
 
 const collections = new Map();
 export const getCollection = (key) => {
-  return collections.get(key);
+  return collections.get(
+    key.startsWith(firestoreNS) ? key.substring(firestoreNS.length) : key
+  );
 };
 /**
  * @template T

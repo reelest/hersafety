@@ -21,7 +21,7 @@ export const _searchValue = (e) =>
     : "";
 
 export const _id = (e) =>
-  e instanceof IndexEntry ? e.getItemId() : e instanceof Item ? e.id() : e;
+  e instanceof IndexEntry ? e.getItem().id : e instanceof Item ? e.id() : e;
 
 export function SearchInput() {
   const [open, setOpen] = useState(false);
@@ -52,12 +52,7 @@ export function SearchInput() {
     <Autocomplete
       disablePortal
       renderOption={(props, option) => (
-        <ModelItemPreview
-          item={option}
-          {...props}
-          sx={{ width: "20rem", maxWidth: "100%", minWidth: 0, ...props.sx }}
-          key={_id(option)}
-        />
+        <ModelItemPreview item={option} {...props} key={_id(option)} />
       )}
       // {...{ groupBy, getOptionLabel, renderGroup }}
       options={results}

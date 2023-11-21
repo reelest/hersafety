@@ -82,7 +82,8 @@ export class UserData extends CountedItem {
         if (userRole.isLocalOnly())
           await userRole.set({ role: this.getRole() }, txn);
         else {
-          await this.upgradeUser(userRole.role);
+          if (userRole.role !== this.getRole())
+            await this.upgradeUser(userRole.role);
         }
       },
       txn

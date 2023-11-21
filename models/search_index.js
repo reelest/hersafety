@@ -27,6 +27,7 @@ export class IndexEntry extends CountedItem {
     updateTokens(prevState.tokens, this.id(), txn, UpdateValue.arrayRemove);
   }
   async onUpdateItem(txn, newState, prevState) {
+    console.log({ txn, newState, prevState });
     await super.onUpdateItem(txn, newState, prevState);
     const added = newState.tokens.filter(notIn(prevState.tokens));
     const removed = prevState.tokens.filter(notIn(newState.tokens));
@@ -37,7 +38,6 @@ export class IndexEntry extends CountedItem {
     this.markTriggersUpdateTxn(["tokens"], true);
   }
 }
-
 const INDEX_SIZE = 3;
 function updateTokens(tokens, id, txn, method) {
   const m = {};
