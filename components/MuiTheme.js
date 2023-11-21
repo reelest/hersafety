@@ -67,34 +67,34 @@ const MuiTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: 'Inter, "Helvetica", "Arial", sans-serif',
+    fontFamily: 'Raleway, "Helvetica", "Arial", sans-serif',
     h1: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "4.214rem",
     },
     h2: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "3.161rem",
     },
     h3: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "2.37rem",
     },
     h4: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "1.78rem",
     },
     h5: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "1.33333333rem",
     },
     h6: {
-      fontFamily: "Inter, sans-serif",
+      fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",
       fontSize: "1.1666666rem",
     },

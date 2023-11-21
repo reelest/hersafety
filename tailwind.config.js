@@ -5,8 +5,8 @@ module.exports = {
     extend: {
       colors: {
         primary: "#a45039",
-        primaryDark: "#343019",
-        secondary: "#ff8200",
+        primaryDark: "#141019",
+        secondary: "#e40d20",
         bg: "#f9f9fc",
         error: "#d32f2f",
         // primaryLight: MuiTheme.palette.primary.light,

@@ -19,7 +19,11 @@ const DashboardLayout = ({ renderChild = _renderChild, tabs }) => {
 
 const _renderChild = function (tab) {
   const Component = tab.component;
-  return <Component />;
+  return Component ? (
+    <Component />
+  ) : (
+    <div className="flex justify-center items-center">Nothing Here</div>
+  );
 };
 
 function ChooseLayout({ renderChild, tabs }) {

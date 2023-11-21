@@ -1,5 +1,5 @@
 import "./globals.css";
-import "@fontsource/inter";
+import "@fontsource/raleway";
 import "@fontsource/poppins";
 import { ThemeProvider } from "@mui/material/styles";
 import MuiTheme from "../components/MuiTheme";
