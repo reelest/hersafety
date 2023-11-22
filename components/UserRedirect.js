@@ -5,7 +5,7 @@ import useUserData from "@/logic/user_data";
 
 const DASHBOARD_URL = {
   admin: "/admin",
-  client: "/client",
+  user: "/user",
   police: "/police",
 };
 

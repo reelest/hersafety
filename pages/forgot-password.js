@@ -46,8 +46,7 @@ export default function ForgotPassword() {
               email: "",
             }}
             onSubmit={resetPassword}
-            noValidate
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, width: "100%" }}
           >
             <FormErrors />
             <FormField
@@ -66,7 +65,7 @@ export default function ForgotPassword() {
               variant="contained"
               sx={{ mt: 6, mb: 4 }}
             >
-              Sign In
+              Send Reset Password Link
             </FormSubmit>
             <Grid container>
               <Grid item xs>
@@ -75,7 +74,7 @@ export default function ForgotPassword() {
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="/forgot-password" variant="body2">
+                <Link href="/signup" variant="body2">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>

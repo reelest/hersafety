@@ -1,4 +1,4 @@
-import Clients from "@/models/client";
+import Users from "@/models/user";
 import { useState } from "react";
 import { Modal, Paper } from "@mui/material";
 import Form, { FormErrors, FormField, FormSubmit } from "../Form";
@@ -46,11 +46,11 @@ export default function UsersPage() {
         </Paper>
       </Modal>
       <ModelTable
-        Model={Clients}
+        Model={Users}
         allowDelete={false}
         onCreate={() => {
           return new Promise((r, j) => {
-            setUserModel(Clients);
+            setUserModel(Users);
             setFormCreationRequest(() => r);
           });
         }}

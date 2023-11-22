@@ -14,7 +14,7 @@ import { indexForSearch } from "./lib/indexForSearch";
 //Rather than 1 to N reads for all the users
 //However, the concept of a filtered collection is also there and might be explored in future.
 
-const DEFAULT_ROLE = "client";
+const DEFAULT_ROLE = "user";
 class UserRole extends Item {
   role = DEFAULT_ROLE;
 }

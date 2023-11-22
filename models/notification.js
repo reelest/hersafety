@@ -1,6 +1,6 @@
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
-import Clients from "./client.js";
+import Users from "./user.js";
 import { getUser } from "@/logic/auth";
 
 export class Notification extends CountedItem {
@@ -13,7 +13,7 @@ export class Notification extends CountedItem {
 const Notifications = new CountedModel("notifications", Notification, {
   user: {
     type: "ref",
-    refModel: Clients,
+    refModel: Users,
     hidden: true,
   },
 });

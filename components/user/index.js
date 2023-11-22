@@ -25,12 +25,12 @@ const TABS = [
   },
 ];
 
-export default function Client() {
+export default function UserDashboard() {
   const clientId = useUser()?.uid;
   return (
     <UserRedirect redirectOnNoUser>
       <Head>
-        <title>Guardian - Client Dashboard</title>
+        <title>Guardian - User Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
           name="description"

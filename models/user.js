@@ -1,13 +1,13 @@
 import { CountedModel } from "./lib/counted_model";
 import { UserData, UserMeta } from "./user_data";
 
-class Client extends UserData {
+class User extends UserData {
   getRole() {
-    return "client";
+    return "user";
   }
 }
 
-const Clients = new CountedModel("clients", Client, {
+const Users = new CountedModel("users", User, {
   ...UserMeta,
 });
-export default Clients;
+export default Users;

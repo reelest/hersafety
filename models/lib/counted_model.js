@@ -39,7 +39,7 @@ export class CountedModel extends Model {
   /**
    * @param {string} _collectionID
    * @param {import("./model").Class<T>} ItemClass
-   * @param {[ConstructorParameters<typeof Model>[2]]} props
+   * @param {[ConstructorParameters<typeof Model<T>>[2]]} props
    */
   constructor(_collectionID, ItemClass = CountedItem, ...props) {
     super(_collectionID, ItemClass ?? CountedItem, ...props);

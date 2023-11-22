@@ -39,7 +39,7 @@ export const getCollection = (key) => {
  */
 /**
  * @template T
- * @typedef {Pick<T, { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]>} Data
+ * @typedef {Pick<T, { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]>} Fields
  */
 /**
  * @template {Item} T
@@ -50,7 +50,7 @@ export class Model {
   /**
    * @param {string} _collectionID
    * @param {Class<T>} [ItemClass=Item]
-   * @param {Partial<import("./model_type_info").ModelTypeInfo>} meta
+   * @param {Partial<Record<keyof Fields<T>, import("./model_type_info").ModelPropInfo> & import("./model_type_info").ModelTypeInfo>} meta
    */
   constructor(_collectionID, ItemClass = Item, meta) {
     this._ref = noFirestore
@@ -393,7 +393,7 @@ export class Item {
 
   /**
    * @param {Txn} txn
-   * @returns {Promise<Data<this>>}
+   * @returns {Promise<Fields<this>>}
    */
   async read(txn) {
     if (txn) return (await txn.get(this._ref)).data();
