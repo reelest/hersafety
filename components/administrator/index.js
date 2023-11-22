@@ -1,8 +1,5 @@
-import Drugs from "@/models/inventory";
-import ModelTable from "../ModelTable";
-import { Box } from "@mui/material";
 import DashboardLayout from "../DashboardLayout";
-import { UserEdit, Airdrop, Wallet } from "iconsax-react";
+import { UserEdit, Airdrop } from "iconsax-react";
 import UsersPage from "./UsersPage";
 import ComplaintsPage from "./ComplaintsPage";
 import PageHeader from "../PageHeader";
@@ -44,7 +41,7 @@ export default function Admin() {
         renderChild={(tab) => {
           return (
             <>
-              <PageHeader />
+              <PageHeader title={"Admin Dashboard"} />
               <tab.component />
             </>
           );

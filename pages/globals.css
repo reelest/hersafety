@@ -1,6 +1,9 @@
 /* @tailwind base; Messes up material ui. Use CssBaseline*/
 @tailwind components;
 @tailwind utilities;
+:root {
+  font-size: 0.875rem;
+}
 ul {
   padding-left: 0;
 }

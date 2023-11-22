@@ -1,13 +1,13 @@
-
 import { formatNumber } from "@/utils/formatNumber";
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
 import { MODEL_ITEM_PREVIEW } from "@/components/ModelItemPreview";
 import Clients from "./client.js";
+import { getUser } from "@/logic/auth";
 
 export class Complaint extends CountedItem {
   date = new Date();
-  user = getUser()?.uid ?? ""
+  user = getUser()?.uid ?? "";
   title = "";
   description = "";
 }
@@ -21,7 +21,7 @@ const Complaints = new CountedModel("complaints", Complaint, {
   user: {
     type: "ref",
     refModel: Clients,
-    hidden: true
+    hidden: true,
   },
 });
 export default Complaints;

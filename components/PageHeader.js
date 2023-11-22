@@ -46,7 +46,7 @@ export default function PageHeader({ title, onSearch }) {
           {title}
         </Typography>
         <Hidden smUp>
-          <Avatar />
+          <Avatar src={user.photoURL} />
         </Hidden>
       </Box>
       <Spacer style={{ width: "1px" }} />
@@ -67,7 +67,7 @@ export default function PageHeader({ title, onSearch }) {
           </div>
         </Hidden>
         <Hidden smDown>
-          <Avatar className="ml-4" />
+          <Avatar src={user.photoURL} className="ml-4" />
         </Hidden>
       </Box>
     </Paper>

@@ -34,13 +34,19 @@ function _ModelDataView({
         switch (meta.stringType) {
           case "email":
             return value ? (
-              <Link href={"email:" + value}>{value}</Link>
+              <Link target="_blank" href={"email:" + value}>
+                {value}
+              </Link>
             ) : (
               <NoneProvided />
             );
           case "tel":
             return value ? (
-              <Link href={"tel:" + value} className="whitespace-nowrap">
+              <Link
+                target="_blank"
+                href={"tel:" + value}
+                className="whitespace-nowrap"
+              >
                 {formatPhoneNumber(value)}
               </Link>
             ) : (
@@ -49,7 +55,7 @@ function _ModelDataView({
           case "url":
             return (
               value && (
-                <Link href={value} rel="noopener">
+                <Link target="_blank" href={value} rel="noopener">
                   {value}
                 </Link>
               )
@@ -79,7 +85,7 @@ function _ModelDataView({
         return formatTime(value);
       case "file":
         return value ? (
-          <Link href={value} rel="noopener">
+          <Link target="_blank" href={value} rel="noopener">
             Download
           </Link>
         ) : (
@@ -91,7 +97,7 @@ function _ModelDataView({
         ) : undefined;
       case "image":
         return value ? (
-          <Link href={value} rel="noopener">
+          <Link target="_blank" href={value} rel="noopener">
             View
           </Link>
         ) : (

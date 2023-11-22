@@ -5,10 +5,7 @@ import Form, { FormErrors, FormField, FormSubmit } from "../Form";
 import ModelTable from "../ModelTable";
 import { createUser } from "@/logic/admin";
 import Admins from "@/models/admin";
-import Clients from "@/models/client";
 import Police from "@/models/police";
-import { useRouter } from "next/router";
-import SearchTestView from "./test_search";
 export default function UsersPage() {
   const [formCreationRequest, setFormCreationRequest] = useState(null);
   const [userModel, setUserModel] = useState(Admins);
@@ -48,7 +45,6 @@ export default function UsersPage() {
           </Form>
         </Paper>
       </Modal>
-      <SearchTestView />
       <ModelTable
         Model={Clients}
         allowDelete={false}

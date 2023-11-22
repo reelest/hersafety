@@ -27,12 +27,13 @@ export class IndexEntry extends CountedItem {
     updateTokens(prevState.tokens, this.id(), txn, UpdateValue.arrayRemove);
   }
   async onUpdateItem(txn, newState, prevState) {
-    console.log({ txn, newState, prevState });
     await super.onUpdateItem(txn, newState, prevState);
-    const added = newState.tokens.filter(notIn(prevState.tokens));
-    const removed = prevState.tokens.filter(notIn(newState.tokens));
-    updateTokens(removed, this.id(), txn, UpdateValue.arrayRemove);
-    updateTokens(added, this.id(), txn, UpdateValue.arrayUnion);
+    if (this.didUpdate("tokens")) {
+      const added = newState.tokens.filter(notIn(prevState.tokens));
+      const removed = prevState.tokens.filter(notIn(newState.tokens));
+      updateTokens(removed, this.id(), txn, UpdateValue.arrayRemove);
+      updateTokens(added, this.id(), txn, UpdateValue.arrayUnion);
+    }
   }
   static {
     this.markTriggersUpdateTxn(["tokens"], true);
