@@ -23,4 +23,4 @@ const PoliceStations = new CountedModel("police_station", PoliceStation, {
     label: "Longitude",
   },
 });
-export default Drugs;
+export default PoliceStations;

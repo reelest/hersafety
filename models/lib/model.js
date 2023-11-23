@@ -48,18 +48,25 @@ export const getCollection = (key) => {
 export class Model {
   _Item;
   /**
-   * @param {string} _collectionID
+   * @param {string|string[]} _collectionID
    * @param {Class<T>} [ItemClass=Item]
    * @param {Partial<Record<keyof Fields<T>, import("./model_type_info").ModelPropInfo> & import("./model_type_info").ModelTypeInfo>} meta
    */
   constructor(_collectionID, ItemClass = Item, meta) {
+    if (!Array.isArray(_collectionID)) {
+      _collectionID = [_collectionID];
+    }
+    _collectionID[0] = firestoreNS + _collectionID[0];
+    const path = _collectionID.join("/");
+
     this._ref = noFirestore
-      ? { path: firestoreNS + _collectionID }
-      : collection(firestore, firestoreNS + _collectionID);
+      ? { path: path }
+      : collection(firestore, ..._collectionID);
+
     this._Item = ItemClass ?? Item;
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
-    global[_collectionID + "Model"] = this;
+    global[_collectionID.join("_") + "Model"] = this;
     collections.set(this.uniqueName(), this);
   }
   static converter(model) {

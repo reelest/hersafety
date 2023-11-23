@@ -1,5 +1,6 @@
 import { CountedItem } from "./lib/counted_item";
 import { CountedModel } from "./lib/counted_model";
+import { UserData } from "./user_data";
 
 export class Contact extends CountedItem {
   name = "";
@@ -9,28 +10,33 @@ export class Contact extends CountedItem {
   notifyInTimesOfDanger = false;
 }
 
-const Contacts = new CountedModel("contacts", Contact, {
-  email: {
-    stringType: "email",
-  },
-  phoneNumber: {
-    stringType: "tel",
-  },
-  relationship: {
-    options: [
-      "father",
-      "mother",
-      "sister",
-      "brother",
-      "uncle",
-      "aunt",
-      "boss",
-      "son",
-      "daughter",
-      "relative",
-      "unspecified",
-    ],
-  },
-});
-
-export default Contacts;
+/**
+ *
+ * @param {UserData} user
+ * @returns
+ */
+export default function getContacts(user) {
+  return new CountedModel(["contacts", user.uid(), "a"], Contact, {
+    email: {
+      stringType: "email",
+    },
+    phoneNumber: {
+      stringType: "tel",
+    },
+    relationship: {
+      options: [
+        "father",
+        "mother",
+        "sister",
+        "brother",
+        "uncle",
+        "aunt",
+        "boss",
+        "son",
+        "daughter",
+        "relative",
+        "unspecified",
+      ],
+    },
+  });
+}

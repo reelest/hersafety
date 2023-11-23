@@ -7,7 +7,7 @@ import { getUser } from "@/logic/auth";
 export class PanicAlert extends CountedItem {
   user = getUser()?.uid ?? "";
   timeStarted = new Date();
-  locationStarted = getLocation()?.id?.() ?? "";
+  locationStarted = getActiveLocation()?.id?.() ?? "";
   stopped = false;
 }
 
