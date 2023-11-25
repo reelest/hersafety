@@ -13,6 +13,7 @@ import { Fragment, memo, useMemo } from "react";
 import usePromise from "@/utils/usePromise";
 import { guessMeta } from "@/models/lib/model_type_info";
 import typeOf from "@/utils/typeof";
+import ImageView from "./ImageView";
 
 /**
  * @param {Object} param0
@@ -97,9 +98,7 @@ function _ModelDataView({
         ) : undefined;
       case "image":
         return value ? (
-          <Link target="_blank" href={value} rel="noopener">
-            View
-          </Link>
+          <ImageView value={value} sx={{ my: 4 }} />
         ) : (
           <NoneProvided />
         );

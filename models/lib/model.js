@@ -18,6 +18,7 @@ import hasProp from "@/utils/hasProp";
 import { isUpdateValue } from "./update_value";
 import { None } from "@/utils/none";
 import { getItemFromStore } from "./item_store";
+import sentenceCase from "@/utils/sentenceCase";
 /**
  * (new|(?<!Model )extends) \w*Model\b
  */
@@ -58,7 +59,6 @@ export class Model {
     }
     _collectionID[0] = firestoreNS + _collectionID[0];
     const path = _collectionID.join("/");
-
     this._ref = noFirestore
       ? { path: path }
       : collection(firestore, ..._collectionID);
@@ -66,8 +66,13 @@ export class Model {
     this._Item = ItemClass ?? Item;
     this.Meta = this.Meta ?? getModelTypeInfo(this, meta);
     this.converter = Model.converter(this);
-    global[_collectionID.join("_") + "Model"] = this;
+    global[
+      _collectionID[0] +
+        _collectionID.slice(1).map(sentenceCase).join("") +
+        "Model"
+    ] = this;
     collections.set(this.uniqueName(), this);
+    console.log({ done: this.uniqueName() });
   }
   static converter(model) {
     return {
@@ -167,12 +172,13 @@ export class Model {
     return x;
   }
   ref(...id) {
+    console.assert(id.every(Boolean));
     return noFirestore
       ? { path: "server-side", id: "server-side" }
       : doc(this._ref, ...id);
   }
   uniqueName() {
-    return this._ref.path.substring(firestoreNS.length);
+    return this._ref.path.substring(firestoreNS.length).split("/").join("-");
   }
   fields() {
     return Object.keys(this.Meta).filter((e) => e[0] !== "!");

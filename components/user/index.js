@@ -1,12 +1,10 @@
-import ModelTable from "../ModelTable";
-import { Box } from "@mui/material";
 import DashboardLayout from "../DashboardLayout";
-import { UserEdit, Airdrop } from "iconsax-react";
+import { UserEdit, Airdrop, User, Personalcard } from "iconsax-react";
 import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
-import { useUser } from "@/logic/auth";
 import DashboardPage from "./DashboardPage";
+import ContactsPage from "./ContactsPage";
 
 const TABS = [
   {
@@ -15,19 +13,28 @@ const TABS = [
     component: DashboardPage,
   },
   {
-    name: "Complaints",
-    icon: Airdrop,
-    // component: ComplaintsPage,
+    name: "My Contacts",
+    icon: User,
+    component: ContactsPage,
+  },
+  {
+    name: "My Info",
+    icon: Personalcard,
+    // component: NotificationsPage,
+  },
+  {
+    name: "Nearby Stations",
+    icon: Personalcard,
+    // component: NotificationsPage,
   },
   {
     name: "Notifications",
-    icon: Airdrop,
+    icon: Personalcard,
     // component: NotificationsPage,
   },
 ];
 
 export default function UserDashboard() {
-  const clientId = useUser()?.uid;
   return (
     <UserRedirect redirectOnNoUser>
       <Head>

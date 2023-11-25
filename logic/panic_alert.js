@@ -1,8 +1,11 @@
 import { createSharedQuery } from "@/models/lib/query";
-import PanicAlerts from "@/models/panic_alert";
+import PanicAlerts, { PanicAlert } from "@/models/panic_alert";
 import createSubscription from "@/utils/createSubscription";
 import { getUser, onUser } from "./auth";
 
+/**
+ * @type {import("@/utils/createSubscription").Subscription<PanicAlert>}
+ */
 export const [usePanic, onPanicChange, , getPanic] = createSubscription(
   (setPanic) => {
     return onUser((user) => {
@@ -19,7 +22,6 @@ export const [usePanic, onPanicChange, , getPanic] = createSubscription(
         { watch: true }
       );
       return onData(({ data }) => {
-        console.log({ data });
         setPanic(data && data.length ? data[0] : false);
       });
     });
@@ -41,3 +43,4 @@ export const startPanic = async function () {
     locationStarted: currentLocation?.id?.(),
   });
 };
+import("./location");

@@ -20,9 +20,19 @@ export default function DashboardPage() {
   const [item, setItem] = useState(Complaints.create());
   return (
     <Box className="px-6 md:px-12 flex flex-col items-center py-12">
+      <Typography
+        variant="h4"
+        paragraph
+        color={panic ? "red" : "green"}
+        sx={{ mt: 5 }}
+      >
+        {" "}
+        Press in Times of Danger
+      </Typography>
       <Button
         variant="contained"
         size="large"
+        disabled={panic === null}
         onClick={panic ? stopPanic : panic === false ? startPanic : null}
         sx={{
           height: 240,
@@ -36,15 +46,6 @@ export default function DashboardPage() {
           className={panic ? "text-red-200" : "text-green-400"}
         />
       </Button>
-      <Typography
-        variant="h4"
-        paragraph
-        color={panic ? "red" : "green"}
-        sx={{ mt: 5 }}
-      >
-        {" "}
-        I'm in Trouble!!!
-      </Typography>
       <Card className="mt-24 px-6 py-8" elevation={12}>
         <CardHeader title="Create Complaint">
           <Typography variant="h3">Create Complaint</Typography>
@@ -52,7 +53,6 @@ export default function DashboardPage() {
         <CardContent>
           <ModelForm
             model={Complaints}
-            title="Create Complaint"
             item={item}
             submitText={"Submit Complaint"}
             onSubmit={() => {

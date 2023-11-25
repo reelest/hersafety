@@ -11,6 +11,8 @@ import createQuery from "@/utils/createQuery";
 import { useDebounce } from "react-use";
 import { IndexEntry } from "@/models/search_index";
 import { Item } from "@/models/lib/model";
+import pick from "@/utils/pick";
+import notIn from "@/utils/notIn";
 export const _searchValue = (e) =>
   e instanceof IndexEntry
     ? e.tokens
@@ -86,8 +88,10 @@ export function SearchInput() {
         <OutlinedInput
           // as={OutlinedInput}
           placeholder="Search"
-          {...params}
-          InputLabelProps={undefined}
+          {...pick(
+            params,
+            Object.keys(params).filter(notIn(["InputProps", "InputLabelProps"]))
+          )}
           sx={{
             ...params.sx,
             "& .MuiInputBase-root": {

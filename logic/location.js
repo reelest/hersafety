@@ -28,7 +28,7 @@ export const [useLocation, onLocationChange, , getLocation] =
         return () => navigator.geolocation.clearWatch(m);
       } else {
         return onLocationUpdateIntervalChange((interval) => {
-          let m = setInterval(function () {
+          function get() {
             navigator.geolocation.getCurrentPosition(
               function (e) {
                 setLocation({
@@ -41,7 +41,9 @@ export const [useLocation, onLocationChange, , getLocation] =
                 alert("Failed to get location");
               }
             );
-          }, interval);
+          }
+          get();
+          let m = setInterval(get, interval);
           return () => clearTimeout(m);
         });
       }

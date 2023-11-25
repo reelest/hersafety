@@ -11,6 +11,7 @@ export class Complaint extends CountedItem {
   user = getUser()?.uid ?? "";
   title = "";
   description = "";
+  images = [];
 }
 
 const Complaints = new CountedModel("complaints", Complaint, {
@@ -27,6 +28,11 @@ const Complaints = new CountedModel("complaints", Complaint, {
   },
   description: {
     stringType: "longtext",
+  },
+  images: {
+    arrayType: {
+      type: "image",
+    },
   },
 });
 export default Complaints;

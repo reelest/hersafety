@@ -33,6 +33,7 @@ import pick from "@/utils/pick";
 import Image from "next/image";
 import { Trash } from "iconsax-react";
 import useStable from "@/utils/useStable";
+import ImageView from "./ImageView";
 // import { useCSRFToken } from "@/logic/api_get";
 
 /**
@@ -265,22 +266,6 @@ export function ImageField({
   className,
   ...props
 }) {
-  const [src, setSrc] = useState(false);
-  useEffect(() => {
-    if (!value) {
-      return;
-    } else if (typeof value === "string") {
-      setSrc(value);
-      return;
-    } else {
-      const url = URL.createObjectURL(value);
-      setSrc(url);
-      return () => {
-        setSrc(null);
-        URL.revokeObjectURL(url);
-      };
-    }
-  }, [value]);
   const expanded = !!value;
   return (
     <Template
@@ -311,19 +296,11 @@ export function ImageField({
       >
         {label}
       </InputLabel>
-      <Box
-        as="img"
-        src={src}
+      <ImageView
+        value={value}
         alt={"Supplied image for " + props.name}
-        className="rounded-t"
         sx={{
-          backgroundColor: "gray.light",
-          color: "primary.dark",
-          flexGrow: 1,
           display: expanded ? "" : "none",
-          width: "auto",
-          minHeight: "10rem",
-          maxWidth: "20rem",
         }}
       />
       <Button

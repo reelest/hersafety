@@ -58,7 +58,7 @@ export default class Txn {
           this.successCbs = [];
           await this.retry();
         }
-        return x;
+        return await x;
       });
     }
     if (!this.useTxn) {
@@ -110,7 +110,10 @@ export default class Txn {
         this.txnFinished.catch(
           (e) => e !== m && console.error(this.id, "late error ", e)
         );
-        this.j(m);
+        // Sometimes, a transaction fails the first time because it requires a previous read
+        // But succeeds on subsequent tries because it no longer requires previous reads
+        // Very rare, though
+        if (this.j) this.j(m);
         this.r = this.j = this.txn = this.txnGotten = null;
       }
       if (this.cbs.length) {

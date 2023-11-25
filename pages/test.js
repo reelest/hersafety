@@ -19,7 +19,7 @@ export default function Test(props) {
       <ClassDiagram model={Polices} />;
       <ClassDiagram
         model={getContacts({
-          uid() {
+          id() {
             return "[uid]";
           },
         })}

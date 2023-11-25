@@ -17,10 +17,9 @@ import { useEffect, useRef, useState } from "react";
 import createSubscription from "@/utils/createSubscription";
 import useStable from "@/utils/useStable";
 import { noop } from "@/utils/none";
-import { Item, noFirestore } from "./model";
+import { Item, Model, noFirestore } from "./model";
 import { range } from "d3";
 import usePager from "@/utils/usePager";
-import useLogger from "@/utils/useLogger";
 import { InvalidParameters, InvalidState } from "./errors";
 import pool from "@/utils/request_pool";
 
@@ -45,6 +44,7 @@ export const SECONDARY_ORDERING_DESCENDING = "!model-secondary-descending";
 
 /**
  * Provides anchors for moving to the next page or going to the previous page
+ * @template {Item} T
  */
 class LocalCache {
   //When items which were in the window get removed, assume they were deleted
@@ -101,7 +101,7 @@ class LocalCache {
     }
   }
   /**
-   * @returns {Array<import("./lib/model").Item>}
+   * @returns {Array<T>}
    */
   get() {
     return this.data
@@ -184,16 +184,14 @@ class LocalCache {
   }
 }
 
-/**
- *
- * @param {QueryCursor} query
- */
-
 const PAGE_DIRECTION_FORWARDS = 1;
 const PAGE_DIRECTION_BACKWARDS = -1;
 let _id = 1;
 /**
  * TODO: caching queries that start and stop frequently by using a snapshot/local cache
+ */
+/**
+ * @template {Item} T
  */
 export class QueryCursor {
   _pageSize = 100;
@@ -209,8 +207,13 @@ export class QueryCursor {
    *
    * @param {import("./lib/model").Model} model
    */
+  /**
+   *
+   * @param {Model<T>} model
+   */
   constructor(model) {
     //Used for filtering
+    /** @type {Model<T>} */
     this.model = model;
     this._cache = new LocalCache();
     // A subscription that notifies listeners when this query completes
@@ -515,6 +518,14 @@ export class QueryCursor {
     this._cache.reset().then(() => this.restart());
     return this;
   }
+  /**
+   *
+   * @param {keyof import("./model").Fields<T>} key
+   * @param {boolean} descending
+   * @param {keyof import("./model").Fields<T>} secondKey
+   * @param {boolean} secondDescending
+   * @returns
+   */
   orderBy(key, descending, secondKey, secondDescending) {
     key = key ?? this.model.Meta[DEFAULT_ORDERING];
     descending =
@@ -546,10 +557,13 @@ export class QueryCursor {
   }
 }
 
+/**
+ * @template {Item} T
+ */
 export class DocumentQueryCursor {
   /**
    *
-   * @param {Item} item
+   * @param {T} item
    */
   constructor(item) {
     this.item = item;
@@ -689,6 +703,19 @@ export function usePagedQuery(createQuery, deps = [], { ...opts } = {}) {
   return { data, loading, pager, ...rest };
 }
 
+/**
+ * @template T
+ * @param {(()=>QueryCursor<T>)|(()=>DocumentQueryCursor<T>)} createQuery
+ * @param {Array<any>} deps
+ * @param {{watch: boolean}} param2
+ * @returns {{
+ *  data: Array<T> & T,
+ *  error: Error,
+ *  loading: boolean,
+ *  count: number,
+ *  index: number
+ * }}
+ */
 export function useQuery(createQuery, deps = [], { watch = false } = {}) {
   const dedupeIndex = useRef(0);
   const [state, setState] = useState({

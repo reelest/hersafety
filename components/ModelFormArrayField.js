@@ -14,6 +14,7 @@ import deepEqual from "deep-equal";
 import { getDefaultValue } from "@/models/lib/model_type_info";
 import ModelDataView from "./ModelDataView";
 import Spacer from "./Spacer";
+import uniqueKey from "@/utils/uniqueKey";
 
 /**
  *
@@ -71,7 +72,7 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
       <div className="mx-4 w-full mb-4">
         {value.map((e, i) => (
           <ModelFormArrayItem
-            key={e}
+            key={uniqueKey(e)}
             index={i}
             value={value}
             setValue={setValue}
@@ -111,7 +112,10 @@ function ArrayField({ name, id, meta, value, onChange, ...props }) {
           >
             <ModelFormField
               name={edit ? _id(edit.index) : _new}
-              meta={meta.arrayType}
+              meta={{
+                ...meta.arrayType,
+                label: "",
+              }}
               onChange={() => alert("hi")}
             />
             <FormSubmit
@@ -131,6 +135,7 @@ function ModelFormArrayItem({ meta, index, value, setValue, setEdit }) {
   const e = value[index];
   const i = index;
   const move = (e, from, to) => {
+    console.log({ e, from, to, value });
     if (value[from] === e && value[to] !== undefined) {
       value = value.slice();
       const temp = value[from];
@@ -155,7 +160,7 @@ function ModelFormArrayItem({ meta, index, value, setValue, setEdit }) {
     //TODO handle missing refs
   }, [meta, _value, index, remove]);
   return (
-    <div className="flex flex-wrap items-center" key={e}>
+    <div className="flex flex-wrap items-center">
       <Typography sx={{ mr: 4, width: "1em" }}>{i + 1}.</Typography>
       <ModelDataView meta={meta} value={_value} />
       <Spacer />
