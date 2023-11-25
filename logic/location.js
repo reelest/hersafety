@@ -1,7 +1,7 @@
 import createSubscription from "@/utils/createSubscription";
 import { noop } from "@/utils/none";
 import { onUser } from "./auth";
-import Locations, { Location } from "@/models/location";
+import Locations from "@/models/location";
 import { hoursToMs, minutesToMs } from "@/utils/time_utils";
 import isServerSide from "@/utils/is_server_side";
 import { getPanic, onPanicChange } from "./panic_alert";
