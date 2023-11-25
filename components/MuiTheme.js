@@ -27,6 +27,14 @@ const MuiTheme = createTheme({
         LinkComponent: LinkBehavior,
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: "2.5rem",
+          textTransform: "capitalize",
+        },
+      },
+    },
     MuiFilledInput: {
       styleOverrides: {
         root: ({ theme }) => ({
@@ -67,7 +75,7 @@ const MuiTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: 'Raleway, "Helvetica", "Arial", sans-serif',
+    fontFamily: 'Inter, "Helvetica", "Arial", sans-serif',
     h1: {
       fontFamily: "Raleway, sans-serif",
       fontWeight: "bold",

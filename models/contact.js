@@ -16,7 +16,7 @@ export class Contact extends CountedItem {
  * @returns
  */
 export default function getContacts(user) {
-  return new CountedModel(["contacts", user.uid(), "a"], Contact, {
+  return new CountedModel(["contacts", "all", user.uid()], Contact, {
     email: {
       stringType: "email",
     },

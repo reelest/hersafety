@@ -93,7 +93,7 @@ const TabLink = ({
     <Template
       as={Link}
       props={props}
-      className={`block text-left whitespace-nowrap w-full`}
+      className={`block text-left whitespace-nowrap w-full rounded-3xl`}
       sx={{
         marginTop: "0.375rem",
         marginBottom: "0.375rem",
@@ -102,7 +102,6 @@ const TabLink = ({
         textAlign: "left",
         display: "block",
         textDecoration: "none",
-        borderRadius: "0.75rem",
         backgroundColor: isSelected ? "white" : "",
         color: isActivated
           ? "white"

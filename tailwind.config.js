@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#5039a4",
+        primary: "#700994",
         primaryDark: "#141019",
         secondary: "#e40d20",
         bg: "#f9f9fc",
@@ -15,7 +15,7 @@ module.exports = {
         disabledOnPrimaryDark: "#aeafb5",
       },
       borderRadius: {
-        DEFAULT: "8px",
+        DEFAULT: "16px",
       },
     },
   },

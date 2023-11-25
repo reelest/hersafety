@@ -92,7 +92,7 @@ export class Model {
     return this.request();
   }
   /**
-   * @template {keyof T} V
+   * @template {keyof Fields<T>} V
    * @param {V} key
    * @param {WhereFilterOp} op
    * @param {T[V]} val
@@ -255,7 +255,7 @@ export class Item {
   */
   /**
    *
-   * @param {Record<keyof ThisParameterType, any>} data
+   * @param {Fields<this>} data
    * @param {Txn} txn
    */
   async set(data, txn) {

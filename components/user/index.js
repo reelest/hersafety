@@ -6,12 +6,13 @@ import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
 import { useUser } from "@/logic/auth";
+import DashboardPage from "./DashboardPage";
 
 const TABS = [
   {
-    name: "Users",
+    name: "Dashboard",
     icon: UserEdit,
-    // component: UsersPage,
+    component: DashboardPage,
   },
   {
     name: "Complaints",
@@ -43,7 +44,7 @@ export default function UserDashboard() {
           return (
             <>
               <PageHeader title="Client Dashboard" />
-              {/* <tab.component /> */}
+              <tab.component />
             </>
           );
         }}
