@@ -9,11 +9,16 @@ import { Add } from "iconsax-react";
 export default function ContactsPage() {
   const user = useUserData();
   const Contacts = user && getContacts(user);
-  const { count, data, loading } = useQuery(() => Contacts?.all());
+  const { count, data, loading } = useQuery(() => Contacts?.all(), [Contacts]);
   const [isOpen, setOpen] = useState(false);
   return (
     <>
-      <ModelFormDialog isOpen={isOpen} model={Contacts} />
+      <ModelFormDialog
+        isOpen={isOpen}
+        model={Contacts}
+        closeOnSubmit
+        onclose={setOpen(false)}
+      />
       <Button variant="contained" onClick={() => setOpen(true)}>
         <Add />
       </Button>
