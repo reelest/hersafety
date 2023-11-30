@@ -16,7 +16,6 @@ import { green, red } from "@mui/material/colors";
 
 export default function DashboardPage() {
   const panic = usePanic();
-  console.log(panic);
   const [item, setItem] = useState(Complaints.create());
   return (
     <Box className="px-6 md:px-12 flex flex-col items-center py-12">

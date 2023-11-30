@@ -72,7 +72,6 @@ export class Model {
         "Model"
     ] = this;
     collections.set(this.uniqueName(), this);
-    console.log({ done: this.uniqueName() });
   }
   static converter(model) {
     return {

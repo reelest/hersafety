@@ -3,13 +3,14 @@ import getContacts from "@/models/contact";
 import { useQuery } from "@/models/lib/query";
 import ModelFormDialog from "../ModelFormDialog";
 import { useState } from "react";
-import { Button } from "@mui/material";
-import { Add } from "iconsax-react";
+import { Button, Card, List, ListItem, Paper, Typography } from "@mui/material";
+import { Add, InfoCircle } from "iconsax-react";
+import uniqueKey from "@/utils/uniqueKey";
 
 export default function ContactsPage() {
   const user = useUserData();
   const Contacts = user && getContacts(user);
-  const { count, data, loading } = useQuery(() => Contacts?.all(), [Contacts]);
+  const { count, data, loading } = useQuery(() => Contacts?.all(), [user]);
   const [isOpen, setOpen] = useState(false);
   return (
     <>
@@ -17,12 +18,25 @@ export default function ContactsPage() {
         isOpen={isOpen}
         model={Contacts}
         closeOnSubmit
-        onclose={setOpen(false)}
+        onclose={() => setOpen(false)}
       />
       <Button variant="contained" onClick={() => setOpen(true)}>
-        <Add />
+        Add Contact <Add />
       </Button>
-      {data ? (data.length ? data.map((e) => e.name) : null) : null}
+      {data ? (
+        data.length === 0 ? (
+          <div className="flex flex-col items-center p-10">
+            <InfoCircle size={32} className="text-primary mb-4" />
+            <Typography elevation={1}>No Contacts Yet</Typography>
+          </div>
+        ) : (
+          <List>
+            {data.map((e) => (
+              <ListItem key={uniqueKey(e)}>{e}</ListItem>
+            ))}
+          </List>
+        )
+      ) : null}
     </>
   );
 }

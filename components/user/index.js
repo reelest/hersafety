@@ -1,10 +1,19 @@
 import DashboardLayout from "../DashboardLayout";
-import { UserEdit, Airdrop, User, Personalcard } from "iconsax-react";
+import {
+  UserEdit,
+  Airdrop,
+  User,
+  Personalcard,
+  Location,
+  Notification,
+} from "iconsax-react";
 import PageHeader from "../PageHeader";
 import UserRedirect from "../UserRedirect";
 import Head from "next/head";
 import DashboardPage from "./DashboardPage";
 import ContactsPage from "./ContactsPage";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import MyInfoPage from "./MyInfoPage";
 
 const TABS = [
   {
@@ -20,16 +29,16 @@ const TABS = [
   {
     name: "My Info",
     icon: Personalcard,
-    // component: NotificationsPage,
+    component: MyInfoPage,
   },
   {
     name: "Nearby Stations",
-    icon: Personalcard,
+    icon: Location,
     // component: NotificationsPage,
   },
   {
     name: "Notifications",
-    icon: Personalcard,
+    icon: Notification,
     // component: NotificationsPage,
   },
 ];
@@ -49,10 +58,10 @@ export default function UserDashboard() {
         tabs={TABS}
         renderChild={(tab) => {
           return (
-            <>
+            <ErrorBoundary>
               <PageHeader title="Client Dashboard" />
               <tab.component />
-            </>
+            </ErrorBoundary>
           );
         }}
       />
